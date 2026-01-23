@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto Price Action Lab</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+
+<div id="app">
+  <div id="charts">
+    <div class="chart-wrapper">
+      <div class="chart-title" id="title-5m">
+        <span class="title-bell" style="display:inline-block; margin-right:8px; position:relative; z-index:10;">🔔</span>
+        <span class="title-ruler" style="display:inline-block; margin-left:20px; cursor:pointer; opacity:0.5; position:relative; z-index:10;">📏</span>
+        <span class="title-text">Loading...</span>
+        <span class="title-fullscreen" style="float:right; position:relative; z-index:10;">⛶</span>
+      </div>
+      <div id="chart-5m" class="chart-container"></div>
+    </div>
+    <div class="chart-wrapper">
+      <div class="chart-title" id="title-30m">
+        <span class="title-bell" style="display:inline-block; margin-right:8px; position:relative; z-index:10;">🔔</span>
+        <span class="title-ruler" style="display:inline-block; margin-left:20px; cursor:pointer; opacity:0.5; position:relative; z-index:10;">📏</span>
+        <span class="title-text">Loading...</span>
+        <span class="title-fullscreen" style="float:right; position:relative; z-index:10;">⛶</span>
+      </div>
+      <div id="chart-30m" class="chart-container"></div>
+    </div>
+    <div class="chart-wrapper">
+      <div class="chart-title" id="title-4h">
+        <span class="title-bell" style="display:inline-block; margin-right:8px; position:relative; z-index:10;">🔔</span>
+        <span class="title-ruler" style="display:inline-block; margin-left:20px; cursor:pointer; opacity:0.5; position:relative; z-index:10;">📏</span>
+        <span class="title-text">Loading...</span>
+        <span class="title-fullscreen" style="float:right; position:relative; z-index:10;">⛶</span>
+      </div>
+      <div id="chart-4h" class="chart-container"></div>
+    </div>
+    <div class="chart-wrapper">
+      <div class="chart-title" id="title-1d">
+        <span class="title-bell" style="display:inline-block; margin-right:8px; position:relative; z-index:10;">🔔</span>
+        <span class="title-ruler" style="display:inline-block; margin-left:20px; cursor:pointer; opacity:0.5; position:relative; z-index:10;">📏</span>
+        <span class="title-text">Loading...</span>
+        <span class="title-fullscreen" style="float:right; position:relative; z-index:10;">⛶</span>
+      </div>
+      <div id="chart-1d" class="chart-container"></div>
+    </div>
+  </div>
+
+  <div id="pairs">
+    <div class="pairs-header">
+      <div class="header-left">
+        <select id="exchange-select">
+          <option value="bybit">Bybit</option>
+          <option value="binance">Binance</option>
+        </select>
+        <span>Perpetual Pairs</span>
+        <span id="info-btn" style="cursor:pointer; margin-left:8px; font-size:18px; color:#aaa;">i</span>
+      </div>
+      <div class="header-right">
+        <select id="sort-select">
+          <option value="volume">By Volume</option>
+          <option value="gainers">Top Gainers 24h</option>
+          <option value="losers">Top Losers 24h</option>
+        </select>
+        <button id="settings-btn">⚙️ Settings</button>
+      </div>
+    </div>
+    <div id="pairs-list">
+      <div class="loading">Loading pairs...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">×</span>
+    <h3>Settings</h3>
+
+    <div style="display:flex; gap:10px; margin:15px 0; flex-wrap:wrap;">
+      <button id="toggle-ema" style="flex:1; padding:10px; background:#2a3150; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">EMA: On</button>
+      <button id="toggle-bb" style="flex:1; padding:10px; background:#2a3150; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Bollinger Bands: Off</button>
+    </div>
+
+    <div id="ema-periods-section">
+      <label>EMA 1: <input type="number" min="1" id="ema1" value="5"></label>
+      <label>EMA 2: <input type="number" min="1" id="ema2" value="10"></label>
+      <label>EMA 3: <input type="number" min="1" id="ema3" value="60"></label>
+      <label>EMA 4: <input type="number" min="1" id="ema4" value="223"></label>
+    </div>
+
+    <div id="bb-periods-section" style="display:none;">
+      <label>Bollinger Period: <input type="number" min="1" id="bb-period" value="20"></label>
+      <label>Bollinger Std Dev: <input type="number" min="0.1" step="0.1" id="bb-dev" value="2"></label>
+    </div>
+
+    <hr style="border-color:#333; margin:20px 0;">
+
+    <label>Top Left Chart TF:
+      <select id="tf-chart-5m">
+        <option value="1">1m</option>
+        <option value="3">3m</option>
+        <option value="5" selected>5m</option>
+        <option value="15">15m</option>
+        <option value="30">30m</option>
+        <option value="60">1h</option>
+        <option value="240">4h</option>
+        <option value="D">1d</option>
+      </select>
+    </label>
+
+    <label>Top Right Chart TF:
+      <select id="tf-chart-30m">
+        <option value="1">1m</option>
+        <option value="3">3m</option>
+        <option value="5">5m</option>
+        <option value="15">15m</option>
+        <option value="30" selected>30m</option>
+        <option value="60">1h</option>
+        <option value="240">4h</option>
+        <option value="D">1d</option>
+      </select>
+    </label>
+
+    <label>Bottom Left Chart TF:
+      <select id="tf-chart-4h">
+        <option value="1">1m</option>
+        <option value="3">3m</option>
+        <option value="5">5m</option>
+        <option value="15">15m</option>
+        <option value="30">30m</option>
+        <option value="60">1h</option>
+        <option value="240" selected>4h</option>
+        <option value="D">1d</option>
+      </select>
+    </label>
+
+    <label>Bottom Right Chart TF:
+      <select id="tf-chart-1d">
+        <option value="1">1m</option>
+        <option value="3">3m</option>
+        <option value="5">5m</option>
+        <option value="15">15m</option>
+        <option value="30">30m</option>
+        <option value="60">1h</option>
+        <option value="240">4h</option>
+        <option value="D" selected>1d</option>
+      </select>
+    </label>
+
+    <hr style="border-color:#333; margin:20px 0;">
+
+    <h4>Telegram Alerts (Required)</h4>
+    <p style="font-size:14px; color:#ccc;">Private alerts with screenshot (30m chart) and trade link. Configure your personal bot.</p>
+
+    <div style="margin-left:20px; margin-top:10px;">
+      <button id="open-botfather-btn" style="width:100%; padding:12px; background:#229ED9; color:white; border:none; border-radius:4px; font-weight:bold; margin-bottom:10px;">
+        Open @BotFather to create your bot (30 seconds)
+      </button>
+
+      <label>Bot Token:<br>
+        <input type="password" id="personal-tg-token" placeholder="123456:ABC-...">
+      </label>
+
+      <label>Chat ID:<br>
+        <input type="text" id="personal-tg-chatid" placeholder="123456789">
+      </label>
+
+      <p style="font-size:12px; color:#aaa; margin-top:15px;">
+        <strong>Quick guide:</strong><br>
+        1. Click button → open @BotFather.<br>
+        2. /newbot → name → copy token.<br>
+        3. Start bot → /start → copy Chat ID.<br>
+        4. Apply → private alerts!
+      </p>
+    </div>
+
+    <button id="apply-settings">Apply</button>
+  </div>
+</div>
+
+<!-- Info Modal -->
+<div id="info-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">×</span>
+    <h3>APP INFORMATION</h3>
+    <p><strong>- Trade smarter, faster, and clearer – all for free!</strong></p>
+    <p><strong>- Real-time market analysis at a glance, perfect for quick trades.</strong></p>
+    <p><strong>- Completely free, supported only by a small amount of non-intrusive ads.</strong></p>
+    <p><strong>- No login, no data collection – your privacy is safe.</strong></p>
+    <p><strong>- Independent and unbiased: we are not affiliated with any exchange.</strong></p>
+
+    <h4>MAIN FEATURES</h4>
+    <ul>
+      <li>Real-time charts that update instantly.</li>
+      <li>Switch exchanges or lists anytime.</li>
+      <li>Synchronized analysis line: add with one click, move without duplicates. Double-click on any chart to remove it.</li>
+      <li>Full-screen charts for precise analysis.</li>
+      <li>Quick alerts: target exact levels or nearby zones with direct trade access.</li>
+      <li><strong>Advanced Tools</strong></li>
+      <li>Private Telegram alerts (configure personal bot in Settings).</li>
+      <li>Change all chart timeframes at once.</li>
+      <li>Customize moving average settings.</li>
+      <li>Dynamic color bands based on BTC movement.</li>
+    </ul>
+
+    <h4>Price Ruler Tool 📏</h4>
+    <ul>
+      <li>Click the ruler icon (right of the bell) to toggle measurement mode on/off.</li>
+      <li>When active, click on any chart to measure the percentage difference from the synchronized horizontal line to the clicked price.</li>
+      <li>A dashed green line will appear showing the percentage (e.g. +2.45%).</li>
+      <li>Click again on the chart to update the measurement to a new price level.</li>
+      <li>Click the ruler icon again to turn off and remove the measurement line.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Alert Setup Panel -->
+<div id="alert-setup" style="display:none; position:fixed; top:20px; left:20px; background:#161a25; padding:20px; border-radius:8px; border:1px solid #222; z-index:10000; box-shadow:0 4px 20px rgba(0,0,0,0.5); width:320px; color:white;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <h4 style="margin:0;">Alert for <span id="alert-symbol"></span></h4>
+    <span id="close-alert-setup" style="cursor:pointer; font-size:28px; color:#aaa;">×</span>
+  </div>
+  <label style="display:block; margin:10px 0;">Alert price:<br>
+    <input type="number" step="any" id="alert-price-input" style="width:100%; padding:8px; background:#1f2433; border:none; color:white; border-radius:4px;">
+  </label>
+  <div style="display:flex; gap:8px; margin-top:20px;">
+    <button id="set-local-alert" style="flex:1; padding:10px; background:#00ff85; color:black; border:none; border-radius:4px; font-weight:bold;">Alert</button>
+    <button id="open-in-exchange" style="flex:1; padding:10px; background:#229ED9; color:white; border:none; border-radius:4px; font-weight:bold;">Open in Exchange</button>
+  </div>
+</div>
+
+<!-- Fullscreen overlay -->
+<div id="fullscreen-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0f1117; z-index:9999;">
+  <button id="close-fullscreen" style="position:absolute; top:10px; right:10px; z-index:10000; background:#222; color:white; border:none; padding:6px 10px; cursor:pointer; font-size:16px;">✖</button>
+  <div class="fullscreen-title" id="fullscreen-title">
+    <span class="title-bell" style="display:inline-block; margin-right:8px; position:relative; z-index:10;">🔔</span>
+    <span class="title-ruler" style="display:inline-block; margin-left:20px; cursor:pointer; opacity:0.5; position:relative; z-index:10;">📏</span>
+    <span class="title-text">BTCUSDT - 30m</span>
+    <span class="title-fullscreen" style="float:right; position:relative; z-index:10;">⛶</span>
+  </div>
+  <div id="fullscreen-chart" style="width:100%;height:calc(100% - 60px);position:relative;"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
