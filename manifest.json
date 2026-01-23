@@ -1,0 +1,23 @@
+{
+  "name": "SRAZU - Crypto Price Action",
+  "short_name": "SRAZU",
+  "description": "Real-time multi-timeframe crypto charts",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#00ff85",
+  "icons": [
+    {
+      "src": "logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
