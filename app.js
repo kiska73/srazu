@@ -744,16 +744,8 @@ document.getElementById("open-in-exchange").onclick = () => {
         ? `https://www.bybit.com/trade/usdt/${currentSymbol}`
         : `https://www.binance.com/en/futures/${currentSymbol}`;
 
-    // Rileva se è mobile (Android o iOS)
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    if (isMobile) {
-        // Su mobile: prova ad aprire l'app (universal link), fallback al sito se non installata
-        window.location.href = tradeLink;
-    } else {
-        // Su PC/desktop: apre in nuova tab
-        window.open(tradeLink, '_blank');
-    }
+    // Miglioramento: sempre nuova tab → apre l'app se installata (mobile/PC)
+    window.open(tradeLink, '_blank');
 
     document.getElementById("alert-setup").style.display = "none";
 };
