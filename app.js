@@ -715,6 +715,7 @@ document.getElementById("set-local-alert").onclick = () => {
     alertPrices[currentSymbol] = price;
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
 
+    // Aggiungi automaticamente ai preferiti se non c'è già
     if (!favorites.includes(currentSymbol)) toggleFavorite(currentSymbol);
 
     alertTriggeredSymbols.delete(currentSymbol);
@@ -744,7 +745,6 @@ document.getElementById("open-in-exchange").onclick = () => {
         ? `https://www.bybit.com/trade/usdt/${currentSymbol}`
         : `https://www.binance.com/en/futures/${currentSymbol}`;
 
-    // Miglioramento: sempre nuova tab → apre l'app se installata (mobile/PC)
     window.open(tradeLink, '_blank');
 
     document.getElementById("alert-setup").style.display = "none";
