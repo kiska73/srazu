@@ -989,4 +989,26 @@ window.onload = async () => {
             applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
         }
     });
+
+    // Force resize su cambio orientazione (fix zoom/taglio su mobile landscape)
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        const totalSlots = visibleBarsCount + spaceBarsCount;
+        for (const id in charts) {
+          const el = document.getElementById(id);
+          if (charts[id] && el) {
+            charts[id].applyOptions({ width: el.clientWidth, height: el.clientHeight });
+            const newSpacing = el.clientWidth / totalSlots;
+            charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
+            applyVisibleRange(charts[id], candleSeries[id]);
+          }
+        }
+        if (fullscreenActive && fullscreenChart) {
+          fullscreenChart.chart.applyOptions({ width: window.innerWidth, height: window.innerHeight - 60 });
+          const newSpacing = window.innerWidth / totalSlots;
+          fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
+          applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
+        }
+      }, 500); // Delay aumentato per aspettare il cambio orientazione completo
+    });
 };
