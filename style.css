@@ -1,58 +1,288 @@
-/* Layout "come PC" quando schermo largo (PC o cellulare girato) */
-@media (min-width: 800px) {
-  body {
-    display: flex;
-    flex-direction: row;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background: #0f1117;
-  }
+body {
+  margin: 0;
+  padding: 0;
+  background: #0f1117;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
 
+#app {
+  display: flex;
+  flex-direction: column; /* Default: stacked per mobile portrait */
+  height: 100vh;
+}
+
+#charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Default 2 colonne, ma su portrait diventerà 1 */
+  grid-template-rows: auto;
+  gap: 2px;
+  background: #222;
+  flex: 1;
+  overflow: hidden;
+}
+
+.chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  background: #0f1117;
+}
+
+.chart-title, .fullscreen-title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: #161a25;
+  font-weight: bold;
+  font-size: 14px;
+  text-align: center;
+  border-bottom: 1px solid #222;
+  flex-shrink: 0;
+}
+
+.title-bell, .title-measure, .title-fullscreen {
+  position: absolute;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 10px;
+  background: rgba(34,34,34,0.7);
+  border-radius: 4px;
+}
+
+.title-bell { left: 8px; }
+.title-measure { 
+  left: 42px; 
+  opacity: 0.5; 
+  transition: opacity 0.2s; 
+}
+.title-measure.active { opacity: 1; }
+.title-fullscreen { right: 8px; }
+
+.title-text { flex: 1; }
+
+/* --- NUOVO POSIZIONAMENTO PER LA % --- */
+.title-pct {
+  position: absolute;
+  left: 82px;                /* subito a destra del metro */
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;            /* bianco di base */
+  opacity: 0.9;
+  transition: color 0.2s;
+}
+
+.fullscreen-title {
+  padding: 10px;
+  font-size: 18px;
+  background: #161a25;
+}
+
+.fullscreen-title .title-bell { left: 10px; }
+.fullscreen-title .title-measure { left: 48px; }
+.fullscreen-title .title-fullscreen { right: 10px; }
+.fullscreen-title .title-pct {
+  left: 92px;                /* adattato per il padding maggiore del fullscreen */
+}
+
+.chart-container {
+  flex: 1;
+  position: relative;
+}
+
+#pairs {
+  border-top: 1px solid #222; /* Default: bordo sopra per stacked */
+  display: flex;
+  flex-direction: column;
+  min-height: 300px; /* Altezza minima per portrait */
+}
+
+.pairs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #161a25;
+  font-weight: bold;
+  border-bottom: 1px solid #222;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #00ff85;
+  text-shadow: 0 0 10px #00ff85;
+  margin-right: 12px;
+}
+
+#exchange-select,
+#sort-select {
+  background: #1f2433;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+#settings-btn {
+  background: #2a3150;
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#pairs-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.pair {
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  align-items: center;
+}
+
+.pair:hover { background: #1f2433; }
+.pair.active { background: #2a3150; font-weight: bold; }
+
+.pair-symbol {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.star {
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.star.favorite {
+  color: #FFD700;
+}
+
+.green { color: #00ff85; }
+.red { color: #ff5252; }
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #aaa;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 100;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
+
+.modal-content {
+  background: #161a25;
+  padding: 20px;
+  width: 340px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid #222;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.close {
+  float: right;
+  font-size: 28px;
+  cursor: pointer;
+  color: #aaa;
+}
+
+.modal label {
+  display: block;
+  margin: 12px 0 6px;
+}
+
+.modal input[type=number], .modal input[type=text] {
+  width: 100%;
+  padding: 6px;
+  background: #1f2433;
+  border: none;
+  color: white;
+}
+
+.modal button {
+  margin-top: 20px;
+  padding: 10px 16px;
+  background: #2a3150;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#apply-settings {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  background: #2a3150;
+  font-size: 16px;
+}
+
+.chart-title.green { background: #004d26 !important; }
+.chart-title.red { background: #4d0000 !important; }
+.chart-title.neutral { background: #161a25 !important; }
+
+#toggle-ema.active, #toggle-bb.active {
+  background: #00ff85 !important;
+  color: black !important;
+}
+
+/* LAYOUT "COME PC" SU SCHERMI LARghi (PC e cellulare in landscape) */
+@media (min-width: 900px) {
   #app {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 280px; /* Grafici flessibili, lista fissa 280px come prima su PC */
+    height: 100vh;
   }
 
   #charts {
-    flex: 82%; /* Grafici occupano la maggior parte (grandi come su PC) */
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 colonne */
-    grid-template-rows: 1fr 1fr;    /* 2 righe – vedi tutti i 4 chart perfettamente */
-    gap: 10px;
-    padding: 10px;
+    grid-template-rows: 1fr 1fr; /* Forza 2 righe per 4 chart perfetti */
+    height: 100vh;
   }
 
   #pairs {
-    flex: 18%; /* Lista stretta come sidebar (non invade) */
-    min-width: 200px; /* Larghezza minima leggibile */
-    overflow-y: auto;
-    border-left: 1px solid #333;
-    padding: 10px;
-    font-size: 0.85em; /* Testo compatto ma leggibile */
-    background: #161a25;
-  }
-
-  .chart-wrapper, .chart-container {
-    width: 100%;
-    height: 100%;
-  }
-
-  .chart-title {
-    font-size: 1em;
-    padding: 8px;
-  }
-
-  .pair {
-    padding: 8px 4px;
+    border-left: 1px solid #222; /* Bordo laterale invece di sopra */
+    border-top: none;
   }
 }
 
-/* Per schermi molto larghi (PC full) – identico */
-@media (min-width: 1200px) {
-  #charts { flex: 85%; }
-  #pairs { flex: 15%; font-size: 0.9em; }
+/* Extra per portrait mobile (schermi stretti): chart uno per riga */
+@media (max-width: 899px) {
+  #charts {
+    grid-template-columns: 1fr; /* Un chart per riga */
+  }
 }
