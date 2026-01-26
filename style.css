@@ -10,18 +10,16 @@ body {
 
 #app {
   display: flex;
-  flex-direction: column; /* Default: stacked per mobile portrait */
+  flex-direction: column; /* Default mobile portrait: stacked */
   height: 100vh;
 }
 
 #charts {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Default 2 colonne, ma su portrait diventerà 1 */
-  grid-template-rows: auto;
+  grid-template-columns: 1fr; /* Default mobile: un chart per riga */
   gap: 2px;
   background: #222;
   flex: 1;
-  overflow: hidden;
 }
 
 .chart-wrapper {
@@ -67,10 +65,10 @@ body {
 /* --- NUOVO POSIZIONAMENTO PER LA % --- */
 .title-pct {
   position: absolute;
-  left: 82px;                /* subito a destra del metro */
+  left: 82px;
   font-size: 14px;
   font-weight: bold;
-  color: #ffffff;            /* bianco di base */
+  color: #ffffff;
   opacity: 0.9;
   transition: color 0.2s;
 }
@@ -85,7 +83,7 @@ body {
 .fullscreen-title .title-measure { left: 48px; }
 .fullscreen-title .title-fullscreen { right: 10px; }
 .fullscreen-title .title-pct {
-  left: 92px;                /* adattato per il padding maggiore del fullscreen */
+  left: 92px;
 }
 
 .chart-container {
@@ -94,10 +92,10 @@ body {
 }
 
 #pairs {
-  border-top: 1px solid #222; /* Default: bordo sopra per stacked */
+  border-top: 1px solid #222;
   display: flex;
   flex-direction: column;
-  min-height: 300px; /* Altezza minima per portrait */
+  min-height: 300px;
 }
 
 .pairs-header {
@@ -261,28 +259,24 @@ body {
   color: black !important;
 }
 
-/* LAYOUT "COME PC" SU SCHERMI LARghi (PC e cellulare in landscape) */
-@media (min-width: 900px) {
+/* LAYOUT IDENTICO AL PC SU SCHERMI LARghi (PC e cellulare landscape) */
+@media (min-width: 700px) {
   #app {
     display: grid;
-    grid-template-columns: 1fr 280px; /* Grafici flessibili, lista fissa 280px come prima su PC */
+    grid-template-columns: 1fr 280px; /* Lista fissa 280px come su PC */
     height: 100vh;
   }
 
   #charts {
-    grid-template-rows: 1fr 1fr; /* Forza 2 righe per 4 chart perfetti */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr; /* 4 chart perfetti */
     height: 100vh;
+    gap: 2px;
   }
 
   #pairs {
-    border-left: 1px solid #222; /* Bordo laterale invece di sopra */
+    border-left: 1px solid #222;
     border-top: none;
-  }
-}
-
-/* Extra per portrait mobile (schermi stretti): chart uno per riga */
-@media (max-width: 899px) {
-  #charts {
-    grid-template-columns: 1fr; /* Un chart per riga */
   }
 }
