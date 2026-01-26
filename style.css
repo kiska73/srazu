@@ -8,15 +8,16 @@ body {
   overflow: hidden;
 }
 
+/* Default mobile portrait: stacked */
 #app {
   display: flex;
-  flex-direction: column; /* Default mobile portrait: stacked */
+  flex-direction: column;
   height: 100vh;
 }
 
 #charts {
   display: grid;
-  grid-template-columns: 1fr; /* Default mobile: un chart per riga */
+  grid-template-columns: 1fr; /* Un chart per riga su portrait */
   gap: 2px;
   background: #222;
   flex: 1;
@@ -26,6 +27,7 @@ body {
   display: flex;
   flex-direction: column;
   background: #0f1117;
+  height: 100%;
 }
 
 .chart-title, .fullscreen-title {
@@ -95,7 +97,6 @@ body {
   border-top: 1px solid #222;
   display: flex;
   flex-direction: column;
-  min-height: 300px;
 }
 
 .pairs-header {
@@ -259,24 +260,51 @@ body {
   color: black !important;
 }
 
-/* LAYOUT IDENTICO AL PC SU SCHERMI LARghi (PC e cellulare landscape) */
-@media (min-width: 700px) {
+/* LAYOUT IDENTICO AL PC SU LANDSCAPE (cellulare girato o PC) */
+@media (orientation: landscape) {
   #app {
     display: grid;
-    grid-template-columns: 1fr 280px; /* Lista fissa 280px come su PC */
+    grid-template-columns: 1fr 280px; /* Lista fissa 280px */
     height: 100vh;
   }
 
   #charts {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr; /* 4 chart perfetti */
-    height: 100vh;
-    gap: 2px;
+    grid-template-rows: repeat(2, 1fr); /* Forza esattamente 2 righe uguali – tutti 4 grafici visibili */
+    gap: 4px; /* Gap piccolo per massimizzare spazio */
+    padding: 4px;
+    height: 100%;
+  }
+
+  .chart-wrapper {
+    height: 100%;
   }
 
   #pairs {
     border-left: 1px solid #222;
     border-top: none;
+  }
+}
+
+/* Ottimizzazioni per cellulari piccoli in landscape (per far entrare tutto) */
+@media (orientation: landscape) and (max-height: 600px) {
+  .chart-title {
+    padding: 6px;
+    font-size: 12px;
+  }
+
+  #charts {
+    gap: 2px;
+    padding: 2px;
+  }
+
+  #pairs {
+    font-size: 0.8em;
+  }
+
+  .pairs-header {
+    padding: 8px;
+    font-size: 0.9em;
   }
 }
