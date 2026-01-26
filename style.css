@@ -1,5 +1,5 @@
-/* Layout IDENTICO al PC anche su cellulare in landscape */
-@media (orientation: landscape) {
+/* Layout "come PC" quando schermo largo (PC o cellulare girato) */
+@media (min-width: 800px) {
   body {
     display: flex;
     flex-direction: row;
@@ -7,7 +7,7 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background: #0f1117; /* Sfondo uniforme */
+    background: #0f1117;
   }
 
   #app {
@@ -18,71 +18,41 @@
   }
 
   #charts {
-    flex: 85%; /* Grafici occupano quasi tutto (come su PC) */
+    flex: 82%; /* Grafici occupano la maggior parte (grandi come su PC) */
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Sempre 2 colonne */
-    grid-template-rows: 1fr 1fr;    /* Sempre 2 righe – vedi tutti i 4 chart senza scroll */
-    gap: 8px; /* Spazio tra chart come su PC */
-    padding: 8px;
+    grid-template-columns: 1fr 1fr; /* 2 colonne */
+    grid-template-rows: 1fr 1fr;    /* 2 righe – vedi tutti i 4 chart perfettamente */
+    gap: 10px;
+    padding: 10px;
   }
 
   #pairs {
-    flex: 15%; /* Lista stretta come sidebar (non "grandissima") */
-    min-width: 180px; /* Larghezza minima per leggibilità */
-    overflow-y: auto; /* Scroll verticale se serve */
+    flex: 18%; /* Lista stretta come sidebar (non invade) */
+    min-width: 200px; /* Larghezza minima leggibile */
+    overflow-y: auto;
     border-left: 1px solid #333;
-    padding: 8px;
-    font-size: 0.75em; /* Testo piccolo per far entrare più coppie (come su PC ma adattato) */
+    padding: 10px;
+    font-size: 0.85em; /* Testo compatto ma leggibile */
     background: #161a25;
   }
 
-  .chart-wrapper {
-    width: 100%;
-    height: 100%;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .chart-container {
+  .chart-wrapper, .chart-container {
     width: 100%;
     height: 100%;
   }
 
   .chart-title {
-    font-size: 0.9em; /* Titoli chart come su PC */
-    padding: 6px;
+    font-size: 1em;
+    padding: 8px;
   }
 
-  /* Riduci header lista per risparmiare spazio */
-  .pairs-header {
-    font-size: 0.8em;
-    padding: 4px;
-  }
-
-  /* Coppie nella lista più compatte */
   .pair {
-    padding: 6px 4px;
-    font-size: 0.9em;
-  }
-
-  /* Nascondi elementi meno importanti su mobile se serve spazio */
-  .title-ruler, .title-fullscreen {
-    opacity: 0.8;
+    padding: 8px 4px;
   }
 }
 
-/* Extra per telefoni piccoli in landscape (schermo basso/alto) */
-@media (orientation: landscape) and (max-height: 500px) {
-  #charts {
-    gap: 4px;
-    padding: 4px;
-  }
-  #pairs {
-    font-size: 0.7em;
-    min-width: 150px;
-  }
-  .chart-title {
-    font-size: 0.8em;
-    padding: 4px;
-  }
+/* Per schermi molto larghi (PC full) – identico */
+@media (min-width: 1200px) {
+  #charts { flex: 85%; }
+  #pairs { flex: 15%; font-size: 0.9em; }
 }
