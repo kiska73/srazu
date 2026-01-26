@@ -1009,6 +1009,6 @@ window.onload = async () => {
           fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
           applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
         }
-      }, 500); // Delay aumentato per aspettare il cambio orientazione completo
+      }, 500); // Delay per aspettare il cambio orientazione completo
     });
 };
