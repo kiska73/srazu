@@ -1,24 +1,26 @@
-body {
+html, body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100svh;
   background: #0f1117;
   color: #ffffff;
   font-family: Arial, sans-serif;
-  height: 100vh;
   overflow: hidden;
   box-sizing: border-box;
 }
 
-/* Default: mobile portrait (stacked) */
 #app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  min-height: 100svh;
 }
 
 #charts {
   display: grid;
-  grid-template-columns: 1fr; /* Un chart per riga su portrait */
+  grid-template-columns: 1fr;
   gap: 2px;
   background: #222;
   flex: 1;
@@ -30,7 +32,7 @@ body {
   flex-direction: column;
   background: #0f1117;
   height: 100%;
-  min-height: 0; /* Permette flessibilità */
+  min-height: 0;
 }
 
 .chart-title, .fullscreen-title {
@@ -94,14 +96,13 @@ body {
 .chart-container {
   flex: 1;
   position: relative;
-  min-height: 0; /* Importante per Lightweight Charts */
+  min-height: 0;
 }
 
 #pairs {
   border-top: 1px solid #222;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
 }
 
 .pairs-header {
@@ -266,29 +267,25 @@ body {
   color: black !important;
 }
 
-/* LAYOUT IDENTICO AL PC IN LANDSCAPE (cellulare girato o PC) */
-@media (orientation: landscape) {
+/* LAYOUT IDENTICO AL PC IN LANDSCAPE */
+@media (orientation: landscape) and (min-width: 700px) {
   #app {
     display: grid;
-    grid-template-columns: 1fr 280px; /* Lista fissa 280px come su PC */
-    height: 100vh;
+    grid-template-columns: 1fr 280px;
+    height: 100%;
+    min-height: 100svh;
   }
 
   #charts {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr; /* Due righe uguali – tutti 4 grafici riempiono lo spazio */
+    grid-template-rows: 1fr 1fr;
     gap: 4px;
     padding: 4px;
     height: 100%;
   }
 
   .chart-wrapper {
-    height: 100%;
-    min-height: 0;
-  }
-
-  .chart-container {
     height: 100%;
   }
 
@@ -298,39 +295,25 @@ body {
   }
 }
 
-/* FIX DEFINITIVO PER LANDSCAPE SU CELLULARE (riduce titoli per far entrare TUTTO) */
+/* Riduci titoli su landscape basso */
 @media (orientation: landscape) and (max-height: 700px) {
   .chart-title {
     padding: 4px 6px;
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .title-bell, .title-fullscreen, .title-measure {
-    font-size: 14px;
+    font-size: 16px;
     padding: 2px 4px;
   }
 
   .title-pct {
-    font-size: 11px;
-    left: 60px;
+    font-size: 12px;
+    left: 70px;
   }
 
   #charts {
-    gap: 1px;
-    padding: 1px;
-  }
-
-  #pairs {
-    font-size: 0.75em;
-  }
-
-  .pairs-header {
-    padding: 4px;
-    font-size: 0.8em;
-  }
-
-  .pair {
-    padding: 4px 6px;
-    font-size: 0.85em;
+    gap: 2px;
+    padding: 2px;
   }
 }
