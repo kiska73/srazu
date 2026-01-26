@@ -262,7 +262,7 @@ function updateRulerLineOnSeries(series, key) {
     const line = series.createPriceLine({
         price: rulerPrice,
         color: "#00FF00",
-        lineWidth: 2,
+        lineWidth: 2;
         lineStyle: LightweightCharts.LineStyle.Dashed,
         axisLabelVisible: true,
         axisLabelColor: "#00FF00",
@@ -1011,4 +1011,14 @@ window.onload = async () => {
         }
       }, 500); // Delay per aspettare il cambio orientazione completo
     });
+
+    // FIX viewport height bug su Android PWA (dal collega)
+    function fixViewportHeight() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+
+    fixViewportHeight();
+    window.addEventListener('resize', fixViewportHeight);
+    window.addEventListener('orientationchange', fixViewportHeight);
 };
