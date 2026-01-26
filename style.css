@@ -9,12 +9,13 @@ html, body {
   font-family: Arial, sans-serif;
   overflow: hidden;
   box-sizing: border-box;
+  position: fixed;
 }
 
 #app {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(var(--vh, 1vh) * 100);
   min-height: 100svh;
 }
 
@@ -272,7 +273,7 @@ html, body {
   #app {
     display: grid;
     grid-template-columns: 1fr 280px;
-    height: 100%;
+    height: calc(var(--vh, 1vh) * 100);
     min-height: 100svh;
   }
 
