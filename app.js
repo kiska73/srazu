@@ -1,16 +1,3 @@
-// Registrazione del Service Worker per PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('SW registered: ', registration);
-      })
-      .catch(registrationError => {
-        console.log('SW registration failed: ', registrationError);
-      });
-  });
-}
-
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
 let charts = {};
@@ -262,7 +249,7 @@ function updateRulerLineOnSeries(series, key) {
     const line = series.createPriceLine({
         price: rulerPrice,
         color: "#00FF00",
-        lineWidth: 2;
+        lineWidth: 2,
         lineStyle: LightweightCharts.LineStyle.Dashed,
         axisLabelVisible: true,
         axisLabelColor: "#00FF00",
@@ -989,36 +976,4 @@ window.onload = async () => {
             applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
         }
     });
-
-    // Force resize su cambio orientazione (fix zoom/taglio su mobile landscape)
-    window.addEventListener('orientationchange', () => {
-      setTimeout(() => {
-        const totalSlots = visibleBarsCount + spaceBarsCount;
-        for (const id in charts) {
-          const el = document.getElementById(id);
-          if (charts[id] && el) {
-            charts[id].applyOptions({ width: el.clientWidth, height: el.clientHeight });
-            const newSpacing = el.clientWidth / totalSlots;
-            charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
-            applyVisibleRange(charts[id], candleSeries[id]);
-          }
-        }
-        if (fullscreenActive && fullscreenChart) {
-          fullscreenChart.chart.applyOptions({ width: window.innerWidth, height: window.innerHeight - 60 });
-          const newSpacing = window.innerWidth / totalSlots;
-          fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
-          applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
-        }
-      }, 500); // Delay per aspettare il cambio orientazione completo
-    });
-
-    // FIX viewport height bug su Android PWA (dal collega)
-    function fixViewportHeight() {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-    }
-
-    fixViewportHeight();
-    window.addEventListener('resize', fixViewportHeight);
-    window.addEventListener('orientationchange', fixViewportHeight);
 };
