@@ -1,39 +1,32 @@
-html, body {
+body {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
-  min-height: 100svh;
   background: #0f1117;
   color: #ffffff;
   font-family: Arial, sans-serif;
+  height: 100vh;
   overflow: hidden;
-  box-sizing: border-box;
-  position: fixed;
 }
 
 #app {
-  display: flex;
-  flex-direction: column;
-  height: calc(var(--vh, 1vh) * 100);
-  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  height: 100vh;
 }
 
 #charts {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 100vh;
   gap: 2px;
   background: #222;
-  flex: 1;
-  overflow: hidden;
 }
 
 .chart-wrapper {
   display: flex;
   flex-direction: column;
   background: #0f1117;
-  height: 100%;
-  min-height: 0;
 }
 
 .chart-title, .fullscreen-title {
@@ -73,10 +66,10 @@ html, body {
 /* --- NUOVO POSIZIONAMENTO PER LA % --- */
 .title-pct {
   position: absolute;
-  left: 82px;
+  left: 82px;                /* subito a destra del metro */
   font-size: 14px;
   font-weight: bold;
-  color: #ffffff;
+  color: #ffffff;            /* bianco di base */
   opacity: 0.9;
   transition: color 0.2s;
 }
@@ -91,19 +84,19 @@ html, body {
 .fullscreen-title .title-measure { left: 48px; }
 .fullscreen-title .title-fullscreen { right: 10px; }
 .fullscreen-title .title-pct {
-  left: 92px;
+  left: 92px;                /* adattato per il padding maggiore del fullscreen */
 }
 
 .chart-container {
   flex: 1;
   position: relative;
-  min-height: 0;
 }
 
 #pairs {
-  border-top: 1px solid #222;
+  border-left: 1px solid #222;
   display: flex;
   flex-direction: column;
+  height: 100vh;
 }
 
 .pairs-header {
@@ -229,13 +222,12 @@ html, body {
   margin: 12px 0 6px;
 }
 
-.modal input[type=number], .modal input[type=text], .modal input[type=password] {
+.modal input[type=number], .modal input[type=text] {
   width: 100%;
   padding: 6px;
   background: #1f2433;
   border: none;
   color: white;
-  border-radius: 4px;
 }
 
 .modal button {
@@ -266,55 +258,4 @@ html, body {
 #toggle-ema.active, #toggle-bb.active {
   background: #00ff85 !important;
   color: black !important;
-}
-
-/* LAYOUT IDENTICO AL PC IN LANDSCAPE */
-@media (orientation: landscape) and (min-width: 700px) {
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 280px;
-    height: calc(var(--vh, 1vh) * 100);
-    min-height: 100svh;
-  }
-
-  #charts {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 4px;
-    padding: 4px;
-    height: 100%;
-  }
-
-  .chart-wrapper {
-    height: 100%;
-  }
-
-  #pairs {
-    border-left: 1px solid #222;
-    border-top: none;
-  }
-}
-
-/* Riduci titoli su landscape basso */
-@media (orientation: landscape) and (max-height: 700px) {
-  .chart-title {
-    padding: 4px 6px;
-    font-size: 11px;
-  }
-
-  .title-bell, .title-fullscreen, .title-measure {
-    font-size: 16px;
-    padding: 2px 4px;
-  }
-
-  .title-pct {
-    font-size: 12px;
-    left: 70px;
-  }
-
-  #charts {
-    gap: 2px;
-    padding: 2px;
-  }
 }
