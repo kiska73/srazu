@@ -6,9 +6,10 @@ body {
   font-family: Arial, sans-serif;
   height: 100vh;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
-/* Default mobile portrait: stacked */
+/* Default: mobile portrait (stacked) */
 #app {
   display: flex;
   flex-direction: column;
@@ -21,6 +22,7 @@ body {
   gap: 2px;
   background: #222;
   flex: 1;
+  overflow: hidden;
 }
 
 .chart-wrapper {
@@ -28,6 +30,7 @@ body {
   flex-direction: column;
   background: #0f1117;
   height: 100%;
+  min-height: 0; /* Permette flessibilità */
 }
 
 .chart-title, .fullscreen-title {
@@ -91,12 +94,14 @@ body {
 .chart-container {
   flex: 1;
   position: relative;
+  min-height: 0; /* Importante per Lightweight Charts */
 }
 
 #pairs {
   border-top: 1px solid #222;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 .pairs-header {
@@ -222,12 +227,13 @@ body {
   margin: 12px 0 6px;
 }
 
-.modal input[type=number], .modal input[type=text] {
+.modal input[type=number], .modal input[type=text], .modal input[type=password] {
   width: 100%;
   padding: 6px;
   background: #1f2433;
   border: none;
   color: white;
+  border-radius: 4px;
 }
 
 .modal button {
@@ -260,24 +266,29 @@ body {
   color: black !important;
 }
 
-/* LAYOUT IDENTICO AL PC SU LANDSCAPE (cellulare girato o PC) */
+/* LAYOUT IDENTICO AL PC IN LANDSCAPE (cellulare girato o PC) */
 @media (orientation: landscape) {
   #app {
     display: grid;
-    grid-template-columns: 1fr 280px; /* Lista fissa 280px */
+    grid-template-columns: 1fr 280px; /* Lista fissa 280px come su PC */
     height: 100vh;
   }
 
   #charts {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: repeat(2, 1fr); /* Forza esattamente 2 righe uguali – tutti 4 grafici visibili */
-    gap: 4px; /* Gap piccolo per massimizzare spazio */
+    grid-template-rows: 1fr 1fr; /* Due righe uguali – tutti 4 grafici riempiono lo spazio */
+    gap: 4px;
     padding: 4px;
     height: 100%;
   }
 
   .chart-wrapper {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .chart-container {
     height: 100%;
   }
 
@@ -287,24 +298,39 @@ body {
   }
 }
 
-/* Ottimizzazioni per cellulari piccoli in landscape (per far entrare tutto) */
-@media (orientation: landscape) and (max-height: 600px) {
+/* FIX DEFINITIVO PER LANDSCAPE SU CELLULARE (riduce titoli per far entrare TUTTO) */
+@media (orientation: landscape) and (max-height: 700px) {
   .chart-title {
-    padding: 6px;
-    font-size: 12px;
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+
+  .title-bell, .title-fullscreen, .title-measure {
+    font-size: 14px;
+    padding: 2px 4px;
+  }
+
+  .title-pct {
+    font-size: 11px;
+    left: 60px;
   }
 
   #charts {
-    gap: 2px;
-    padding: 2px;
+    gap: 1px;
+    padding: 1px;
   }
 
   #pairs {
-    font-size: 0.8em;
+    font-size: 0.75em;
   }
 
   .pairs-header {
-    padding: 8px;
-    font-size: 0.9em;
+    padding: 4px;
+    font-size: 0.8em;
+  }
+
+  .pair {
+    padding: 4px 6px;
+    font-size: 0.85em;
   }
 }
