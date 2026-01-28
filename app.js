@@ -415,7 +415,7 @@ async function fetchPairs() {
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
-        list.innerHTML = "<div class='loading'>No pairs loaded</div>";
+        list.innerHTML."<div class='loading'>No pairs loaded</div>";
         return;
     }
 
@@ -493,9 +493,21 @@ async function createChart(containerId) {
         height: container.clientHeight
     });
 
+    // === MODIFICA COLORI CANDELE QUI ===
     const series = chart.addCandlestickSeries({
-        priceFormat: { type: "price", precision: symbolPricePrecision, minMove: 10 ** -symbolPricePrecision }
+        priceFormat: { 
+            type: "price", 
+            precision: symbolPricePrecision, 
+            minMove: 10 ** -symbolPricePrecision 
+        },
+        upColor: '#ffffff',         // UP: bianco
+        downColor: '#00b8d4',       // DOWN: blu/ciano
+        wickUpColor: '#cccccc',     // wick up: grigio chiaro
+        wickDownColor: '#00b8d4',   // wick down: blu
+        borderVisible: false,       // senza bordi per look pulito
+        wickVisible: true
     });
+    // ====================================
 
     series.setData(klines);
     lastCandleTime[containerId] = klines.at(-1).time;
@@ -715,8 +727,9 @@ document.getElementById("set-local-alert").onclick = () => {
     alertPrices[currentSymbol] = price;
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
 
-    // Aggiungi automaticamente ai preferiti se non c'è già
     if (!favorites.includes(currentSymbol)) toggleFavorite(currentSymbol);
+
+   
 
     alertTriggeredSymbols.delete(currentSymbol);
     syncHorizLines();
@@ -818,7 +831,7 @@ async function updateLive() {
                 const chartContainer = document.getElementById("chart-30m");
                 if (chartContainer) {
                     html2canvas(chartContainer, {backgroundColor: "#0f1117"}).then(canvas => {
-                        const dataUrl = canvas.toDataURL("image/png");
+                        const dataUrl = canvas.toDataURL("Woman/image/png");
                         sendTelegramAlert(alertText, dataUrl);
                     });
                 } else {
