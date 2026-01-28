@@ -499,9 +499,9 @@ async function createChart(containerId) {
             minMove: 10 ** -symbolPricePrecision 
         },
         upColor: '#ffffff',         // UP: bianco
-        downColor: '#00b8d4',       // DOWN: blu/ciano
+        downColor: '#0051D4',       // DOWN: blu/ciano
         wickUpColor: '#cccccc',     // wick up: grigio chiaro
-        wickDownColor: '#00b8d4',   // wick down: blu
+        wickDownColor: '#0051D4',   // wick down: blu
         borderVisible: false,
         wickVisible: true
     });
