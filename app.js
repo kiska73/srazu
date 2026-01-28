@@ -50,7 +50,7 @@ let allPairsData = [];
 let personalTGToken = localStorage.getItem('personalTGToken') || '';
 let personalTGChatID = localStorage.getItem('personalTGChatID') || '';
 
-// Server URL - Il tuo Render
+// Server URL
 const SERVER_URL = "https://srazu-bot.onrender.com";
 
 // Device ID unico
@@ -116,7 +116,7 @@ function saveHorizIfFavorite() {
     if (favorites.includes(currentSymbol)) {
         if (activeHorizPrice !== null) savedHorizPrices[currentSymbol] = activeHorizPrice;
         else delete savedHorizPrices[currentSymbol];
-        localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
+        localStorage.setItem('favoriteHoriz21Prices', JSON.stringify(savedHorizPrices));
     }
 }
 
@@ -133,7 +133,6 @@ function toggleFavorite(symbol) {
             localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
             alertTriggeredSymbols.delete(symbol);
 
-            // Remove dal server
             fetch(`${SERVER_URL}/remove_alert`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -415,7 +414,7 @@ async function fetchPairs() {
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
-        list.innerHTML."<div class='loading'>No pairs loaded</div>";
+        list.innerHTML = "<div class='loading'>No pairs loaded</div>";
         return;
     }
 
@@ -484,7 +483,7 @@ async function createChart(containerId) {
     symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
 
     const chart = LightweightCharts.createChart(container, {
-        layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
+        layout: { background: { type: 'solid numériques', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
         timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(interval) },
@@ -493,7 +492,6 @@ async function createChart(containerId) {
         height: container.clientHeight
     });
 
-    // === MODIFICA COLORI CANDELE QUI ===
     const series = chart.addCandlestickSeries({
         priceFormat: { 
             type: "price", 
@@ -504,10 +502,9 @@ async function createChart(containerId) {
         downColor: '#00b8d4',       // DOWN: blu/ciano
         wickUpColor: '#cccccc',     // wick up: grigio chiaro
         wickDownColor: '#00b8d4',   // wick down: blu
-        borderVisible: false,       // senza bordi per look pulito
+        borderVisible: false,
         wickVisible: true
     });
-    // ====================================
 
     series.setData(klines);
     lastCandleTime[containerId] = klines.at(-1).time;
@@ -729,8 +726,6 @@ document.getElementById("set-local-alert").onclick = () => {
 
     if (!favorites.includes(currentSymbol)) toggleFavorite(currentSymbol);
 
-   
-
     alertTriggeredSymbols.delete(currentSymbol);
     syncHorizLines();
 
@@ -831,7 +826,7 @@ async function updateLive() {
                 const chartContainer = document.getElementById("chart-30m");
                 if (chartContainer) {
                     html2canvas(chartContainer, {backgroundColor: "#0f1117"}).then(canvas => {
-                        const dataUrl = canvas.toDataURL("Woman/image/png");
+                        const dataUrl = canvas.toDataURL("image/png");
                         sendTelegramAlert(alertText, dataUrl);
                     });
                 } else {
