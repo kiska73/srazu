@@ -63,7 +63,7 @@ let deviceId = localStorage.getItem('deviceId') || (function() {
 const visibleBarsCount = 38;
 const spaceBarsCount = 1;
 
-const EMA_COLORS = ["#FFD700", "#FF9800", "#2196F3", "#E040FB"];
+const EMA_COLORS = ["#FFD700", "#FF9800", "#00b8d4", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
