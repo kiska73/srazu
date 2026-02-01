@@ -317,3 +317,63 @@ body {
   .pair { font-size: 13px; padding: 10px 12px; }
   .pairs-header { padding: 10px; font-size: 14px; flex-wrap: wrap; }
 }
+/* Messaggio per portrait */
+#portrait-message {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 17, 23, 0.95);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: white;
+  font-size: 20px;
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+#portrait-message span {
+  font-size: 60px;
+  margin-bottom: 20px;
+}
+
+/* Landscape: layout come desktop (tutto visibile) */
+@media (orientation: landscape) {
+  #app {
+    grid-template-columns: 1fr 280px !important; /* pairs fissa a destra */
+  }
+
+  #pairs {
+    position: static !important;
+    right: auto !important;
+    width: auto !important;
+    height: 100vh !important;
+    transition: none !important;
+    box-shadow: none !important;
+  }
+
+  #pairs.open { right: auto; }
+
+  #mobile-pairs-toggle,
+  #mobile-pairs-close,
+  #portrait-message {
+    display: none !important;
+  }
+}
+
+/* Portrait: drawer + messaggio gira schermo */
+@media (orientation: portrait) {
+  #portrait-message {
+    display: flex;
+  }
+
+  /* Nascondi overflow per evitare tagli */
+  body {
+    overflow: hidden;
+  }
+}
