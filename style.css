@@ -259,3 +259,61 @@ body {
   background: #00ff85 !important;
   color: black !important;
 }
+
+/* ... TUTTO IL TUO CSS ORIGINALE ... */
+
+/* Mobile drawer per pairs */
+#mobile-pairs-toggle {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+  background: #2a3150;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  font-size: 20px;
+}
+
+#mobile-pairs-close {
+  display: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 32px;
+  cursor: pointer;
+  color: #aaa;
+  z-index: 10;
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  #app { grid-template-columns: 1fr 250px; }
+}
+
+@media (max-width: 768px) {
+  #mobile-pairs-toggle, #mobile-pairs-close { display: block; }
+
+  #app { grid-template-columns: 1fr; }
+
+  #pairs {
+    position: fixed;
+    top: 0;
+    right: -85%;
+    width: 85%;
+    max-width: 380px;
+    height: 100vh;
+    z-index: 999;
+    transition: right 0.3s ease;
+    background: #0f1117;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.7);
+  }
+
+  #pairs.open { right: 0; }
+
+  .chart-title { font-size: 12px; padding: 6px; }
+  .pair { font-size: 13px; padding: 10px 12px; }
+  .pairs-header { padding: 10px; font-size: 14px; flex-wrap: wrap; }
+}
