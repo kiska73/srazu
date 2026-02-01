@@ -1,11 +1,3 @@
-// Forza landscape all'avvio (funziona su PWA installata Android)
-window.addEventListener('load', () => {
-  if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock('landscape-primary').catch((err) => {
-      console.log('Lock landscape fallito:', err);
-    });
-  }
-});
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
 let charts = {};
@@ -737,7 +729,6 @@ document.getElementById("set-local-alert").onclick = () => {
     alertTriggeredSymbols.delete(currentSymbol);
     syncHorizLines();
 
-    // Invia al server per alert background
     fetch(`${SERVER_URL}/add_alert`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -953,22 +944,6 @@ document.getElementById('open-botfather-btn').onclick = () => {
     window.open('https://t.me/BotFather', '_blank');
 };
 
-// Mobile pairs drawer toggle
-const pairsPanel = document.getElementById('pairs');
-const togglePairsBtn = document.getElementById('mobile-pairs-toggle');
-const closePairsBtn = document.getElementById('mobile-pairs-close');
-
-if (togglePairsBtn) togglePairsBtn.onclick = () => pairsPanel.classList.add('open');
-if (closePairsBtn) closePairsBtn.onclick = () => pairsPanel.classList.remove('open');
-
-document.addEventListener('click', (e) => {
-  if (window.innerWidth <= 768 && pairsPanel.classList.contains('open')) {
-    if (!pairsPanel.contains(e.target) && e.target !== togglePairsBtn) {
-      pairsPanel.classList.remove('open');
-    }
-  }
-});
-
 window.onload = async () => {
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
@@ -1022,14 +997,25 @@ window.onload = async () => {
             applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
         }
     });
-};
-window.addEventListener('orientationchange', () => {
-  setTimeout(() => {
-    window.dispatchEvent(new Event('resize'));
-  }, 300);
-});
 
-// Mobile pairs drawer toggle (già presente)
+    // Forza landscape se possibile (sicuro, dentro onload)
+    if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+      if ('orientation' in screen && screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').then(() => {
+          console.log('Landscape locked!');
+        }).catch((err) => {
+          console.warn('Lock fallito:', err);
+        });
+      }
+    }
+
+    // Forza resize dopo eventuale lock
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 500);
+};
+
+// Mobile drawer toggle
 const pairsPanel = document.getElementById('pairs');
 const togglePairsBtn = document.getElementById('mobile-pairs-toggle');
 const closePairsBtn = document.getElementById('mobile-pairs-close');
@@ -1043,4 +1029,11 @@ document.addEventListener('click', (e) => {
       pairsPanel.classList.remove('open');
     }
   }
+});
+
+// Forza resize su cambio orientamento
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    window.dispatchEvent(new Event('resize'));
+  }, 300);
 });
