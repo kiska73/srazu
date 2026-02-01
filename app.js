@@ -116,7 +116,7 @@ function saveHorizIfFavorite() {
     if (favorites.includes(currentSymbol)) {
         if (activeHorizPrice !== null) savedHorizPrices[currentSymbol] = activeHorizPrice;
         else delete savedHorizPrices[currentSymbol];
-        localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
+        localStorage.setItem('favoriteHoriz21Prices', JSON.stringify(savedHorizPrices));
     }
 }
 
@@ -172,11 +172,11 @@ function updatePriceLineOnSeries(series, key) {
 
     const line = series.createPriceLine({
         price: activeHorizPrice,
-        color: "#FFFF00",
+        color: "##FFFF00",
         lineWidth: 1,
         lineStyle: LightweightCharts.LineStyle.Solid,
         axisLabelVisible: true,
-        axisLabelColor: "#FFFF00",
+        axisLabelColor: "##FFFF00",
         axisLabelBackgroundColor: "#161a25",
         title: "",
         draggable: true
@@ -483,7 +483,7 @@ async function createChart(containerId) {
     symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
 
     const chart = LightweightCharts.createChart(container, {
-        layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
+        layout: { background: { type: 'solid numériques', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
         timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(interval) },
@@ -498,10 +498,10 @@ async function createChart(containerId) {
             precision: symbolPricePrecision, 
             minMove: 10 ** -symbolPricePrecision 
         },
-        upColor: '#ffffff',
-        downColor: '#0051D4',
-        wickUpColor: '#cccccc',
-        wickDownColor: '#0051D4',
+        upColor: '#ffffff',         // UP: bianco
+        downColor: '#0051D4',       // DOWN: blu/ciano
+        wickUpColor: '#cccccc',     // wick up: grigio chiaro
+        wickDownColor: '#0051D4',   // wick down: blu
         borderVisible: false,
         wickVisible: true
     });
@@ -728,19 +728,6 @@ document.getElementById("set-local-alert").onclick = () => {
 
     alertTriggeredSymbols.delete(currentSymbol);
     syncHorizLines();
-
-    fetch(`${SERVER_URL}/add_alert`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            device_id: deviceId,
-            exchange: currentExchange,
-            symbol: currentSymbol,
-            price: price,
-            tg_token: personalTGToken,
-            tg_chatid: personalTGChatID
-        })
-    }).catch(e => console.error("Errore add_alert:", e));
 
     document.getElementById("alert-setup").style.display = "none";
 
@@ -997,43 +984,4 @@ window.onload = async () => {
             applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
         }
     });
-
-    // Forza landscape se possibile (sicuro, dentro onload)
-    if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
-      if ('orientation' in screen && screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock('landscape').then(() => {
-          console.log('Landscape locked!');
-        }).catch((err) => {
-          console.warn('Lock fallito:', err);
-        });
-      }
-    }
-
-    // Forza resize dopo eventuale lock
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-    }, 500);
 };
-
-// Mobile drawer toggle
-const pairsPanel = document.getElementById('pairs');
-const togglePairsBtn = document.getElementById('mobile-pairs-toggle');
-const closePairsBtn = document.getElementById('mobile-pairs-close');
-
-if (togglePairsBtn) togglePairsBtn.onclick = () => pairsPanel.classList.add('open');
-if (closePairsBtn) closePairsBtn.onclick = () => pairsPanel.classList.remove('open');
-
-document.addEventListener('click', (e) => {
-  if (window.innerWidth <= 768 && pairsPanel.classList.contains('open')) {
-    if (!pairsPanel.contains(e.target) && e.target !== togglePairsBtn) {
-      pairsPanel.classList.remove('open');
-    }
-  }
-});
-
-// Forza resize su cambio orientamento
-window.addEventListener('orientationchange', () => {
-  setTimeout(() => {
-    window.dispatchEvent(new Event('resize'));
-  }, 300);
-});
