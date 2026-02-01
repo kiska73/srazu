@@ -172,11 +172,11 @@ function updatePriceLineOnSeries(series, key) {
 
     const line = series.createPriceLine({
         price: activeHorizPrice,
-        color: "##FFFF00",
+        color: "#FFFF00",
         lineWidth: 1,
         lineStyle: LightweightCharts.LineStyle.Solid,
         axisLabelVisible: true,
-        axisLabelColor: "##FFFF00",
+        axisLabelColor: "#FFFF00",
         axisLabelBackgroundColor: "#161a25",
         title: "",
         draggable: true
