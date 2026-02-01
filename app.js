@@ -1015,3 +1015,24 @@ window.onload = async () => {
         }
     });
 };
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    window.dispatchEvent(new Event('resize'));
+  }, 300);
+});
+
+// Mobile pairs drawer toggle (già presente)
+const pairsPanel = document.getElementById('pairs');
+const togglePairsBtn = document.getElementById('mobile-pairs-toggle');
+const closePairsBtn = document.getElementById('mobile-pairs-close');
+
+if (togglePairsBtn) togglePairsBtn.onclick = () => pairsPanel.classList.add('open');
+if (closePairsBtn) closePairsBtn.onclick = () => pairsPanel.classList.remove('open');
+
+document.addEventListener('click', (e) => {
+  if (window.innerWidth <= 768 && pairsPanel.classList.contains('open')) {
+    if (!pairsPanel.contains(e.target) && e.target !== togglePairsBtn) {
+      pairsPanel.classList.remove('open');
+    }
+  }
+});
