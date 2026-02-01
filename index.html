@@ -2,10 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#00ff85">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>SRAZU Crypto Action Price</title>
 
-  <!-- FAVICON AGGIORNATE DAL GENERATORE -->
+  <!-- FAVICON -->
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -58,6 +61,7 @@
   </div>
 
   <div id="pairs">
+    <span id="mobile-pairs-close">×</span>
     <div class="pairs-header">
       <div class="header-left">
         <select id="exchange-select">
@@ -81,6 +85,8 @@
     </div>
   </div>
 </div>
+
+<div id="mobile-pairs-toggle">📋</div>
 
 <!-- Settings Modal -->
 <div id="settings-modal" class="modal">
@@ -227,7 +233,7 @@
 </div>
 
 <!-- Alert Setup Panel -->
-<div id="alert-setup" style="display:none; position:fixed; top:20px; left:20px; background:#161a25; padding:20px; border-radius:8px; border:1px solid #222; z-index:10000; box-shadow:0 4px 20px rgba(0,0,0,0.5); width:320px; color:white;">
+<div id="alert-setup" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); max-width:90%; width:320px; background:#161a25; padding:20px; border-radius:8px; border:1px solid #222; z-index:10000; box-shadow:0 4px 20px rgba(0,0,0,0.5); color:white;">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
     <h4 style="margin:0;">Alert for <span id="alert-symbol"></span></h4>
     <span id="close-alert-setup" style="cursor:pointer; font-size:28px; color:#aaa;">×</span>
