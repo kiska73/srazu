@@ -1,3 +1,11 @@
+// Forza landscape all'avvio (funziona su PWA installata Android)
+window.addEventListener('load', () => {
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape-primary').catch((err) => {
+      console.log('Lock landscape fallito:', err);
+    });
+  }
+});
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
 let charts = {};
