@@ -110,13 +110,14 @@ function syncHorizLines() {
         updateAlertLineOnSeries(fullscreenChart.series, "fullscreen");
         if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) updateRulerLineOnSeries(fullscreenChart.series, "fullscreen");
     }
+    updateRulerPercentage();   // <-- aggiunta per mostrare %
 }
 
 function saveHorizIfFavorite() {
     if (favorites.includes(currentSymbol)) {
         if (activeHorizPrice !== null) savedHorizPrices[currentSymbol] = activeHorizPrice;
         else delete savedHorizPrices[currentSymbol];
-        localStorage.setItem('favoriteHoriz21Prices', JSON.stringify(savedHorizPrices));
+        localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
     }
 }
 
@@ -231,6 +232,7 @@ function toggleRulerMode() {
                 delete rulerLines[k];
             }
         });
+        updateRulerPercentage();
     }
 }
 
@@ -257,6 +259,22 @@ function updateRulerLineOnSeries(series, key) {
         draggable: false
     });
     rulerLines[key] = line;
+}
+
+// NUOVA FUNZIONE: mostra % nel titolo
+function updateRulerPercentage() {
+    const pctElements = document.querySelectorAll('.title-pct');
+    const fsPct = document.querySelector('#fullscreen-title .title-pct');
+    if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) {
+        const diff = ((rulerPrice - activeHorizPrice) / activeHorizPrice * 100);
+        const sign = diff >= 0 ? '+' : '';
+        const text = `${sign}${diff.toFixed(2)}%`;
+        pctElements.forEach(el => el.textContent = text);
+        if (fsPct) fsPct.textContent = text;
+    } else {
+        pctElements.forEach(el => el.textContent = '');
+        if (fsPct) fsPct.textContent = '';
+    }
 }
 
 function createEMA(seriesArray, chart, klines, period, color) {
@@ -483,7 +501,7 @@ async function createChart(containerId) {
     symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
 
     const chart = LightweightCharts.createChart(container, {
-        layout: { background: { type: 'solid numériques', color: '#0f1117' }, textColor: '#d1d4dc' },
+        layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
         timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(interval) },
@@ -498,10 +516,10 @@ async function createChart(containerId) {
             precision: symbolPricePrecision, 
             minMove: 10 ** -symbolPricePrecision 
         },
-        upColor: '#ffffff',         // UP: bianco
-        downColor: '#0051D4',       // DOWN: blu/ciano
-        wickUpColor: '#cccccc',     // wick up: grigio chiaro
-        wickDownColor: '#0051D4',   // wick down: blu
+        upColor: '#ffffff',
+        downColor: '#0051D4',
+        wickUpColor: '#cccccc',
+        wickDownColor: '#0051D4',
         borderVisible: false,
         wickVisible: true
     });
@@ -568,7 +586,7 @@ async function loadAllCharts(symbol) {
     Object.keys(charts).forEach(id => {
         const el = document.getElementById(id);
         if (charts[id] && el) {
-            charts[id].applyOptions({ width: el.clientWidth, height: el.clientHeight });
+            charts[id].resize(el.clientWidth, el.clientHeight);
             const newSpacing = el.clientWidth / totalSlots;
             charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
             applyVisibleRange(charts[id], candleSeries[id]);
@@ -586,6 +604,7 @@ function openFullscreen(containerId, tfLabel) {
     const fsRuler = fsTitle.querySelector('.title-ruler');
     const fsText = fsTitle.querySelector('.title-text');
     const fsFs = fsTitle.querySelector('.title-fullscreen');
+    const fsPct = fsTitle.querySelector('.title-pct');
 
     fsBell.onclick = () => openAlertSetup();
     fsRuler.onclick = toggleRulerMode;
@@ -931,6 +950,23 @@ document.getElementById('open-botfather-btn').onclick = () => {
     window.open('https://t.me/BotFather', '_blank');
 };
 
+// Mobile drawer toggle
+document.getElementById('mobile-pairs-toggle').addEventListener('click', () => {
+    document.getElementById('pairs').classList.add('open');
+});
+document.getElementById('mobile-pairs-close').addEventListener('click', () => {
+    document.getElementById('pairs').classList.remove('open');
+});
+
+// Registrazione Service Worker (PWA)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('SW registered: ', reg))
+            .catch(err => console.log('SW registration failed: ', err));
+    });
+}
+
 window.onload = async () => {
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
@@ -971,14 +1007,14 @@ window.onload = async () => {
         for (const id in charts) {
             const el = document.getElementById(id);
             if (charts[id] && el) {
-                charts[id].applyOptions({ width: el.clientWidth, height: el.clientHeight });
+                charts[id].resize(el.clientWidth, el.clientHeight);
                 const newSpacing = el.clientWidth / totalSlots;
                 charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
                 applyVisibleRange(charts[id], candleSeries[id]);
             }
         }
         if (fullscreenActive && fullscreenChart) {
-            fullscreenChart.chart.applyOptions({ width: window.innerWidth, height: window.innerHeight - 60 });
+            fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
             const newSpacing = window.innerWidth / totalSlots;
             fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
             applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
