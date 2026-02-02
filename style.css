@@ -31,7 +31,7 @@ body {
 
 .chart-title, .fullscreen-title {
   position: relative;
-  padding: 8px 40px 8px 8px; /* padding destra per fullscreen, sinistra per icone */
+  padding: 8px 50px 8px 8px; /* padding destra per fullscreen, sinistra minima per icone */
   background: #161a25;
   font-weight: bold;
   font-size: 14px;
@@ -46,10 +46,11 @@ body {
   display: inline-block;
   width: 100%;
   text-align: center;
+  margin: 0;
 }
 
 .fullscreen-title {
-  padding: 12px 60px 12px 12px;
+  padding: 12px 70px 12px 12px;
   font-size: 18px;
   white-space: nowrap;
   overflow: hidden;
