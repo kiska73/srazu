@@ -38,13 +38,14 @@ body {
   text-align: center;
   border-bottom: 1px solid #222;
   flex-shrink: 0;
-  white-space: nowrap; /* Previene che il ruler vada sotto */
+  white-space: nowrap;
   overflow: hidden;
 }
 
 .title-text {
   flex: 1;
   text-align: center;
+  margin: 0 40px 0 0; /* spazio per fullscreen */
 }
 
 .fullscreen-title {
@@ -219,7 +220,6 @@ body {
   color: black !important;
 }
 
-/* Mobile drawer */
 #mobile-pairs-toggle {
   display: none;
   position: fixed;
