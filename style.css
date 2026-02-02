@@ -31,7 +31,10 @@ body {
 
 .chart-title, .fullscreen-title {
   position: relative;
-  padding: 12px 60px 12px 12px; /* Altezza aumentata per icone grandi, padding destra per fullscreen */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 50px 8px 8px; /* Altezza originale come prima, padding destra per fullscreen */
   background: #161a25;
   font-weight: bold;
   text-align: center;
@@ -39,21 +42,68 @@ body {
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
-  height: 60px; /* Altezza fissa per allineamento verticale perfetto */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+}
+
+.title-bell, .title-ruler {
+  font-size: 22px; /* Più grandi */
+  cursor: pointer;
+  position: relative;
+  z-index: 10;
+}
+
+.title-bell {
+  margin-right: 8px;
+}
+
+.title-ruler {
+  margin-left: 20px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.title-pct {
+  margin-left: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #00ff85;
 }
 
 .title-text {
+  font-size: 18px; /* Più grande */
+  font-weight: bold;
   flex: 1;
   text-align: center;
   margin: 0 20px;
 }
 
+.title-fullscreen {
+  font-size: 26px; /* Più grande */
+  cursor: pointer;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .fullscreen-title {
-  padding: 16px 80px 16px 16px;
-  height: 80px;
+  padding: 8px 60px 8px 8px; /* Altezza originale anche in fullscreen */
+}
+
+.fullscreen-title .title-bell, .fullscreen-title .title-ruler {
+  font-size: 26px;
+}
+
+.fullscreen-title .title-pct {
+  font-size: 18px;
+}
+
+.fullscreen-title .title-text {
+  font-size: 22px;
+}
+
+.fullscreen-title .title-fullscreen {
+  font-size: 30px;
+  right: 15px;
 }
 
 .chart-container {
@@ -61,6 +111,7 @@ body {
   position: relative;
 }
 
+/* Resto del CSS identico al tuo originale */
 #pairs {
   border-left: 1px solid #222;
   display: flex;
@@ -271,23 +322,7 @@ body {
 
   #pairs.open { right: 0; }
 
-  .chart-title { 
-    padding: 10px 50px 10px 10px; 
-    height: 50px;
-  }
-
-  .title-bell, .title-ruler, .title-fullscreen {
-    font-size: 20px !important;
-  }
-
-  .title-text {
-    font-size: 16px !important;
-  }
-
-  .title-pct {
-    font-size: 14px !important;
-  }
-
+  .chart-title { font-size: 12px; padding: 6px 40px 6px 6px; }
   .pair { font-size: 13px; padding: 10px 12px; }
   .pairs-header { padding: 10px; font-size: 14px; flex-wrap: wrap; }
 }
