@@ -31,29 +31,29 @@ body {
 
 .chart-title, .fullscreen-title {
   position: relative;
-  padding: 8px 50px 8px 8px; /* padding destra per fullscreen, sinistra minima per icone */
+  padding: 12px 60px 12px 12px; /* Altezza aumentata per icone grandi, padding destra per fullscreen */
   background: #161a25;
   font-weight: bold;
-  font-size: 14px;
   text-align: center;
   border-bottom: 1px solid #222;
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
+  height: 60px; /* Altezza fissa per allineamento verticale perfetto */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .title-text {
-  display: inline-block;
-  width: 100%;
+  flex: 1;
   text-align: center;
-  margin: 0;
+  margin: 0 20px;
 }
 
 .fullscreen-title {
-  padding: 12px 70px 12px 12px;
-  font-size: 18px;
-  white-space: nowrap;
-  overflow: hidden;
+  padding: 16px 80px 16px 16px;
+  height: 80px;
 }
 
 .chart-container {
@@ -271,7 +271,23 @@ body {
 
   #pairs.open { right: 0; }
 
-  .chart-title { font-size: 12px; padding: 6px 40px 6px 6px; }
+  .chart-title { 
+    padding: 10px 50px 10px 10px; 
+    height: 50px;
+  }
+
+  .title-bell, .title-ruler, .title-fullscreen {
+    font-size: 20px !important;
+  }
+
+  .title-text {
+    font-size: 16px !important;
+  }
+
+  .title-pct {
+    font-size: 14px !important;
+  }
+
   .pair { font-size: 13px; padding: 10px 12px; }
   .pairs-header { padding: 10px; font-size: 14px; flex-wrap: wrap; }
 }
