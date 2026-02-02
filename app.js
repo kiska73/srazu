@@ -134,7 +134,6 @@ function toggleFavorite(symbol) {
             localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
             alertTriggeredSymbols.delete(symbol);
 
-            // INVIO AL SERVER PER RIMUOVERE ALERT (con chat_id per identificare a chi era destinato)
             fetch(`${SERVER_URL}/remove_alert`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -142,7 +141,7 @@ function toggleFavorite(symbol) {
                     device_id: deviceId,
                     exchange: currentExchange,
                     symbol: symbol,
-                    chat_id: personalTGChatID || null   // indica a chi era destinato l'alert
+                    chat_id: personalTGChatID || null
                 })
             }).catch(e => console.error("Server remove error:", e));
 
@@ -236,6 +235,7 @@ function toggleRulerMode() {
         });
         updateRulerPercentage();
     }
+    syncHorizLines();
 }
 
 function updateRulerLineOnSeries(series, key) {
@@ -245,10 +245,6 @@ function updateRulerLineOnSeries(series, key) {
     }
     if (rulerPrice === null || activeHorizPrice === null) return;
 
-    const diff = ((rulerPrice - activeHorizPrice) / activeHorizPrice * 100);
-    const sign = diff >= 0 ? '+' : '';
-    const title = `${sign}${diff.toFixed(2)}%`;
-
     const line = series.createPriceLine({
         price: rulerPrice,
         color: "#00FF00",
@@ -257,7 +253,7 @@ function updateRulerLineOnSeries(series, key) {
         axisLabelVisible: true,
         axisLabelColor: "#00FF00",
         axisLabelBackgroundColor: "#161a25",
-        title: title,
+        title: "",  // Nessun titolo % sulla linea del grafico
         draggable: false
     });
     rulerLines[key] = line;
@@ -745,7 +741,6 @@ document.getElementById("set-local-alert").onclick = () => {
 
     if (!favorites.includes(currentSymbol)) toggleFavorite(currentSymbol);
 
-    // INVIO AL SERVER CON INFO SU A CHI MANDARE (chat_id personale, così il server sa a chi era destinato l'alert)
     fetch(`${SERVER_URL}/add_alert`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -754,7 +749,7 @@ document.getElementById("set-local-alert").onclick = () => {
             exchange: currentExchange,
             symbol: currentSymbol,
             price: price,
-            chat_id: personalTGChatID   // <-- A CHI MANDARE IL MESSAGGIO (il tuo chat_id personale)
+            chat_id: personalTGChatID
         })
     }).catch(e => console.error("Server add alert error:", e));
 
