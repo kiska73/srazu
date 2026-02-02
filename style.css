@@ -30,26 +30,22 @@ body {
 }
 
 .chart-title, .fullscreen-title {
-  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 8px;
+  justify-content: space-between;
+  padding: 8px 12px;
   background: #161a25;
   font-weight: bold;
   font-size: 14px;
-  text-align: center;
   border-bottom: 1px solid #222;
   flex-shrink: 0;
 }
 
 .left-icons {
-  position: absolute;
-  left: 10px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  z-index: 10;
+  gap: 18px; /* Spacing naturale e cliccabile */
+  flex-shrink: 0;
 }
 
 .title-bell,
@@ -71,29 +67,30 @@ body {
 }
 
 .title-fullscreen {
-  position: absolute;
-  right: 10px;
   cursor: pointer;
   font-size: 20px;
+  flex-shrink: 0;
 }
 
 .title-text {
   flex: 1;
+  text-align: center;
+  margin: 0 10px;
 }
 
+/* Fullscreen */
 .fullscreen-title {
-  padding: 12px;
+  padding: 12px 20px;
   font-size: 18px;
 }
 
 .fullscreen-title .left-icons {
-  left: 15px;
-  gap: 20px;
+  gap: 24px;
 }
 
 .fullscreen-title .title-bell,
 .fullscreen-title .title-ruler {
-  font-size: 24px;
+  font-size: 26px;
 }
 
 .fullscreen-title .title-pct {
@@ -101,8 +98,7 @@ body {
 }
 
 .fullscreen-title .title-fullscreen {
-  right: 15px;
-  font-size: 24px;
+  font-size: 26px;
 }
 
 .chart-container {
@@ -240,19 +236,10 @@ body {
   color: white;
 }
 
-.modal button {
-  margin-top: 20px;
-  padding: 10px 16px;
-  background: #2a3150;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-#apply-settings, #open-botfather-btn, #set-local-alert, #open-in-exchange {
+.modal button, #open-botfather-btn, #set-local-alert, #open-in-exchange {
   width: 100%;
   padding: 12px;
+  margin-top: 10px;
   background: #2a3150;
   color: white;
   border: none;
@@ -272,6 +259,11 @@ body {
 
 #open-in-exchange {
   background: #229ED9;
+}
+
+#apply-settings {
+  background: #00ff85;
+  color: black;
 }
 
 .chart-title.green { background: #004d26 !important; }
@@ -346,7 +338,28 @@ body {
 
   #pairs.open { right: 0; }
 
-  .chart-title { font-size: 12px; padding: 6px; }
+  .chart-title {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .left-icons {
+    gap: 14px;
+  }
+
+  .title-bell,
+  .title-ruler {
+    font-size: 18px;
+  }
+
+  .title-pct {
+    font-size: 12px;
+  }
+
+  .title-fullscreen {
+    font-size: 18px;
+  }
+
   .pair { font-size: 13px; padding: 10px 12px; }
   .pairs-header { padding: 10px; font-size: 14px; flex-wrap: wrap; }
 }
