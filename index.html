@@ -6,7 +6,6 @@
   <meta name="theme-color" content="#00ff85">
   <title>SRAZU - Crypto Price Action</title>
 
-  <!-- FAVICON E ICONE PWA -->
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -22,9 +21,11 @@
   <div id="charts">
     <div class="chart-wrapper">
       <div class="chart-title" id="title-5m">
-        <span class="title-bell">🔔</span>
-        <span class="title-ruler">📏</span>
-        <span class="title-pct"></span>
+        <div class="left-icons">
+          <span class="title-bell">🔔</span>
+          <span class="title-ruler">📏</span>
+          <span class="title-pct"></span>
+        </div>
         <span class="title-text">Loading...</span>
         <span class="title-fullscreen">⛶</span>
       </div>
@@ -32,9 +33,11 @@
     </div>
     <div class="chart-wrapper">
       <div class="chart-title" id="title-30m">
-        <span class="title-bell">🔔</span>
-        <span class="title-ruler">📏</span>
-        <span class="title-pct"></span>
+        <div class="left-icons">
+          <span class="title-bell">🔔</span>
+          <span class="title-ruler">📏</span>
+          <span class="title-pct"></span>
+        </div>
         <span class="title-text">Loading...</span>
         <span class="title-fullscreen">⛶</span>
       </div>
@@ -42,9 +45,11 @@
     </div>
     <div class="chart-wrapper">
       <div class="chart-title" id="title-4h">
-        <span class="title-bell">🔔</span>
-        <span class="title-ruler">📏</span>
-        <span class="title-pct"></span>
+        <div class="left-icons">
+          <span class="title-bell">🔔</span>
+          <span class="title-ruler">📏</span>
+          <span class="title-pct"></span>
+        </div>
         <span class="title-text">Loading...</span>
         <span class="title-fullscreen">⛶</span>
       </div>
@@ -52,9 +57,11 @@
     </div>
     <div class="chart-wrapper">
       <div class="chart-title" id="title-1d">
-        <span class="title-bell">🔔</span>
-        <span class="title-ruler">📏</span>
-        <span class="title-pct"></span>
+        <div class="left-icons">
+          <span class="title-bell">🔔</span>
+          <span class="title-ruler">📏</span>
+          <span class="title-pct"></span>
+        </div>
         <span class="title-text">Loading...</span>
         <span class="title-fullscreen">⛶</span>
       </div>
@@ -87,7 +94,6 @@
   </div>
 </div>
 
-<!-- Mobile toggle button -->
 <div id="mobile-pairs-toggle">📊</div>
 <div id="mobile-pairs-close">×</div>
 
@@ -98,8 +104,8 @@
     <h3>Settings</h3>
 
     <div style="display:flex; gap:10px; margin:15px 0; flex-wrap:wrap;">
-      <button id="toggle-ema" style="flex:1; padding:10px; background:#2a3150; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">EMA: On</button>
-      <button id="toggle-bb" style="flex:1; padding:10px; background:#2a3150; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Bollinger Bands: Off</button>
+      <button id="toggle-ema" class="active">EMA: On</button>
+      <button id="toggle-bb">Bollinger Bands: Off</button>
     </div>
 
     <div id="ema-periods-section">
@@ -174,9 +180,7 @@
     <p style="font-size:14px; color:#ccc;">Private alerts with screenshot (30m chart) and trade link. Configure your personal bot.</p>
 
     <div style="margin-left:20px; margin-top:10px;">
-      <button id="open-botfather-btn" style="width:100%; padding:12px; background:#229ED9; color:white; border:none; border-radius:4px; font-weight:bold; margin-bottom:10px;">
-        Open @BotFather to create your bot (30 seconds)
-      </button>
+      <button id="open-botfather-btn">Open @BotFather to create your bot (30 seconds)</button>
 
       <label>Bot Token:<br>
         <input type="password" id="personal-tg-token" placeholder="123456:ABC-...">
@@ -245,18 +249,20 @@
     <input type="number" step="any" id="alert-price-input" style="width:100%; padding:8px; background:#1f2433; border:none; color:white; border-radius:4px;">
   </label>
   <div style="display:flex; gap:8px; margin-top:20px;">
-    <button id="set-local-alert" style="flex:1; padding:10px; background:#00ff85; color:black; border:none; border-radius:4px; font-weight:bold;">Alert</button>
-    <button id="open-in-exchange" style="flex:1; padding:10px; background:#229ED9; color:white; border:none; border-radius:4px; font-weight:bold;">Open in Exchange</button>
+    <button id="set-local-alert">Alert</button>
+    <button id="open-in-exchange">Open in Exchange</button>
   </div>
 </div>
 
 <!-- Fullscreen overlay -->
 <div id="fullscreen-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0f1117; z-index:9999;">
-  <button id="close-fullscreen" style="position:absolute; top:10px; right:10px; z-index:10000; background:#222; color:white; border:none; padding:6px 10px; cursor:pointer; font-size:16px;">✖</button>
+  <button id="close-fullscreen">✖</button>
   <div class="fullscreen-title" id="fullscreen-title">
-    <span class="title-bell">🔔</span>
-    <span class="title-ruler">📏</span>
-    <span class="title-pct"></span>
+    <div class="left-icons">
+      <span class="title-bell">🔔</span>
+      <span class="title-ruler">📏</span>
+      <span class="title-pct"></span>
+    </div>
     <span class="title-text">BTCUSDT - 30m</span>
     <span class="title-fullscreen">⛶</span>
   </div>
