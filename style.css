@@ -30,75 +30,28 @@ body {
 }
 
 .chart-title, .fullscreen-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
+  position: relative;
+  padding: 8px;
   background: #161a25;
   font-weight: bold;
   font-size: 14px;
+  text-align: center;
   border-bottom: 1px solid #222;
   flex-shrink: 0;
-}
-
-.left-icons {
-  display: flex;
-  align-items: center;
-  gap: 18px; /* Spacing naturale e cliccabile */
-  flex-shrink: 0;
-}
-
-.title-bell,
-.title-ruler {
-  cursor: pointer;
-  font-size: 20px;
-}
-
-.title-ruler {
-  opacity: 0.5;
-  transition: opacity 0.2s;
-}
-
-.title-pct {
-  font-size: 14px;
-  font-weight: bold;
-  color: #00ff85;
-  opacity: 0.9;
-}
-
-.title-fullscreen {
-  cursor: pointer;
-  font-size: 20px;
-  flex-shrink: 0;
+  white-space: nowrap; /* Previene che il ruler vada sotto */
+  overflow: hidden;
 }
 
 .title-text {
   flex: 1;
   text-align: center;
-  margin: 0 10px;
 }
 
-/* Fullscreen */
 .fullscreen-title {
-  padding: 12px 20px;
+  padding: 12px;
   font-size: 18px;
-}
-
-.fullscreen-title .left-icons {
-  gap: 24px;
-}
-
-.fullscreen-title .title-bell,
-.fullscreen-title .title-ruler {
-  font-size: 26px;
-}
-
-.fullscreen-title .title-pct {
-  font-size: 18px;
-}
-
-.fullscreen-title .title-fullscreen {
-  font-size: 26px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .chart-container {
@@ -236,34 +189,25 @@ body {
   color: white;
 }
 
-.modal button, #open-botfather-btn, #set-local-alert, #open-in-exchange {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
+.modal button {
+  margin-top: 20px;
+  padding: 10px 16px;
   background: #2a3150;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
-}
-
-#open-botfather-btn {
-  background: #229ED9;
-}
-
-#set-local-alert {
-  background: #00ff85;
-  color: black;
-}
-
-#open-in-exchange {
-  background: #229ED9;
 }
 
 #apply-settings {
-  background: #00ff85;
-  color: black;
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  background: #2a3150;
+  font-size: 16px;
 }
 
 .chart-title.green { background: #004d26 !important; }
@@ -275,6 +219,7 @@ body {
   color: black !important;
 }
 
+/* Mobile drawer */
 #mobile-pairs-toggle {
   display: none;
   position: fixed;
@@ -301,19 +246,6 @@ body {
   z-index: 10;
 }
 
-#close-fullscreen {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 10000;
-  background: #222;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
 @media (max-width: 1024px) and (min-width: 769px) {
   #app { grid-template-columns: 1fr 250px; }
 }
@@ -338,28 +270,7 @@ body {
 
   #pairs.open { right: 0; }
 
-  .chart-title {
-    padding: 6px 10px;
-    font-size: 12px;
-  }
-
-  .left-icons {
-    gap: 14px;
-  }
-
-  .title-bell,
-  .title-ruler {
-    font-size: 18px;
-  }
-
-  .title-pct {
-    font-size: 12px;
-  }
-
-  .title-fullscreen {
-    font-size: 18px;
-  }
-
+  .chart-title { font-size: 12px; padding: 6px; }
   .pair { font-size: 13px; padding: 10px 12px; }
   .pairs-header { padding: 10px; font-size: 14px; flex-wrap: wrap; }
 }
