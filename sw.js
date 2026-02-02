@@ -5,7 +5,7 @@ const CORE_ASSETS = [
   '/index.html',
   '/style.css',
   '/app.js',
-  '/site.webmanifest',  // Aggiornato al nuovo manifest
+  '/site.webmanifest',
   '/apple-touch-icon.png',
   '/favicon-16x16.png',
   '/favicon-32x32.png',
