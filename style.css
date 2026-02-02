@@ -31,10 +31,7 @@ body {
 
 .chart-title, .fullscreen-title {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 50px 8px 8px; /* Altezza originale come prima, padding destra per fullscreen */
+  padding: 8px 40px 8px 8px; /* Altezza originale, padding minimo */
   background: #161a25;
   font-weight: bold;
   text-align: center;
@@ -42,68 +39,23 @@ body {
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
-}
-
-.title-bell, .title-ruler {
-  font-size: 22px; /* Più grandi */
-  cursor: pointer;
-  position: relative;
-  z-index: 10;
-}
-
-.title-bell {
-  margin-right: 8px;
-}
-
-.title-ruler {
-  margin-left: 20px;
-  opacity: 0.5;
-  transition: opacity 0.2s;
-}
-
-.title-pct {
-  margin-left: 10px;
-  font-size: 16px;
-  font-weight: bold;
-  color: #00ff85;
+  height: 40px; /* Altezza fissa originale per non cambiare */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .title-text {
-  font-size: 18px; /* Più grande */
-  font-weight: bold;
   flex: 1;
   text-align: center;
-  margin: 0 20px;
-}
-
-.title-fullscreen {
-  font-size: 26px; /* Più grande */
-  cursor: pointer;
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
+  font-size: 16px; /* Più grande */
+  font-weight: bold;
+  margin: 0 10px;
 }
 
 .fullscreen-title {
-  padding: 8px 60px 8px 8px; /* Altezza originale anche in fullscreen */
-}
-
-.fullscreen-title .title-bell, .fullscreen-title .title-ruler {
-  font-size: 26px;
-}
-
-.fullscreen-title .title-pct {
-  font-size: 18px;
-}
-
-.fullscreen-title .title-text {
-  font-size: 22px;
-}
-
-.fullscreen-title .title-fullscreen {
-  font-size: 30px;
-  right: 15px;
+  padding: 8px 50px 8px 8px; /* Altezza originale anche in fullscreen */
+  height: 40px;
 }
 
 .chart-container {
@@ -111,7 +63,6 @@ body {
   position: relative;
 }
 
-/* Resto del CSS identico al tuo originale */
 #pairs {
   border-left: 1px solid #222;
   display: flex;
