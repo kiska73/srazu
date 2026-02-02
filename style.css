@@ -43,45 +43,66 @@ body {
   flex-shrink: 0;
 }
 
-.title-bell, .title-ruler, .title-fullscreen {
+.left-icons {
   position: absolute;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 10;
+}
+
+.title-bell,
+.title-ruler {
   cursor: pointer;
   font-size: 20px;
-  padding: 4px 10px;
-  background: rgba(34,34,34,0.7);
-  border-radius: 4px;
 }
 
-.title-bell { left: 8px; }
-.title-ruler { 
-  left: 42px; 
-  opacity: 0.5; 
-  transition: opacity 0.2s; 
+.title-ruler {
+  opacity: 0.5;
+  transition: opacity 0.2s;
 }
-.title-fullscreen { right: 8px; }
-
-.title-text { flex: 1; }
 
 .title-pct {
-  position: absolute;
-  left: 82px;
   font-size: 14px;
   font-weight: bold;
   color: #00ff85;
   opacity: 0.9;
 }
 
-.fullscreen-title {
-  padding: 10px;
-  font-size: 18px;
-  background: #161a25;
+.title-fullscreen {
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  font-size: 20px;
 }
 
-.fullscreen-title .title-bell { left: 10px; }
-.fullscreen-title .title-ruler { left: 48px; }
-.fullscreen-title .title-fullscreen { right: 10px; }
+.title-text {
+  flex: 1;
+}
+
+.fullscreen-title {
+  padding: 12px;
+  font-size: 18px;
+}
+
+.fullscreen-title .left-icons {
+  left: 15px;
+  gap: 20px;
+}
+
+.fullscreen-title .title-bell,
+.fullscreen-title .title-ruler {
+  font-size: 24px;
+}
+
 .fullscreen-title .title-pct {
-  left: 92px;
+  font-size: 18px;
+}
+
+.fullscreen-title .title-fullscreen {
+  right: 15px;
+  font-size: 24px;
 }
 
 .chart-container {
@@ -229,15 +250,28 @@ body {
   cursor: pointer;
 }
 
-#apply-settings {
-  position: sticky;
-  bottom: 0;
-  left: 0;
+#apply-settings, #open-botfather-btn, #set-local-alert, #open-in-exchange {
   width: 100%;
-  margin-top: 20px;
   padding: 12px;
   background: #2a3150;
-  font-size: 16px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#open-botfather-btn {
+  background: #229ED9;
+}
+
+#set-local-alert {
+  background: #00ff85;
+  color: black;
+}
+
+#open-in-exchange {
+  background: #229ED9;
 }
 
 .chart-title.green { background: #004d26 !important; }
@@ -257,7 +291,7 @@ body {
   z-index: 100;
   background: #2a3150;
   color: white;
-  padding:  definitivamente12px 18px;
+  padding: 12px 18px;
   border-radius: 50%;
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
@@ -273,6 +307,19 @@ body {
   cursor: pointer;
   color: #aaa;
   z-index: 10;
+}
+
+#close-fullscreen {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10000;
+  background: #222;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 16px;
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
