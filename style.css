@@ -43,7 +43,7 @@ body {
   flex-shrink: 0;
 }
 
-.title-bell, .title-measure, .title-fullscreen {
+.title-bell, .title-ruler, .title-fullscreen {
   position: absolute;
   cursor: pointer;
   font-size: 20px;
@@ -53,25 +53,22 @@ body {
 }
 
 .title-bell { left: 8px; }
-.title-measure { 
+.title-ruler { 
   left: 42px; 
   opacity: 0.5; 
   transition: opacity 0.2s; 
 }
-.title-measure.active { opacity: 1; }
 .title-fullscreen { right: 8px; }
 
 .title-text { flex: 1; }
 
-/* --- NUOVO POSIZIONAMENTO PER LA % --- */
 .title-pct {
   position: absolute;
-  left: 82px;                /* subito a destra del metro */
+  left: 82px;
   font-size: 14px;
   font-weight: bold;
-  color: #ffffff;            /* bianco di base */
+  color: #00ff85;
   opacity: 0.9;
-  transition: color 0.2s;
 }
 
 .fullscreen-title {
@@ -81,10 +78,10 @@ body {
 }
 
 .fullscreen-title .title-bell { left: 10px; }
-.fullscreen-title .title-measure { left: 48px; }
+.fullscreen-title .title-ruler { left: 48px; }
 .fullscreen-title .title-fullscreen { right: 10px; }
 .fullscreen-title .title-pct {
-  left: 92px;                /* adattato per il padding maggiore del fullscreen */
+  left: 92px;
 }
 
 .chart-container {
@@ -116,14 +113,6 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.app-title {
-  font-size: 24px;
-  font-weight: bold;
-  color: #00ff85;
-  text-shadow: 0 0 10px #00ff85;
-  margin-right: 12px;
 }
 
 #exchange-select,
@@ -222,7 +211,7 @@ body {
   margin: 12px 0 6px;
 }
 
-.modal input[type=number], .modal input[type=text] {
+.modal input[type=number], .modal input[type=text], .modal input[type=password] {
   width: 100%;
   padding: 6px;
   background: #1f2433;
@@ -260,9 +249,6 @@ body {
   color: black !important;
 }
 
-/* ... TUTTO IL TUO CSS ORIGINALE ... */
-
-/* Mobile drawer per pairs */
 #mobile-pairs-toggle {
   display: none;
   position: fixed;
@@ -271,7 +257,7 @@ body {
   z-index: 100;
   background: #2a3150;
   color: white;
-  padding: 12px 18px;
+  padding:  definitivamente12px 18px;
   border-radius: 50%;
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
