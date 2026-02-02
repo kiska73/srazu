@@ -110,7 +110,7 @@ function syncHorizLines() {
         updateAlertLineOnSeries(fullscreenChart.series, "fullscreen");
         if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) updateRulerLineOnSeries(fullscreenChart.series, "fullscreen");
     }
-    updateRulerPercentage();   // <-- aggiunta per mostrare %
+    updateRulerPercentage();
 }
 
 function saveHorizIfFavorite() {
@@ -134,13 +134,15 @@ function toggleFavorite(symbol) {
             localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
             alertTriggeredSymbols.delete(symbol);
 
+            // INVIO AL SERVER PER RIMUOVERE ALERT (con chat_id per identificare a chi era destinato)
             fetch(`${SERVER_URL}/remove_alert`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     device_id: deviceId,
                     exchange: currentExchange,
-                    symbol: symbol
+                    symbol: symbol,
+                    chat_id: personalTGChatID || null   // indica a chi era destinato l'alert
                 })
             }).catch(e => console.error("Server remove error:", e));
 
@@ -261,7 +263,6 @@ function updateRulerLineOnSeries(series, key) {
     rulerLines[key] = line;
 }
 
-// NUOVA FUNZIONE: mostra % nel titolo
 function updateRulerPercentage() {
     const pctElements = document.querySelectorAll('.title-pct');
     const fsPct = document.querySelector('#fullscreen-title .title-pct');
@@ -604,7 +605,6 @@ function openFullscreen(containerId, tfLabel) {
     const fsRuler = fsTitle.querySelector('.title-ruler');
     const fsText = fsTitle.querySelector('.title-text');
     const fsFs = fsTitle.querySelector('.title-fullscreen');
-    const fsPct = fsTitle.querySelector('.title-pct');
 
     fsBell.onclick = () => openAlertSetup();
     fsRuler.onclick = toggleRulerMode;
@@ -744,6 +744,19 @@ document.getElementById("set-local-alert").onclick = () => {
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
 
     if (!favorites.includes(currentSymbol)) toggleFavorite(currentSymbol);
+
+    // INVIO AL SERVER CON INFO SU A CHI MANDARE (chat_id personale, così il server sa a chi era destinato l'alert)
+    fetch(`${SERVER_URL}/add_alert`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            device_id: deviceId,
+            exchange: currentExchange,
+            symbol: currentSymbol,
+            price: price,
+            chat_id: personalTGChatID   // <-- A CHI MANDARE IL MESSAGGIO (il tuo chat_id personale)
+        })
+    }).catch(e => console.error("Server add alert error:", e));
 
     alertTriggeredSymbols.delete(currentSymbol);
     syncHorizLines();
