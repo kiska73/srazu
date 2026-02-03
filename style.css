@@ -277,3 +277,39 @@ body {
   .pair { font-size: 13px; padding: 10px 12px; }
   .pairs-header { padding: 10px; font-size: 14px; flex-wrap: wrap; }
 }
+
+#alert-setup button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+#set-local-alert {
+  background: #FFD700;
+  color: #000;
+}
+
+#open-in-exchange {
+  background: #00ff85;
+  color: #000;
+}
+
+/* Migliore layout su tablet (sempre side-by-side) */
+@media (min-width: 769px) {
+  #app {
+    grid-template-columns: 1fr 280px;
+  }
+  #pairs {
+    position: static !important;
+    right: auto !important;
+    transition: none !important;
+  }
+  #mobile-pairs-toggle,
+  #mobile-pairs-close {
+    display: none !important;
+  }
+}
