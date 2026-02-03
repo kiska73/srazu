@@ -8,7 +8,6 @@ let lastCandleTime = {};
 let priceLines = {};
 let alertLines = {};
 let rulerLines = {};
-let alertTriggeredSymbols = new Set();
 
 let activeHorizPrice = null;
 let rulerMode = false;
@@ -46,7 +45,7 @@ let customLabels = {
 let currentSort = "volume";
 let allPairsData = [];
 
-// Personal Telegram
+// Personal Telegram (solo per inviare al server)
 let personalTGToken = localStorage.getItem('personalTGToken') || '';
 let personalTGChatID = localStorage.getItem('personalTGChatID') || '';
 
@@ -132,22 +131,20 @@ function toggleFavorite(symbol) {
         if (hadAlert) {
             delete alertPrices[symbol];
             localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
-            alertTriggeredSymbols.delete(symbol);
 
-            fetch(`${SERVER_URL}/remove_alert`, {
+            // Rimuovi alert sul server
+            fetch(`${SERVER_URL}/set_alert`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     device_id: deviceId,
                     exchange: currentExchange,
                     symbol: symbol,
-                    chat_id: personalTGChatID || null
+                    price: null,  // null = rimuovi
+                    token: personalTGToken,
+                    chatId: personalTGChatID
                 })
-            }).catch(e => console.error("Server remove error:", e));
-
-            if (personalTGToken && personalTGChatID) {
-                sendTelegramAlert(`❌ <b>Alert CANCELLED</b>\n<b>${symbol}</b>`);
-            }
+            }).catch(e => console.error("Server remove alert error:", e));
         }
     } else {
         favorites.push(symbol);
@@ -201,8 +198,6 @@ function updateAlertLineOnSeries(series, key) {
         delete alertLines[key];
     }
 
-    if (alertTriggeredSymbols.has(currentSymbol)) return;
-
     const alertPrice = alertPrices[currentSymbol];
     if (alertPrice == null) return;
 
@@ -253,7 +248,7 @@ function updateRulerLineOnSeries(series, key) {
         axisLabelVisible: true,
         axisLabelColor: "#00FF00",
         axisLabelBackgroundColor: "#161a25",
-        title: "",  // Nessun titolo % sulla linea del grafico
+        title: "",
         draggable: false
     });
     rulerLines[key] = line;
@@ -576,7 +571,6 @@ async function loadAllCharts(symbol) {
     const promises = Object.keys(customIntervals).map(id => createChart(id));
     await Promise.all(promises);
 
-    alertTriggeredSymbols.delete(symbol);
     syncHorizLines();
 
     const totalSlots = visibleBarsCount + spaceBarsCount;
@@ -685,34 +679,6 @@ function closeFullscreen() {
 
 document.getElementById("close-fullscreen").onclick = closeFullscreen;
 
-async function sendTelegramAlert(text, photoDataUrl = null) {
-    if (!personalTGToken || !personalTGChatID) return;
-
-    const baseUrl = `https://api.telegram.org/bot${personalTGToken}`;
-
-    if (photoDataUrl) {
-        const formData = new FormData();
-        const blob = await (await fetch(photoDataUrl)).blob();
-        formData.append('photo', blob, 'alert.png');
-        formData.append('chat_id', personalTGChatID);
-        formData.append('caption', text);
-        formData.append('parse_mode', 'HTML');
-
-        try {
-            await fetch(`${baseUrl}/sendPhoto`, { method: 'POST', body: formData });
-        } catch (e) {
-            console.error("Telegram photo error:", e);
-        }
-    } else {
-        const url = `${baseUrl}/sendMessage?chat_id=${personalTGChatID}&text=${encodeURIComponent(text)}&parse_mode=HTML`;
-        try {
-            await fetch(url);
-        } catch (e) {
-            console.error("Telegram text error:", e);
-        }
-    }
-}
-
 function openAlertSetup() {
     document.getElementById("alert-symbol").textContent = currentSymbol;
     const latestClose = candleSeries["chart-5m"]?.data()?.at(-1)?.close || 0;
@@ -727,21 +693,22 @@ document.getElementById("close-alert-setup").onclick = () => {
 
 document.getElementById("set-local-alert").onclick = () => {
     const price = Number(document.getElementById("alert-price-input").value);
-    if (isNaN(price) || price <= 0) return alert("Invalid price");
+    if (isNaN(price) || price <= 0) {
+        alert("Prezzo non valido");
+        return;
+    }
 
-    if (!personalTGToken || !personalTGChatID) {
-        alert("Please configure your personal Telegram bot in Settings to receive alerts.");
+    const token = localStorage.getItem('personalTGToken');
+    const chatId = localStorage.getItem('personalTGChatID');
+
+    if (!token || !chatId) {
+        alert("Configura prima il tuo Bot Telegram nelle impostazioni!");
         document.getElementById("alert-setup").style.display = "none";
         return;
     }
 
-    const oldPrice = alertPrices[currentSymbol];
-    alertPrices[currentSymbol] = price;
-    localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
-
-    if (!favorites.includes(currentSymbol)) toggleFavorite(currentSymbol);
-
-    fetch(`${SERVER_URL}/add_alert`, {
+    // Invia al server (add o update)
+    fetch(`${SERVER_URL}/set_alert`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -749,27 +716,20 @@ document.getElementById("set-local-alert").onclick = () => {
             exchange: currentExchange,
             symbol: currentSymbol,
             price: price,
-            chat_id: personalTGChatID
+            token: token,
+            chatId: chatId
         })
-    }).catch(e => console.error("Server add alert error:", e));
+    })
+    .then(res => res.json())
+    .then(data => console.log("Alert registrato sul server:", data))
+    .catch(e => console.error("Errore invio alert al server:", e));
 
-    alertTriggeredSymbols.delete(currentSymbol);
+    // Aggiorna localmente per mostrare la linea tratteggiata
+    alertPrices[currentSymbol] = price;
+    localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
     syncHorizLines();
 
     document.getElementById("alert-setup").style.display = "none";
-
-    const tradeLink = currentExchange === "bybit" 
-        ? `https://www.bybit.com/trade/usdt/${currentSymbol}`
-        : `https://www.binance.com/en/futures/${currentSymbol}`;
-
-    let message;
-    if (oldPrice === undefined) {
-        message = `✅ <b>Alert ACTIVATED</b>\n<b>${currentSymbol}</b>\nTarget price: <b>${price.toFixed(symbolPricePrecision)}</b>`;
-    } else {
-        message = `🔄 <b>Alert UPDATED</b>\n<b>${currentSymbol}</b>\nNew target price: <b>${price.toFixed(symbolPricePrecision)}</b>`;
-    }
-
-    sendTelegramAlert(message);
 };
 
 document.getElementById("open-in-exchange").onclick = () => {
@@ -825,6 +785,7 @@ async function updateLive() {
         }
     }
 
+    // Colora i titoli in base a BTC
     const btcLatest = await fetchLatestCandle("BTCUSDT", "30");
     if (btcLatest) {
         let colorClass = "neutral";
@@ -832,43 +793,10 @@ async function updateLive() {
         else if (btcLatest.close < btcLatest.open) colorClass = "red";
         document.querySelectorAll('.chart-title').forEach(t => t.className = "chart-title " + colorClass);
     }
-
-    if (alertPrices[currentSymbol] && candleSeries["chart-5m"]) {
-        const data = candleSeries["chart-5m"].data();
-        if (data.length >= 2) {
-            const prev = data.at(-2);
-            const last = data.at(-1);
-            const alertPrice = alertPrices[currentSymbol];
-
-            const crossedUp = prev.close < alertPrice && last.close >= alertPrice;
-            const crossedDown = prev.close > alertPrice && last.close <= alertPrice;
-
-            if ((crossedUp || crossedDown) && !alertTriggeredSymbols.has(currentSymbol)) {
-                const tradeLink = currentExchange === "bybit" 
-                    ? `https://www.bybit.com/trade/usdt/${currentSymbol}`
-                    : `https://www.binance.com/en/futures/${currentSymbol}`;
-
-                const alertText = `🚨 <b>PRICE ALERT!</b>\n<b>${currentSymbol}</b> reached ${alertPrice.toFixed(symbolPricePrecision)}\nCurrent price: <b>${last.close.toFixed(symbolPricePrecision)}</b>\nExchange: ${currentExchange.toUpperCase()}\n<a href="${tradeLink}">Open trade now</a>`;
-
-                const chartContainer = document.getElementById("chart-30m");
-                if (chartContainer) {
-                    html2canvas(chartContainer, {backgroundColor: "#0f1117"}).then(canvas => {
-                        const dataUrl = canvas.toDataURL("image/png");
-                        sendTelegramAlert(alertText, dataUrl);
-                    });
-                } else {
-                    sendTelegramAlert(alertText);
-                }
-
-                alertTriggeredSymbols.add(currentSymbol);
-                syncHorizLines();
-            }
-        }
-    }
 }
 
 setInterval(updateLive, 2000);
-setInterval(fetchPairs, 6000);
+setInterval(fetchPairs, 60000); // ogni minuto invece di 6 secondi
 
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
 document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
@@ -964,6 +892,13 @@ document.getElementById('mobile-pairs-toggle').addEventListener('click', () => {
 });
 document.getElementById('mobile-pairs-close').addEventListener('click', () => {
     document.getElementById('pairs').classList.remove('open');
+});
+
+// Forza landscape su mobile (funziona meglio su PWA installata)
+window.addEventListener('load', () => {
+    if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {});
+    }
 });
 
 // Registrazione Service Worker (PWA)
