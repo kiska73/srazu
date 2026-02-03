@@ -684,6 +684,7 @@ document.getElementById("close-alert-setup").onclick = () => {
     document.getElementById("alert-setup").style.display = "none";
 };
 
+/* === FIX CRITICO: set-local-alert più robusto === */
 document.getElementById("set-local-alert").onclick = () => {
     const price = Number(document.getElementById("alert-price-input").value);
     if (isNaN(price) || price <= 0) {
@@ -691,15 +692,16 @@ document.getElementById("set-local-alert").onclick = () => {
         return;
     }
 
-    const token = localStorage.getItem('personalTGToken');
-    const chatId = localStorage.getItem('personalTGChatID');
+    // Priorità ai valori nei campi (se l'utente ha aperto Settings ma non ha cliccato Apply)
+    const token = document.getElementById("personal-tg-token")?.value.trim() || localStorage.getItem('personalTGToken') || '';
+    const chatId = document.getElementById("personal-tg-chatid")?.value.trim() || localStorage.getItem('personalTGChatID') || '';
 
     if (!token || !chatId) {
-        alert("Configura prima il tuo Bot Telegram nelle impostazioni!");
-        document.getElementById("alert-setup").style.display = "none";
+        alert("⚠️ Errore: Configura Token e ChatID nelle impostazioni prima di mettere un alert!");
         return;
     }
 
+    // Invia al server Render
     fetch(`${SERVER_URL}/set_alert`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -711,13 +713,28 @@ document.getElementById("set-local-alert").onclick = () => {
             token: token,
             chatId: chatId
         })
-    }).catch(e => console.error("Errore invio alert:", e));
-
-    alertPrices[currentSymbol] = price;
-    localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
-    syncHorizLines();
-
-    document.getElementById("alert-setup").style.display = "none";
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Server error');
+        return response.json();
+    })
+    .then(data => {
+        console.log("✅ Server sincronizzato:", data);
+        // Salva localmente per mostrare la linea sul grafico
+        alertPrices[currentSymbol] = price;
+        localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
+        syncHorizLines();
+        document.getElementById("alert-setup").style.display = "none";
+    })
+    .catch(e => {
+        console.error("❌ Errore sincronizzazione server:", e);
+        alert("Il server non risponde, ma l'alert locale è attivo (linea visibile).");
+        // Anche in caso di errore server, mostriamo comunque la linea locale
+        alertPrices[currentSymbol] = price;
+        localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
+        syncHorizLines();
+        document.getElementById("alert-setup").style.display = "none";
+    });
 };
 
 document.getElementById("open-in-exchange").onclick = () => {
