@@ -45,7 +45,7 @@ let customLabels = {
 let currentSort = "volume";
 let allPairsData = [];
 
-// Personal Telegram (solo per inviare al server)
+// Personal Telegram
 let personalTGToken = localStorage.getItem('personalTGToken') || '';
 let personalTGChatID = localStorage.getItem('personalTGChatID') || '';
 
@@ -132,7 +132,6 @@ function toggleFavorite(symbol) {
             delete alertPrices[symbol];
             localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
 
-            // Rimuovi alert sul server
             fetch(`${SERVER_URL}/set_alert`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -140,11 +139,11 @@ function toggleFavorite(symbol) {
                     device_id: deviceId,
                     exchange: currentExchange,
                     symbol: symbol,
-                    price: null,  // null = rimuovi
+                    price: null,
                     token: personalTGToken,
                     chatId: personalTGChatID
                 })
-            }).catch(e => console.error("Server remove alert error:", e));
+            }).catch(e => console.error("Remove alert error:", e));
         }
     } else {
         favorites.push(symbol);
@@ -336,18 +335,12 @@ async function fetchKlines(symbol, interval, limit = 1000) {
 
     try {
         const response = await fetch(baseUrl);
-        if (!response.ok) {
-            console.error(`HTTP error! status: ${response.status}`);
-            return [];
-        }
+        if (!response.ok) return [];
         const data = await response.json();
 
         let rawList = [];
         if (currentExchange === "bybit") {
-            if (data.retCode !== 0) {
-                console.error("Bybit error:", data.retMsg);
-                return [];
-            }
+            if (data.retCode !== 0) return [];
             rawList = data.result?.list || [];
         } else {
             rawList = data;
@@ -707,7 +700,6 @@ document.getElementById("set-local-alert").onclick = () => {
         return;
     }
 
-    // Invia al server (add o update)
     fetch(`${SERVER_URL}/set_alert`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -719,12 +711,8 @@ document.getElementById("set-local-alert").onclick = () => {
             token: token,
             chatId: chatId
         })
-    })
-    .then(res => res.json())
-    .then(data => console.log("Alert registrato sul server:", data))
-    .catch(e => console.error("Errore invio alert al server:", e));
+    }).catch(e => console.error("Errore invio alert:", e));
 
-    // Aggiorna localmente per mostrare la linea tratteggiata
     alertPrices[currentSymbol] = price;
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
     syncHorizLines();
@@ -785,7 +773,6 @@ async function updateLive() {
         }
     }
 
-    // Colora i titoli in base a BTC
     const btcLatest = await fetchLatestCandle("BTCUSDT", "30");
     if (btcLatest) {
         let colorClass = "neutral";
@@ -796,7 +783,7 @@ async function updateLive() {
 }
 
 setInterval(updateLive, 2000);
-setInterval(fetchPairs, 60000); // ogni minuto invece di 6 secondi
+setInterval(fetchPairs, 60000);
 
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
 document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
@@ -886,7 +873,6 @@ document.getElementById('open-botfather-btn').onclick = () => {
     window.open('https://t.me/BotFather', '_blank');
 };
 
-// Mobile drawer toggle
 document.getElementById('mobile-pairs-toggle').addEventListener('click', () => {
     document.getElementById('pairs').classList.add('open');
 });
@@ -894,14 +880,12 @@ document.getElementById('mobile-pairs-close').addEventListener('click', () => {
     document.getElementById('pairs').classList.remove('open');
 });
 
-// Forza landscape su mobile (funziona meglio su PWA installata)
 window.addEventListener('load', () => {
     if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('landscape').catch(() => {});
     }
 });
 
-// Registrazione Service Worker (PWA)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
