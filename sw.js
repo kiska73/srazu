@@ -1,4 +1,4 @@
-const CACHE_NAME = 'srazu-v3';
+const CACHE_NAME = 'srazu-v4';
 
 const CORE_ASSETS = [
   '/',
@@ -16,37 +16,30 @@ const CORE_ASSETS = [
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache =>
-      Promise.all(
-        CORE_ASSETS.map(url =>
-          fetch(url)
-            .then(res => {
-              if (!res.ok) throw new Error(url + ' not cached');
-              return cache.put(url, res);
-            })
-            .catch(err => console.warn(err.message))
-        )
-      )
-    )
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(CORE_ASSETS);
+    })
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(names =>
-      Promise.all(
-        names.filter(n => n !== CACHE_NAME).map(n => caches.delete(n))
-      )
-    )
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      );
+    })
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(res => {
-      return res || fetch(event.request).catch(() => caches.match('/index.html'));
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    }).catch(() => {
+      return caches.match('/index.html');
     })
   );
 });
