@@ -249,7 +249,7 @@ body {
   z-index: 10;
 }
 
-/* Stili specifici per i pulsanti dell'Alert Panel */
+/* Pulsanti Alert Panel */
 #alert-setup button {
   flex: 1;
   padding: 14px;
@@ -262,16 +262,15 @@ body {
 }
 
 #set-local-alert {
-  background: #FFD700 !important;  /* Giallo */
+  background: #FFD700 !important;
   color: #000000 !important;
 }
 
 #open-in-exchange {
-  background: #00ff85 !important;  /* Verde */
+  background: #00ff85 !important;
   color: #000000 !important;
 }
 
-/* Hover per renderli più belli */
 #set-local-alert:hover {
   background: #e6c200 !important;
 }
@@ -280,7 +279,7 @@ body {
   background: #00cc6a !important;
 }
 
-/* Layout tablet: sempre side-by-side (come su PC) */
+/* Tablet sempre side-by-side */
 @media (min-width: 769px) {
   #app {
     grid-template-columns: 1fr 280px;
