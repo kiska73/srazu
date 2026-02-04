@@ -39,7 +39,7 @@ body {
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
-  height: 30px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,14 +48,14 @@ body {
 .title-text {
   flex: 1;
   text-align: center;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
   margin: 0 10px;
 }
 
 .fullscreen-title {
   padding: 8px 50px 8px 8px;
-  height: 40px;
+  height: 50px;
 }
 
 .chart-container {
@@ -223,30 +223,8 @@ body {
   color: black !important;
 }
 
-#mobile-pairs-toggle {
-  display: none;
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 100;
-  background: #2a3150;
-  color: white;
-  padding: 12px 18px;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  font-size: 20px;
-}
-
-#mobile-pairs-close {
-  display: none;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 32px;
-  cursor: pointer;
-  color: #aaa;
-  z-index: 10;
+.title-ruler {
+  opacity: 0.8 !important;
 }
 
 /* Pulsanti Alert Panel */
@@ -269,80 +247,4 @@ body {
 #open-in-exchange {
   background: #00ff85 !important;
   color: #000000 !important;
-}
-
-#set-local-alert:hover {
-  background: #e6c200 !important;
-}
-
-#open-in-exchange:hover {
-  background: #00cc6a !important;
-}
-
-/* Tablet e desktop */
-@media (min-width: 769px) {
-  #app {
-    grid-template-columns: 1fr 280px;
-  }
-  #pairs {
-    position: static !important;
-    right: auto !important;
-    transition: none !important;
-  }
-  #mobile-pairs-toggle,
-  #mobile-pairs-close {
-    display: none !important;
-  }
-}
-
-@media (max-width: 1024px) and (min-width: 769px) {
-  #app { grid-template-columns: 1fr 250px; }
-}
-
-/* Mobile: forza landscape */
-@media (max-width: 768px) and (orientation: portrait) {
-  #app, #charts, #pairs {
-    display: none !important;
-  }
-  body::before {
-    content: "Ruota il dispositivo in orizzontale per usare SRAZU";
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 20px;
-    color: white;
-    text-align: center;
-    background: rgba(0,0,0,0.8);
-    padding: 20px;
-    border-radius: 10px;
-    z-index: 99999;
-  }
-}
-
-@media (max-width: 768px) and (orientation: landscape) {
-  #app { grid-template-columns: 1fr 250px; }
-  #pairs {
-    position: static !important;
-    right: auto !important;
-    transition: none !important;
-  }
-  #mobile-pairs-toggle,
-  #mobile-pairs-close {
-    display: none !important;
-  }
-  .chart-title { 
-    font-size: 13px; 
-    padding: 6px 35px 6px 6px; 
-    height: 28px;
-  }
-  .title-text { font-size: 14px; }
-  .pair { font-size: 13px; padding: 9px 10px; }
-  .pairs-header { padding: 8px; font-size: 13px; }
-}
-
-/* Icona metro più visibile */
-.title-ruler {
-  opacity: 0.7 !important;
-  filter: brightness(1.3);
 }
