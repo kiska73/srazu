@@ -216,7 +216,7 @@ function updateAlertLineOnSeries(series, key) {
 function toggleRulerMode() {
     rulerMode = !rulerMode;
     document.querySelectorAll('.title-ruler').forEach(el => {
-        el.style.opacity = rulerMode ? '1' : '0.5';
+        el.style.opacity = rulerMode ? '1' : '0.7';
     });
     if (!rulerMode) {
         rulerPrice = null;
@@ -800,7 +800,7 @@ async function updateLive() {
 }
 
 setInterval(updateLive, 2000);
-setInterval(fetchPairs, 60000);
+setInterval(fetchPairs, 2000);
 
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
 document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
@@ -940,7 +940,7 @@ window.onload = async () => {
     document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
 
     document.querySelectorAll('.title-ruler').forEach(el => {
-        el.style.opacity = '0.5';
+        el.style.opacity = '0.7';
     });
 
     await loadAllCharts("BTCUSDT");
