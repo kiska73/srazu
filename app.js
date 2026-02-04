@@ -204,7 +204,7 @@ function updateAlertLineOnSeries(series, key) {
         price: alertPrice,
         color: "#FFD700",
         lineWidth: 1,
-        lineStyle: LightweightCharts.LineStyle.Dotted,
+        lineStyle: LightweightCharts.LineStyle.Dashed,  // ← ORA È TRATTEGGIATA (DASHED)
         axisLabelVisible: false,
         title: "",
         draggable: false
@@ -684,7 +684,7 @@ document.getElementById("close-alert-setup").onclick = () => {
     document.getElementById("alert-setup").style.display = "none";
 };
 
-/* === ALERT AUTOMATICO NEI PREFERITI === */
+/* === ALERT AUTOMATICO NEI PREFERITI + LINEA TRATTEGGIATA === */
 document.getElementById("set-local-alert").onclick = () => {
     const price = Number(document.getElementById("alert-price-input").value);
     if (isNaN(price) || price <= 0) {
