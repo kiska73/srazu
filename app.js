@@ -204,7 +204,7 @@ function updateAlertLineOnSeries(series, key) {
         price: alertPrice,
         color: "#FFD700",
         lineWidth: 1,
-        lineStyle: LightweightCharts.LineStyle.Dashed,  // ← ORA È TRATTEGGIATA (DASHED)
+        lineStyle: LightweightCharts.LineStyle.Dashed, // TRATTEGGIATA
         axisLabelVisible: false,
         title: "",
         draggable: false
@@ -216,7 +216,7 @@ function updateAlertLineOnSeries(series, key) {
 function toggleRulerMode() {
     rulerMode = !rulerMode;
     document.querySelectorAll('.title-ruler').forEach(el => {
-        el.style.opacity = rulerMode ? '1' : '0.7';
+        el.style.opacity = rulerMode ? '1' : '0.5';
     });
     if (!rulerMode) {
         rulerPrice = null;
@@ -684,7 +684,6 @@ document.getElementById("close-alert-setup").onclick = () => {
     document.getElementById("alert-setup").style.display = "none";
 };
 
-/* === ALERT AUTOMATICO NEI PREFERITI + LINEA TRATTEGGIATA === */
 document.getElementById("set-local-alert").onclick = () => {
     const price = Number(document.getElementById("alert-price-input").value);
     if (isNaN(price) || price <= 0) {
@@ -732,7 +731,6 @@ function completeAlertSetup(price) {
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
     syncHorizLines();
 
-    // AUTOMATICO NEI PREFERITI
     if (!favorites.includes(currentSymbol)) {
         favorites.push(currentSymbol);
         localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
@@ -895,12 +893,6 @@ document.getElementById('open-botfather-btn').onclick = () => {
     window.open('https://t.me/BotFather', '_blank');
 };
 
-window.addEventListener('load', () => {
-    if (screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock('landscape').catch(() => {});
-    }
-});
-
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
@@ -938,7 +930,7 @@ window.onload = async () => {
     document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
 
     document.querySelectorAll('.title-ruler').forEach(el => {
-        el.style.opacity = '0.7';
+        el.style.opacity = '0.5';
     });
 
     await loadAllCharts("BTCUSDT");
