@@ -684,7 +684,7 @@ document.getElementById("close-alert-setup").onclick = () => {
     document.getElementById("alert-setup").style.display = "none";
 };
 
-/* === FIX CRITICO: set-local-alert più robusto === */
+/* === ALERT AUTOMATICO NEI PREFERITI === */
 document.getElementById("set-local-alert").onclick = () => {
     const price = Number(document.getElementById("alert-price-input").value);
     if (isNaN(price) || price <= 0) {
@@ -692,7 +692,6 @@ document.getElementById("set-local-alert").onclick = () => {
         return;
     }
 
-    // Priorità ai valori nei campi (se l'utente ha aperto Settings ma non ha cliccato Apply)
     const token = document.getElementById("personal-tg-token")?.value.trim() || localStorage.getItem('personalTGToken') || '';
     const chatId = document.getElementById("personal-tg-chatid")?.value.trim() || localStorage.getItem('personalTGChatID') || '';
 
@@ -701,7 +700,6 @@ document.getElementById("set-local-alert").onclick = () => {
         return;
     }
 
-    // Invia al server Render
     fetch(`${SERVER_URL}/set_alert`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -720,22 +718,29 @@ document.getElementById("set-local-alert").onclick = () => {
     })
     .then(data => {
         console.log("✅ Server sincronizzato:", data);
-        // Salva localmente per mostrare la linea sul grafico
-        alertPrices[currentSymbol] = price;
-        localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
-        syncHorizLines();
-        document.getElementById("alert-setup").style.display = "none";
+        completeAlertSetup(price);
     })
     .catch(e => {
         console.error("❌ Errore sincronizzazione server:", e);
         alert("Il server non risponde, ma l'alert locale è attivo (linea visibile).");
-        // Anche in caso di errore server, mostriamo comunque la linea locale
-        alertPrices[currentSymbol] = price;
-        localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
-        syncHorizLines();
-        document.getElementById("alert-setup").style.display = "none";
+        completeAlertSetup(price);
     });
 };
+
+function completeAlertSetup(price) {
+    alertPrices[currentSymbol] = price;
+    localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
+    syncHorizLines();
+
+    // AUTOMATICO NEI PREFERITI
+    if (!favorites.includes(currentSymbol)) {
+        favorites.push(currentSymbol);
+        localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
+        populateList(currentSort);
+    }
+
+    document.getElementById("alert-setup").style.display = "none";
+}
 
 document.getElementById("open-in-exchange").onclick = () => {
     const price = Number(document.getElementById("alert-price-input").value);
@@ -889,13 +894,6 @@ window.onclick = (event) => {
 document.getElementById('open-botfather-btn').onclick = () => {
     window.open('https://t.me/BotFather', '_blank');
 };
-
-document.getElementById('mobile-pairs-toggle').addEventListener('click', () => {
-    document.getElementById('pairs').classList.add('open');
-});
-document.getElementById('mobile-pairs-close').addEventListener('click', () => {
-    document.getElementById('pairs').classList.remove('open');
-});
 
 window.addEventListener('load', () => {
     if (screen.orientation && screen.orientation.lock) {
