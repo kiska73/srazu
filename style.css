@@ -39,7 +39,7 @@ body {
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
-  height: 40px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -279,11 +279,9 @@ body {
   background: #00cc6a !important;
 }
 
-/* Tablet sempre side-by-side */
-@media (min-width: 769px) {
-  #app {
-    grid-template-columns: 1fr 280px;
-  }
+/* Modifiche per mobile e tablet: sempre side-by-side in landscape, lock orientation */
+@media (max-width: 1024px) {
+  #app { grid-template-columns: 1fr 250px; }
   #pairs {
     position: static !important;
     right: auto !important;
@@ -295,31 +293,40 @@ body {
   }
 }
 
-@media (max-width: 1024px) and (min-width: 769px) {
-  #app { grid-template-columns: 1fr 250px; }
+@media (max-width: 768px) and (orientation: portrait) {
+  #app {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  #charts, #pairs {
+    display: none;
+  }
+  body::after {
+    content: "Please rotate your device to landscape mode.";
+    color: white;
+    font-size: 18px;
+    text-align: center;
+  }
 }
 
-@media (max-width: 768px) {
-  #mobile-pairs-toggle, #mobile-pairs-close { display: block; }
-
-  #app { grid-template-columns: 1fr; }
-
+@media (max-width: 768px) and (orientation: landscape) {
+  #app { grid-template-columns: 1fr 250px; }
   #pairs {
-    position: fixed;
-    top: 0;
-    right: -85%;
-    width: 85%;
-    max-width: 380px;
-    height: 100vh;
-    z-index: 999;
-    transition: right 0.3s ease;
-    background: #0f1117;
-    box-shadow: -4px 0 20px rgba(0,0,0,0.7);
+    position: static !important;
+    right: auto !important;
+    transition: none !important;
   }
-
-  #pairs.open { right: 0; }
-
+  #mobile-pairs-toggle,
+  #mobile-pairs-close {
+    display: none !important;
+  }
   .chart-title { font-size: 12px; padding: 6px 40px 6px 6px; }
   .pair { font-size: 13px; padding: 10px 12px; }
   .pairs-header { padding: 10px; font-size: 14px; flex-wrap: wrap; }
+}
+
+.title-ruler {
+  opacity: 0.7 !important;
 }
