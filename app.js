@@ -204,7 +204,7 @@ function updateAlertLineOnSeries(series, key) {
         price: alertPrice,
         color: "#FFD700",
         lineWidth: 1,
-        lineStyle: LightweightCharts.LineStyle.Dashed, // TRATTEGGIATA
+        lineStyle: LightweightCharts.LineStyle.Dashed,
         axisLabelVisible: false,
         title: "",
         draggable: false
@@ -216,6 +216,7 @@ function updateAlertLineOnSeries(series, key) {
 function toggleRulerMode() {
     rulerMode = !rulerMode;
     document.querySelectorAll('.title-ruler').forEach(el => {
+        el.style.color = rulerMode ? '#ffffff' : '#888888'; // activated more white, normal less white
         el.style.opacity = rulerMode ? '1' : '0.5';
     });
     if (!rulerMode) {
@@ -234,7 +235,7 @@ function toggleRulerMode() {
 
 function updateRulerLineOnSeries(series, key) {
     if (rulerLines[key]) {
-        series.removePriceLine(rulerLines[key]);
+        series.removePriceLine(rulerLines[k]);
         delete rulerLines[key];
     }
     if (rulerPrice === null || activeHorizPrice === null) return;
@@ -930,6 +931,7 @@ window.onload = async () => {
     document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
 
     document.querySelectorAll('.title-ruler').forEach(el => {
+        el.style.color = '#888888'; // initial less white
         el.style.opacity = '0.5';
     });
 
