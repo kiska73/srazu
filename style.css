@@ -248,3 +248,9 @@ body {
   background: #00ff85 !important;
   color: #000000 !important;
 }
+.title-ruler {
+  color: #888888 !important; /* normale meno bianco */
+  transition: color 0.3s, filter 0.3s, opacity 0.3s; /* transizione fluida */
+}
+
+
