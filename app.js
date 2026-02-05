@@ -102,12 +102,12 @@ function syncHorizLines() {
     Object.keys(candleSeries).forEach(k => {
         updatePriceLineOnSeries(candleSeries[k], k);
         updateAlertLineOnSeries(candleSeries[k], k);
-        if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) updateRulerLineOnSeries(candleSeries[k], k);
+        if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(candleSeries[k], k); // rimosso activeHorizPrice !== null
     });
     if (fullscreenActive) {
         updatePriceLineOnSeries(fullscreenChart.series, "fullscreen");
         updateAlertLineOnSeries(fullscreenChart.series, "fullscreen");
-        if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) updateRulerLineOnSeries(fullscreenChart.series, "fullscreen");
+        if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(fullscreenChart.series, "fullscreen");
     }
     updateRulerPercentage();
 }
@@ -216,8 +216,9 @@ function updateAlertLineOnSeries(series, key) {
 function toggleRulerMode() {
     rulerMode = !rulerMode;
     document.querySelectorAll('.title-ruler').forEach(el => {
-        el.style.color = rulerMode ? '#ffffff' : '#888888'; // activated more white, normal less white
+        el.style.color = rulerMode ? '#ffffff' : '#888888'; // più bianco quando attivo
         el.style.opacity = rulerMode ? '1' : '0.5';
+        el.style.filter = rulerMode ? 'brightness(1.5)' : 'brightness(1)'; // extra contrasto quando attivo
     });
     if (!rulerMode) {
         rulerPrice = null;
@@ -235,10 +236,10 @@ function toggleRulerMode() {
 
 function updateRulerLineOnSeries(series, key) {
     if (rulerLines[key]) {
-        series.removePriceLine(rulerLines[k]);
+        series.removePriceLine(rulerLines[key]);
         delete rulerLines[key];
     }
-    if (rulerPrice === null || activeHorizPrice === null) return;
+    if (rulerPrice === null) return;
 
     const line = series.createPriceLine({
         price: rulerPrice,
@@ -526,7 +527,7 @@ async function createChart(containerId) {
 
     updatePriceLineOnSeries(series, containerId);
     updateAlertLineOnSeries(series, containerId);
-    if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) updateRulerLineOnSeries(series, containerId);
+    if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(series, containerId);
 
     const totalSlots = visibleBarsCount + spaceBarsCount;
     const barSpacing = container.clientWidth / totalSlots;
@@ -536,8 +537,8 @@ async function createChart(containerId) {
     chart.subscribeClick(p => {
         if (p?.point) {
             const price = series.coordinateToPrice(p.point.y);
-            if (rulerMode && activeHorizPrice !== null) {
-                rulerPrice = price;
+            if (rulerMode) {
+                rulerPrice = price; // ogni click sposta la linea verde (anche se activeHorizPrice null)
                 syncHorizLines();
             } else {
                 activeHorizPrice = price;
@@ -629,7 +630,7 @@ function openFullscreen(containerId, tfLabel) {
 
     updatePriceLineOnSeries(newSeries, "fullscreen");
     updateAlertLineOnSeries(newSeries, "fullscreen");
-    if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) updateRulerLineOnSeries(newSeries, "fullscreen");
+    if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(newSeries, "fullscreen");
 
     const totalSlots = visibleBarsCount + spaceBarsCount;
     const barSpacing = window.innerWidth / totalSlots;
@@ -639,7 +640,7 @@ function openFullscreen(containerId, tfLabel) {
     newChart.subscribeClick(p => {
         if (p?.point) {
             const price = newSeries.coordinateToPrice(p.point.y);
-            if (rulerMode && activeHorizPrice !== null) {
+            if (rulerMode) {
                 rulerPrice = price;
                 syncHorizLines();
             } else {
@@ -931,8 +932,9 @@ window.onload = async () => {
     document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
 
     document.querySelectorAll('.title-ruler').forEach(el => {
-        el.style.color = '#888888'; // initial less white
+        el.style.color = '#888888'; // iniziale meno bianco
         el.style.opacity = '0.5';
+        el.style.filter = 'brightness(1)';
     });
 
     await loadAllCharts("BTCUSDT");
