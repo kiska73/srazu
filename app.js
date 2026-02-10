@@ -705,8 +705,8 @@ document.getElementById("close-alert-setup").onclick = () => {
 };
 
 document.getElementById("set-local-alert").onclick = () => {
-    const alertPrice = Number(document.getElementById("alert-price-input").value);
-    const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice;
+    const alertPrice = Number(document.getElementById("alert-price-input").value); // prezzo per controllo scatto alert
+    const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice; // linea sincronizzata per messaggio e salvataggio
 
     if (isNaN(alertPrice) || alertPrice <= 0) {
         alert("Prezzo non valido");
@@ -752,8 +752,10 @@ document.getElementById("set-local-alert").onclick = () => {
 function completeAlertSetup(alertPrice, syncPrice) {
     alertPrices[currentSymbol] = alertPrice;
     syncPrices[currentSymbol] = syncPrice;
+    savedHorizPrices[currentSymbol] = syncPrice; // salva linea sincronizzata come orizzontale persistente
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
     localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
+    localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices)); // persistente anche senza favorite
     syncHorizLines();
 
     if (!favorites.includes(currentSymbol)) {
@@ -941,45 +943,4 @@ window.onload = async () => {
     document.getElementById("personal-tg-chatid").value = personalTGChatID;
 
     Object.keys(customIntervals).forEach(id => {
-        const select = document.getElementById("tf-" + id);
-        if (select) select.value = customIntervals[id];
-    });
-
-    document.getElementById("exchange-select").value = currentExchange;
-
-    document.getElementById("toggle-ema").textContent = emaEnabled ? "EMA: On" : "EMA: Off";
-    document.getElementById("toggle-ema").classList.toggle("active", emaEnabled);
-    document.getElementById("ema-periods-section").style.display = emaEnabled ? "block" : "none";
-
-    document.getElementById("toggle-bb").textContent = bbEnabled ? "Bollinger Bands: On" : "Bollinger Bands: Off";
-    document.getElementById("toggle-bb").classList.toggle("active", bbEnabled);
-    document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
-
-    document.querySelectorAll('.title-ruler').forEach(el => {
-        el.style.color = '#888888';
-        el.style.opacity = '0.5';
-        el.style.filter = 'brightness(1)';
-    });
-
-    await loadAllCharts("BTCUSDT");
-    await fetchPairs();
-
-    window.addEventListener("resize", () => {
-        const totalSlots = visibleBarsCount + spaceBarsCount;
-        for (const id in charts) {
-            const el = document.getElementById(id);
-            if (charts[id] && el) {
-                charts[id].resize(el.clientWidth, el.clientHeight);
-                const newSpacing = el.clientWidth / totalSlots;
-                charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
-                applyVisibleRange(charts[id], candleSeries[id]);
-            }
-        }
-        if (fullscreenActive && fullscreenChart) {
-            fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
-            const newSpacing = window.innerWidth / totalSlots;
-            fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
-            applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
-        }
-    });
-};
+        const select = document.getElementById("tf-" +
