@@ -29,7 +29,7 @@ let symbolPricePrecision = 2;
 let favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
 let savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
 let alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
-let syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}'); // NUOVO: salva linea sincronizzata con alert
+let syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}');
 
 let customIntervals = {
     "chart-5m": "5",
@@ -128,7 +128,7 @@ function toggleFavorite(symbol) {
     if (wasFavorite) {
         favorites = favorites.filter(s => s !== symbol);
         delete savedHorizPrices[symbol];
-        delete syncPrices[symbol]; // rimuovi sync level
+        delete syncPrices[symbol];
 
         if (hadAlert) {
             delete alertPrices[symbol];
@@ -325,7 +325,7 @@ function createBollinger(chart, klines, period, dev) {
              lower: { series: lower, last: dataLower.at(-1)?.value || 0 } };
 }
 
-async function fetchKlines(symbol, interval, limit = 1000) {
+async function fetchKlines(symbol, interval, limit = 500) {
     let baseUrl = "";
     let queryInterval = interval;
 
@@ -339,19 +339,32 @@ async function fetchKlines(symbol, interval, limit = 1000) {
     }
 
     try {
-        const response = await fetch(baseUrl);
-        if (!response.ok) return [];
+        const response = await fetch(baseUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
+        if (!response.ok) {
+            console.error(`Fetch error: ${response.status} ${response.statusText}`);
+            return [];
+        }
         const data = await response.json();
 
         let rawList = [];
         if (currentExchange === "bybit") {
-            if (data.retCode !== 0) return [];
+            if (data.retCode !== 0) {
+                console.error("Bybit error:", data.retMsg);
+                return [];
+            }
             rawList = data.result?.list || [];
         } else {
             rawList = data;
         }
 
-        if (!Array.isArray(rawList)) return [];
+        if (!Array.isArray(rawList) || rawList.length === 0) {
+            console.error("No data in response");
+            return [];
+        }
 
         const klines = rawList.map(c => ({
             time: Number(c[0]) / 1000,
@@ -471,7 +484,7 @@ async function createChart(containerId) {
     const interval = customIntervals[containerId];
     const label = customLabels[interval] || interval;
 
-    const klines = await fetchKlines(currentSymbol, interval, 1000);
+    const klines = await fetchKlines(currentSymbol, interval, 500);
 
     const titleEl = document.getElementById(`title-${containerId.split("-")[1]}`);
     const bellSpan = titleEl.querySelector('.title-bell');
@@ -486,7 +499,10 @@ async function createChart(containerId) {
     textSpan.textContent = klines.length ? `${currentSymbol} - ${label}` : "No data";
     titleEl.className = "chart-title neutral";
 
-    if (!klines.length) return;
+    if (!klines.length) {
+        textSpan.textContent = "No data – check connection";
+        return;
+    }
 
     symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
 
@@ -689,8 +705,8 @@ document.getElementById("close-alert-setup").onclick = () => {
 };
 
 document.getElementById("set-local-alert").onclick = () => {
-    const alertPrice = Number(document.getElementById("alert-price-input").value); // prezzo per controllo scatto alert
-    const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice; // linea sincronizzata per messaggio
+    const alertPrice = Number(document.getElementById("alert-price-input").value);
+    const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice;
 
     if (isNaN(alertPrice) || alertPrice <= 0) {
         alert("Prezzo non valido");
@@ -712,8 +728,8 @@ document.getElementById("set-local-alert").onclick = () => {
             device_id: deviceId,
             exchange: currentExchange,
             symbol: currentSymbol,
-            alert_price: alertPrice,      // per controllo scatto
-            sync_price: syncPrice,        // per messaggio "in prossimità del livello sincronizzato"
+            alert_price: alertPrice,
+            sync_price: syncPrice,
             token: token,
             chatId: chatId
         })
@@ -735,7 +751,7 @@ document.getElementById("set-local-alert").onclick = () => {
 
 function completeAlertSetup(alertPrice, syncPrice) {
     alertPrices[currentSymbol] = alertPrice;
-    syncPrices[currentSymbol] = syncPrice; // salva linea sincronizzata
+    syncPrices[currentSymbol] = syncPrice;
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
     localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     syncHorizLines();
@@ -914,7 +930,7 @@ window.onload = async () => {
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
     alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
-    syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}'); // carica sync level
+    syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}');
     const savedIntervals = localStorage.getItem('customIntervals');
     if (savedIntervals) customIntervals = JSON.parse(savedIntervals);
 
