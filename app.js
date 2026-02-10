@@ -29,7 +29,6 @@ let symbolPricePrecision = 2;
 let favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
 let savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
 let alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
-let syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}');
 
 let customIntervals = {
     "chart-5m": "5",
@@ -103,12 +102,12 @@ function syncHorizLines() {
     Object.keys(candleSeries).forEach(k => {
         updatePriceLineOnSeries(candleSeries[k], k);
         updateAlertLineOnSeries(candleSeries[k], k);
-        if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(candleSeries[k], k);
+        if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) updateRulerLineOnSeries(candleSeries[k], k);
     });
     if (fullscreenActive) {
         updatePriceLineOnSeries(fullscreenChart.series, "fullscreen");
         updateAlertLineOnSeries(fullscreenChart.series, "fullscreen");
-        if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(fullscreenChart.series, "fullscreen");
+        if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) updateRulerLineOnSeries(fullscreenChart.series, "fullscreen");
     }
     updateRulerPercentage();
 }
@@ -128,7 +127,6 @@ function toggleFavorite(symbol) {
     if (wasFavorite) {
         favorites = favorites.filter(s => s !== symbol);
         delete savedHorizPrices[symbol];
-        delete syncPrices[symbol];
 
         if (hadAlert) {
             delete alertPrices[symbol];
@@ -154,7 +152,6 @@ function toggleFavorite(symbol) {
 
     localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
     localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
-    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     populateList(currentSort);
 
     if (wasFavorite && symbol === currentSymbol) {
@@ -207,7 +204,7 @@ function updateAlertLineOnSeries(series, key) {
         price: alertPrice,
         color: "#FFD700",
         lineWidth: 1,
-        lineStyle: LightweightCharts.LineStyle.Dashed,
+        lineStyle: LightweightCharts.LineStyle.Dashed, // TRATTEGGIATA
         axisLabelVisible: false,
         title: "",
         draggable: false
@@ -219,9 +216,7 @@ function updateAlertLineOnSeries(series, key) {
 function toggleRulerMode() {
     rulerMode = !rulerMode;
     document.querySelectorAll('.title-ruler').forEach(el => {
-        el.style.color = rulerMode ? '#ffffff' : '#888888';
         el.style.opacity = rulerMode ? '1' : '0.5';
-        el.style.filter = rulerMode ? 'brightness(1.5)' : 'brightness(1)';
     });
     if (!rulerMode) {
         rulerPrice = null;
@@ -242,7 +237,7 @@ function updateRulerLineOnSeries(series, key) {
         series.removePriceLine(rulerLines[key]);
         delete rulerLines[key];
     }
-    if (rulerPrice === null) return;
+    if (rulerPrice === null || activeHorizPrice === null) return;
 
     const line = series.createPriceLine({
         price: rulerPrice,
@@ -325,7 +320,7 @@ function createBollinger(chart, klines, period, dev) {
              lower: { series: lower, last: dataLower.at(-1)?.value || 0 } };
 }
 
-async function fetchKlines(symbol, interval, limit = 500) {
+async function fetchKlines(symbol, interval, limit = 1000) {
     let baseUrl = "";
     let queryInterval = interval;
 
@@ -339,32 +334,19 @@ async function fetchKlines(symbol, interval, limit = 500) {
     }
 
     try {
-        const response = await fetch(baseUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            }
-        });
-        if (!response.ok) {
-            console.error(`Fetch error: ${response.status} ${response.statusText}`);
-            return [];
-        }
+        const response = await fetch(baseUrl);
+        if (!response.ok) return [];
         const data = await response.json();
 
         let rawList = [];
         if (currentExchange === "bybit") {
-            if (data.retCode !== 0) {
-                console.error("Bybit error:", data.retMsg);
-                return [];
-            }
+            if (data.retCode !== 0) return [];
             rawList = data.result?.list || [];
         } else {
             rawList = data;
         }
 
-        if (!Array.isArray(rawList) || rawList.length === 0) {
-            console.error("No data in response");
-            return [];
-        }
+        if (!Array.isArray(rawList)) return [];
 
         const klines = rawList.map(c => ({
             time: Number(c[0]) / 1000,
@@ -484,7 +466,7 @@ async function createChart(containerId) {
     const interval = customIntervals[containerId];
     const label = customLabels[interval] || interval;
 
-    const klines = await fetchKlines(currentSymbol, interval, 500);
+    const klines = await fetchKlines(currentSymbol, interval, 1000);
 
     const titleEl = document.getElementById(`title-${containerId.split("-")[1]}`);
     const bellSpan = titleEl.querySelector('.title-bell');
@@ -499,10 +481,7 @@ async function createChart(containerId) {
     textSpan.textContent = klines.length ? `${currentSymbol} - ${label}` : "No data";
     titleEl.className = "chart-title neutral";
 
-    if (!klines.length) {
-        textSpan.textContent = "No data – check connection";
-        return;
-    }
+    if (!klines.length) return;
 
     symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
 
@@ -546,7 +525,7 @@ async function createChart(containerId) {
 
     updatePriceLineOnSeries(series, containerId);
     updateAlertLineOnSeries(series, containerId);
-    if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(series, containerId);
+    if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) updateRulerLineOnSeries(series, containerId);
 
     const totalSlots = visibleBarsCount + spaceBarsCount;
     const barSpacing = container.clientWidth / totalSlots;
@@ -556,7 +535,7 @@ async function createChart(containerId) {
     chart.subscribeClick(p => {
         if (p?.point) {
             const price = series.coordinateToPrice(p.point.y);
-            if (rulerMode) {
+            if (rulerMode && activeHorizPrice !== null) {
                 rulerPrice = price;
                 syncHorizLines();
             } else {
@@ -649,7 +628,7 @@ function openFullscreen(containerId, tfLabel) {
 
     updatePriceLineOnSeries(newSeries, "fullscreen");
     updateAlertLineOnSeries(newSeries, "fullscreen");
-    if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(newSeries, "fullscreen");
+    if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) updateRulerLineOnSeries(newSeries, "fullscreen");
 
     const totalSlots = visibleBarsCount + spaceBarsCount;
     const barSpacing = window.innerWidth / totalSlots;
@@ -659,7 +638,7 @@ function openFullscreen(containerId, tfLabel) {
     newChart.subscribeClick(p => {
         if (p?.point) {
             const price = newSeries.coordinateToPrice(p.point.y);
-            if (rulerMode) {
+            if (rulerMode && activeHorizPrice !== null) {
                 rulerPrice = price;
                 syncHorizLines();
             } else {
@@ -695,7 +674,8 @@ document.getElementById("close-fullscreen").onclick = closeFullscreen;
 
 function openAlertSetup() {
     document.getElementById("alert-symbol").textContent = currentSymbol;
-    const prefill = activeHorizPrice !== null ? activeHorizPrice : candleSeries["chart-5m"]?.data()?.at(-1)?.close || 0;
+    const latestClose = candleSeries["chart-5m"]?.data()?.at(-1)?.close || 0;
+    const prefill = activeHorizPrice !== null ? activeHorizPrice : latestClose;
     document.getElementById("alert-price-input").value = prefill.toFixed(symbolPricePrecision);
     document.getElementById("alert-setup").style.display = "block";
 }
@@ -705,10 +685,8 @@ document.getElementById("close-alert-setup").onclick = () => {
 };
 
 document.getElementById("set-local-alert").onclick = () => {
-    const alertPrice = Number(document.getElementById("alert-price-input").value);
-    const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice;
-
-    if (isNaN(alertPrice) || alertPrice <= 0) {
+    const price = Number(document.getElementById("alert-price-input").value);
+    if (isNaN(price) || price <= 0) {
         alert("Prezzo non valido");
         return;
     }
@@ -728,8 +706,7 @@ document.getElementById("set-local-alert").onclick = () => {
             device_id: deviceId,
             exchange: currentExchange,
             symbol: currentSymbol,
-            alert_price: alertPrice,
-            sync_price: syncPrice,
+            price: price,
             token: token,
             chatId: chatId
         })
@@ -740,20 +717,18 @@ document.getElementById("set-local-alert").onclick = () => {
     })
     .then(data => {
         console.log("✅ Server sincronizzato:", data);
-        completeAlertSetup(alertPrice, syncPrice);
+        completeAlertSetup(price);
     })
     .catch(e => {
         console.error("❌ Errore sincronizzazione server:", e);
         alert("Il server non risponde, ma l'alert locale è attivo (linea visibile).");
-        completeAlertSetup(alertPrice, syncPrice);
+        completeAlertSetup(price);
     });
 };
 
-function completeAlertSetup(alertPrice, syncPrice) {
-    alertPrices[currentSymbol] = alertPrice;
-    syncPrices[currentSymbol] = syncPrice;
+function completeAlertSetup(price) {
+    alertPrices[currentSymbol] = price;
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
-    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     syncHorizLines();
 
     if (!favorites.includes(currentSymbol)) {
@@ -930,7 +905,6 @@ window.onload = async () => {
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
     alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
-    syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}');
     const savedIntervals = localStorage.getItem('customIntervals');
     if (savedIntervals) customIntervals = JSON.parse(savedIntervals);
 
@@ -956,9 +930,7 @@ window.onload = async () => {
     document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
 
     document.querySelectorAll('.title-ruler').forEach(el => {
-        el.style.color = '#888888';
         el.style.opacity = '0.5';
-        el.style.filter = 'brightness(1)';
     });
 
     await loadAllCharts("BTCUSDT");
