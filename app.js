@@ -29,6 +29,7 @@ let symbolPricePrecision = 2;
 let favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
 let savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
 let alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
+let syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}'); // NUOVO: salva linea sincronizzata con alert
 
 let customIntervals = {
     "chart-5m": "5",
@@ -102,7 +103,7 @@ function syncHorizLines() {
     Object.keys(candleSeries).forEach(k => {
         updatePriceLineOnSeries(candleSeries[k], k);
         updateAlertLineOnSeries(candleSeries[k], k);
-        if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(candleSeries[k], k); // rimosso activeHorizPrice !== null
+        if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(candleSeries[k], k);
     });
     if (fullscreenActive) {
         updatePriceLineOnSeries(fullscreenChart.series, "fullscreen");
@@ -127,6 +128,7 @@ function toggleFavorite(symbol) {
     if (wasFavorite) {
         favorites = favorites.filter(s => s !== symbol);
         delete savedHorizPrices[symbol];
+        delete syncPrices[symbol]; // rimuovi sync level
 
         if (hadAlert) {
             delete alertPrices[symbol];
@@ -152,6 +154,7 @@ function toggleFavorite(symbol) {
 
     localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
     localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
+    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     populateList(currentSort);
 
     if (wasFavorite && symbol === currentSymbol) {
@@ -216,9 +219,9 @@ function updateAlertLineOnSeries(series, key) {
 function toggleRulerMode() {
     rulerMode = !rulerMode;
     document.querySelectorAll('.title-ruler').forEach(el => {
-        el.style.color = rulerMode ? '#ffffff' : '#888888'; // più bianco quando attivo
+        el.style.color = rulerMode ? '#ffffff' : '#888888';
         el.style.opacity = rulerMode ? '1' : '0.5';
-        el.style.filter = rulerMode ? 'brightness(1.5)' : 'brightness(1)'; // extra contrasto quando attivo
+        el.style.filter = rulerMode ? 'brightness(1.5)' : 'brightness(1)';
     });
     if (!rulerMode) {
         rulerPrice = null;
@@ -538,7 +541,7 @@ async function createChart(containerId) {
         if (p?.point) {
             const price = series.coordinateToPrice(p.point.y);
             if (rulerMode) {
-                rulerPrice = price; // ogni click sposta la linea verde (anche se activeHorizPrice null)
+                rulerPrice = price;
                 syncHorizLines();
             } else {
                 activeHorizPrice = price;
@@ -676,8 +679,7 @@ document.getElementById("close-fullscreen").onclick = closeFullscreen;
 
 function openAlertSetup() {
     document.getElementById("alert-symbol").textContent = currentSymbol;
-    const latestClose = candleSeries["chart-5m"]?.data()?.at(-1)?.close || 0;
-    const prefill = activeHorizPrice !== null ? activeHorizPrice : latestClose;
+    const prefill = activeHorizPrice !== null ? activeHorizPrice : candleSeries["chart-5m"]?.data()?.at(-1)?.close || 0;
     document.getElementById("alert-price-input").value = prefill.toFixed(symbolPricePrecision);
     document.getElementById("alert-setup").style.display = "block";
 }
@@ -687,8 +689,10 @@ document.getElementById("close-alert-setup").onclick = () => {
 };
 
 document.getElementById("set-local-alert").onclick = () => {
-    const price = Number(document.getElementById("alert-price-input").value);
-    if (isNaN(price) || price <= 0) {
+    const alertPrice = Number(document.getElementById("alert-price-input").value); // prezzo per controllo scatto alert
+    const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice; // linea sincronizzata per messaggio
+
+    if (isNaN(alertPrice) || alertPrice <= 0) {
         alert("Prezzo non valido");
         return;
     }
@@ -708,7 +712,8 @@ document.getElementById("set-local-alert").onclick = () => {
             device_id: deviceId,
             exchange: currentExchange,
             symbol: currentSymbol,
-            price: price,
+            alert_price: alertPrice,      // per controllo scatto
+            sync_price: syncPrice,        // per messaggio "in prossimità del livello sincronizzato"
             token: token,
             chatId: chatId
         })
@@ -719,18 +724,20 @@ document.getElementById("set-local-alert").onclick = () => {
     })
     .then(data => {
         console.log("✅ Server sincronizzato:", data);
-        completeAlertSetup(price);
+        completeAlertSetup(alertPrice, syncPrice);
     })
     .catch(e => {
         console.error("❌ Errore sincronizzazione server:", e);
         alert("Il server non risponde, ma l'alert locale è attivo (linea visibile).");
-        completeAlertSetup(price);
+        completeAlertSetup(alertPrice, syncPrice);
     });
 };
 
-function completeAlertSetup(price) {
-    alertPrices[currentSymbol] = price;
+function completeAlertSetup(alertPrice, syncPrice) {
+    alertPrices[currentSymbol] = alertPrice;
+    syncPrices[currentSymbol] = syncPrice; // salva linea sincronizzata
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
+    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     syncHorizLines();
 
     if (!favorites.includes(currentSymbol)) {
@@ -907,6 +914,7 @@ window.onload = async () => {
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
     alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
+    syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}'); // carica sync level
     const savedIntervals = localStorage.getItem('customIntervals');
     if (savedIntervals) customIntervals = JSON.parse(savedIntervals);
 
@@ -932,7 +940,7 @@ window.onload = async () => {
     document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
 
     document.querySelectorAll('.title-ruler').forEach(el => {
-        el.style.color = '#888888'; // iniziale meno bianco
+        el.style.color = '#888888';
         el.style.opacity = '0.5';
         el.style.filter = 'brightness(1)';
     });
