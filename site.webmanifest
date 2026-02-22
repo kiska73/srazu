@@ -1,6 +1,15 @@
 {
   "name": "SRAZU - Crypto Price Action",
   "short_name": "SRAZU",
+  "id": "srazu-crypto",
+  "lang": "it",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "landscape-primary",
+  "theme_color": "#00ff85",
+  "background_color": "#0f1117",
+  "categories": ["finance", "cryptocurrency"],
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -14,11 +23,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "theme_color": "#00ff85",
-  "background_color": "#0f1117",
-  "display": "standalone",
-  "orientation": "landscape-secondary",
-  "scope": "/",
-  "start_url": "/"
+  ]
 }
