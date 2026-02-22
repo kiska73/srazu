@@ -759,7 +759,7 @@ document.getElementById("set-local-alert").onclick = () => {
 function completeAlertSetup(alertPrice, syncPrice) {
     alertPrices[currentSymbol] = alertPrice;
     syncPrices[currentSymbol] = syncPrice;
-    savedHorizPrices[currentSymbol] = syncPrice; // salva come orizzontale persistente
+    savedHorizPrices[currentSymbol] = syncPrice;
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
     localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
@@ -933,6 +933,17 @@ if ('serviceWorker' in navigator) {
             .then(reg => console.log('SW registered: ', reg))
             .catch(err => console.log('SW registration failed: ', err));
     });
+};
+
+// ====================== FORZA LANDSCAPE SU CELLULARE E TABLET ======================
+async function lockLandscape() {
+  if (!('screen' in window) || !screen.orientation || !screen.orientation.lock) return;
+  try {
+    await screen.orientation.lock('landscape-primary');
+    console.log('%c✅ SRAZU bloccato in landscape', 'color:#00ff85;font-weight:bold');
+  } catch (e) {
+    console.log('Landscape lock non disponibile (normale su iOS)');
+  }
 }
 
 window.onload = async () => {
@@ -971,6 +982,9 @@ window.onload = async () => {
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 
+    // FORZA LANDSCAPE (integrato)
+    lockLandscape();
+
     window.addEventListener("resize", () => {
         const totalSlots = visibleBarsCount + spaceBarsCount;
         for (const id in charts) {
@@ -988,5 +1002,11 @@ window.onload = async () => {
             fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
             applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
         }
+        lockLandscape();
     });
 };
+
+// Riprova lock quando torna visibile
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) lockLandscape();
+});
