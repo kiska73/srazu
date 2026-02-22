@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -95,26 +95,21 @@
   <div class="modal-content">
     <span class="close">×</span>
     <h3>Settings</h3>
-
     <div style="display:flex; gap:10px; margin:15px 0; flex-wrap:wrap;">
       <button id="toggle-ema">EMA: On</button>
       <button id="toggle-bb">Bollinger Bands: Off</button>
     </div>
-
     <div id="ema-periods-section">
       <label>EMA 1: <input type="number" min="1" id="ema1" value="5"></label>
       <label>EMA 2: <input type="number" min="1" id="ema2" value="10"></label>
       <label>EMA 3: <input type="number" min="1" id="ema3" value="60"></label>
       <label>EMA 4: <input type="number" min="1" id="ema4" value="223"></label>
     </div>
-
     <div id="bb-periods-section" style="display:none;">
       <label>Bollinger Period: <input type="number" min="1" id="bb-period" value="20"></label>
       <label>Bollinger Std Dev: <input type="number" min="0.1" step="0.1" id="bb-dev" value="2"></label>
     </div>
-
     <hr style="border-color:#333; margin:20px 0;">
-
     <label>Top Left Chart TF:
       <select id="tf-chart-5m">
         <option value="1">1m</option>
@@ -127,7 +122,6 @@
         <option value="D">1d</option>
       </select>
     </label>
-
     <label>Top Right Chart TF:
       <select id="tf-chart-30m">
         <option value="1">1m</option>
@@ -140,7 +134,6 @@
         <option value="D">1d</option>
       </select>
     </label>
-
     <label>Bottom Left Chart TF:
       <select id="tf-chart-4h">
         <option value="1">1m</option>
@@ -153,7 +146,6 @@
         <option value="D">1d</option>
       </select>
     </label>
-
     <label>Bottom Right Chart TF:
       <select id="tf-chart-1d">
         <option value="1">1m</option>
@@ -166,23 +158,17 @@
         <option value="D" selected>1d</option>
       </select>
     </label>
-
     <hr style="border-color:#333; margin:20px 0;">
-
     <h4>Telegram Alerts (Required)</h4>
     <p style="font-size:14px; color:#ccc;">Private alerts managed by server. Configure your personal bot.</p>
-
     <div style="margin-left:20px; margin-top:10px;">
       <button id="open-botfather-btn">Open @BotFather to create your bot (30 seconds)</button>
-
       <label>Bot Token:<br>
         <input type="password" id="personal-tg-token" placeholder="123456:ABC-...">
       </label>
-
       <label>Chat ID:<br>
         <input type="text" id="personal-tg-chatid" placeholder="123456789">
       </label>
-
       <p style="font-size:12px; color:#aaa; margin-top:15px;">
         <strong>Quick guide:</strong><br>
         1. Click button → open @BotFather.<br>
@@ -191,7 +177,6 @@
         4. Apply → private alerts!
       </p>
     </div>
-
     <button id="apply-settings">Apply</button>
   </div>
 </div>
@@ -207,7 +192,6 @@
     <p><strong>- No login, no data collection – your privacy is safe.</strong></p>
     <p><strong>- Independent and unbiased: we are not affiliated with any exchange.</strong></p>
     <p><strong>- Telegram alert with personal bot.</strong></p>
-
     <h4>MAIN FEATURES</h4>
     <ul>
       <li>Real-time charts that update instantly.</li>
@@ -221,7 +205,6 @@
       <li>Customize moving average settings.</li>
       <li>Dynamic color bands based on BTC movement.</li>
     </ul>
-
     <h4>Price Ruler Tool 📏</h4>
     <ul>
       <li>Click the ruler icon (right of the bell) to toggle measurement mode on/off.</li>
