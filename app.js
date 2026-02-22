@@ -409,7 +409,7 @@ async function fetchPairs() {
 
         if (currentExchange === "binance") {
             const infoRes = await fetch(baseUrl);
-            if (!infoRes.ok) return;
+            if (!infoRes.ok) throw new Error('Exchange info fetch failed');
             const info = await infoRes.json();
 
             activeSymbols = info.symbols
@@ -418,7 +418,7 @@ async function fetchPairs() {
         }
 
         const tickerRes = await fetch(currentExchange === "bybit" ? baseUrl : tickerUrl);
-        if (!tickerRes.ok) return;
+        if (!tickerRes.ok) throw new Error('Ticker fetch failed');
         const tickerData = await tickerRes.json();
 
         let rawList = currentExchange === "bybit" ? (tickerData.result?.list || []) : tickerData;
@@ -437,6 +437,10 @@ async function fetchPairs() {
         populateList(currentSort);
     } catch (e) {
         console.error("Fetch pairs error:", e);
+        document.getElementById("pairs-list").innerHTML = `
+            <div class='loading' style="color:#ff5252;">Error loading pairs. Check connection or try later.</div>
+            <button onclick="fetchPairs()" style="margin:10px auto; display:block; background:#00ff85; color:#000; border:none; padding:8px 16px; cursor:pointer;">Retry</button>
+        `;
     }
 }
 
