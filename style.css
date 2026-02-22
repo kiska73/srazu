@@ -5,6 +5,7 @@ body {
   color: #ffffff;
   font-family: Arial, sans-serif;
   height: 100vh;
+  width: 100vw;
   overflow: hidden;
 }
 
@@ -249,6 +250,18 @@ body {
   z-index: 10;
 }
 
+/* Pulsanti Alert Panel */
+#alert-setup button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  margin: 0 4px;
+}
+
 #set-local-alert {
   background: #FFD700 !important;
   color: #000000 !important;
@@ -259,28 +272,35 @@ body {
   color: #000000 !important;
 }
 
-.title-ruler {
-  color: #888888;
-  opacity: 0.5;
-  transition: color 0.3s, opacity 0.3s, filter 0.3s;
+#set-local-alert:hover {
+  background: #e6c200 !important;
 }
 
-.title-ruler.active {
-  color: #ffffff;
-  opacity: 1;
-  filter: brightness(1.5);
+#open-in-exchange:hover {
+  background: #00cc6a !important;
 }
 
+/* Tablet e desktop */
 @media (min-width: 769px) {
-  #app { grid-template-columns: 1fr 280px; }
-  #pairs { position: static !important; }
-  #mobile-pairs-toggle, #mobile-pairs-close { display: none !important; }
+  #app {
+    grid-template-columns: 1fr 280px;
+  }
+  #pairs {
+    position: static !important;
+    right: auto !important;
+    transition: none !important;
+  }
+  #mobile-pairs-toggle,
+  #mobile-pairs-close {
+    display: none !important;
+  }
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
   #app { grid-template-columns: 1fr 250px; }
 }
 
+/* Mobile: forza landscape (tutto visibile in orizzontale) */
 @media (max-width: 768px) and (orientation: portrait) {
   #app, #charts, #pairs, #fullscreen-overlay { display: none !important; }
   body::before {
@@ -303,11 +323,62 @@ body {
 
 @media (max-width: 768px) and (orientation: landscape) {
   #app { grid-template-columns: 1fr 180px; }
-  #charts { gap: 1px; }
+  #charts { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; }
   .chart-title { height: 22px; padding: 2px 20px 2px 2px; font-size: 10px; }
   .title-text { font-size: 11px; }
   .title-bell, .title-ruler, .title-fullscreen { font-size: 14px !important; }
   .title-pct { font-size: 12px; }
   .pair { font-size: 10px; padding: 5px 8px; }
   .pairs-header { font-size: 10px; padding: 4px; }
+  body { font-size: 11px; }
+}
+
+/* Icona metro – cambia colore quando attivo */
+.title-ruler {
+  color: #888888;
+  opacity: 0.5;
+  transition: color 0.3s, opacity 0.3s, filter 0.3s;
+}
+
+.title-ruler.active {
+  color: #ffffff;
+  opacity: 1;
+  filter: brightness(1.5);
+}
+
+/* Forza pieno schermo su mobile/tablet */
+html, body {
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Migliora portrait: messaggio più aggressivo + blocco totale */
+@media (max-width: 1024px) and (orientation: portrait) {
+  #app, #charts, #pairs, #fullscreen-overlay { display: none !important; }
+  body::before {
+    content: "Ruota il dispositivo in orizzontale per usare SRAZU (tocca per ritentare)";
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: #0f1117;
+    color: #00ff85;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    z-index: 99999;
+    cursor: pointer;
+  }
+  body::before:active { opacity: 0.8; }  // Effetto tocco per ritentare
+}
+
+/* Landscape: forza resize pieno schermo senza barra */
+@media (max-width: 1024px) and (orientation: landscape) {
+  html, body, #app, #charts { height: 100vh !important; width: 100vw !important; }
+  .chart-container { height: calc(100vh - 30px) !important; }  // Sottrai altezza titolo
 }
