@@ -759,7 +759,7 @@ document.getElementById("set-local-alert").onclick = () => {
 function completeAlertSetup(alertPrice, syncPrice) {
     alertPrices[currentSymbol] = alertPrice;
     syncPrices[currentSymbol] = syncPrice;
-    savedHorizPrices[currentSymbol] = syncPrice;
+    savedHorizPrices[currentSymbol] = syncPrice; // salva come orizzontale persistente
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
     localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
@@ -933,16 +933,18 @@ if ('serviceWorker' in navigator) {
             .then(reg => console.log('SW registered: ', reg))
             .catch(err => console.log('SW registration failed: ', err));
     });
-};
+}
 
-// ====================== FORZA LANDSCAPE SU CELLULARE E TABLET ======================
+// ====================== FORZA LANDSCAPE SU CELLULARE/TABLET ======================
 async function lockLandscape() {
-  if (!('screen' in window) || !screen.orientation || !screen.orientation.lock) return;
+  if (!screen.orientation || !screen.orientation.lock) return;
   try {
     await screen.orientation.lock('landscape-primary');
-    console.log('%c✅ SRAZU bloccato in landscape', 'color:#00ff85;font-weight:bold');
+    console.log('✅ Locked in landscape');
   } catch (e) {
-    console.log('Landscape lock non disponibile (normale su iOS)');
+    console.log('Lock non supportato (iOS):', e);
+    // Fallback iOS: simula con resize forzato
+    setTimeout(() => window.scrollTo(0, 1), 100);  // Nascondi barra browser
   }
 }
 
@@ -1003,6 +1005,18 @@ window.onload = async () => {
             applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
         }
         lockLandscape();
+    });
+
+    // Listener per rotazione (risolve mezzo schermo)
+    window.addEventListener('orientationchange', () => {
+      lockLandscape();
+      setTimeout(() => {
+        // Forza relayout
+        document.body.style.display = 'none';
+        document.body.offsetHeight;  // Trigger reflow
+        document.body.style.display = 'block';
+        Object.keys(charts).forEach(id => charts[id]?.resize());  // Resize grafici
+      }, 300);  // Delay per rotazione completata
     });
 };
 
