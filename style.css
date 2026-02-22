@@ -359,3 +359,27 @@ body {
   opacity: 1;
   filter: brightness(1.5);
 }
+/* BANNER PUBBLICITARIO PICCOLO */
+#ad-banner {
+  padding: 6px 8px;
+  background: #161a25;
+  border-top: 1px solid #222;
+  text-align: center;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* MODAL VIDEO AD */
+#video-ad-modal .modal-content {
+  background: #1f2433;
+  border: 2px solid #00ff85;
+  box-shadow: 0 0 30px rgba(0,255,133,0.3);
+}
+
+/* Miglioramenti landscape mobile/tablet */
+@media (max-width: 768px) and (orientation: landscape) {
+  #ad-banner { min-height: 52px; }
+}
