@@ -1,4 +1,4 @@
-const CACHE_NAME = 'srazu-v7';
+const CACHE_NAME = 'srazu-v8';
 
 const CORE_ASSETS = [
   '/', '/index.html', '/style.css', '/app.js', '/site.webmanifest',
