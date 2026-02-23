@@ -5,7 +5,7 @@
   "lang": "it",
   "start_url": "/",
   "scope": "/",
-  "display": "fullscreen",  // Questo nasconde la barra browser su Android/iOS quando installata
+  "display": "fullscreen",
   "orientation": "landscape-primary",
   "theme_color": "#00ff85",
   "background_color": "#0f1117",
