@@ -58,6 +58,25 @@ body {
   font-size: 14px;
 }
 
+#exchange-select,
+#sort-select {
+  background: #1f2433;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+#settings-btn {
+  background: #2a3150;
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 #pairs-list {
   flex: 1;
   overflow-y: auto;
@@ -79,6 +98,8 @@ body {
   .title-bell, .title-ruler, .title-fullscreen { font-size: 20px !important; }
   .pair { font-size: 12px; padding: 8px 6px; }
   .pairs-header { padding: 10px 6px; font-size: 12px; }
+  #exchange-select, #sort-select { padding: 4px 6px; font-size: 12px; }
+  #settings-btn { padding: 6px 8px; font-size: 12px; }
 }
 
 /* Portrait: messaggio ruota */
