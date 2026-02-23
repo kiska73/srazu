@@ -437,10 +437,6 @@ async function fetchPairs() {
         populateList(currentSort);
     } catch (e) {
         console.error("Fetch pairs error:", e);
-        document.getElementById("pairs-list").innerHTML = `
-            <div class='loading' style="color:#ff5252;">Error loading pairs.<br>
-            <button onclick="fetchPairs()" style="margin:10px auto;display:block;background:#00ff85;color:#000;border:none;padding:8px 16px;cursor:pointer;">Retry</button>
-            </div>`;
     }
 }
 
@@ -511,7 +507,9 @@ async function createChart(containerId) {
     textSpan.textContent = klines.length ? `${currentSymbol} - ${label}` : "No data – check connection";
     titleEl.className = "chart-title neutral";
 
-    if (!klines.length) return;
+    if (!klines.length) {
+        return;
+    }
 
     symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
 
@@ -526,7 +524,11 @@ async function createChart(containerId) {
     });
 
     const series = chart.addCandlestickSeries({
-        priceFormat: { type: "price", precision: symbolPricePrecision, minMove: 10 ** -symbolPricePrecision },
+        priceFormat: { 
+            type: "price", 
+            precision: symbolPricePrecision, 
+            minMove: 10 ** -symbolPricePrecision 
+        },
         upColor: '#ffffff',
         downColor: '#0051D4',
         wickUpColor: '#cccccc',
@@ -757,7 +759,7 @@ document.getElementById("set-local-alert").onclick = () => {
 function completeAlertSetup(alertPrice, syncPrice) {
     alertPrices[currentSymbol] = alertPrice;
     syncPrices[currentSymbol] = syncPrice;
-    savedHorizPrices[currentSymbol] = syncPrice;
+    savedHorizPrices[currentSymbol] = syncPrice; // salva come orizzontale persistente
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
     localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
