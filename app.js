@@ -935,38 +935,18 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ====================== FORZA LANDSCAPE + FULL SCREEN FIX ======================
+// ====================== FORZA LANDSCAPE SU CELLULARE/TABLET ======================
 async function lockLandscape() {
   if (!screen.orientation || !screen.orientation.lock) return;
   try {
     await screen.orientation.lock('landscape-primary');
-  } catch (e) {}
+    console.log('✅ Locked in landscape');
+  } catch (e) {
+    console.log('Lock non supportato (iOS):', e);
+    // Fallback iOS: simula con resize forzato
+    setTimeout(() => window.scrollTo(0, 1), 100);  // Nascondi barra browser
+  }
 }
-
-window.addEventListener("resize", () => {
-    const totalSlots = visibleBarsCount + spaceBarsCount;
-    document.getElementById("app").style.width = window.innerWidth + "px";
-    document.getElementById("app").style.height = window.innerHeight + "px";
-
-    for (const id in charts) {
-        const el = document.getElementById(id);
-        if (charts[id] && el) {
-            const w = Math.max(200, el.clientWidth);
-            const h = Math.max(150, el.clientHeight);
-            charts[id].resize(w, h);
-            const newSpacing = w / totalSlots;
-            charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
-            applyVisibleRange(charts[id], candleSeries[id]);
-        }
-    }
-    if (fullscreenActive && fullscreenChart) {
-        fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
-        const newSpacing = window.innerWidth / totalSlots;
-        fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
-        applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
-    }
-    lockLandscape();
-});
 
 window.onload = async () => {
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
@@ -1004,19 +984,43 @@ window.onload = async () => {
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 
+    // FORZA LANDSCAPE (integrato)
     lockLandscape();
 
+    window.addEventListener("resize", () => {
+        const totalSlots = visibleBarsCount + spaceBarsCount;
+        for (const id in charts) {
+            const el = document.getElementById(id);
+            if (charts[id] && el) {
+                charts[id].resize(el.clientWidth, el.clientHeight);
+                const newSpacing = el.clientWidth / totalSlots;
+                charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
+                applyVisibleRange(charts[id], candleSeries[id]);
+            }
+        }
+        if (fullscreenActive && fullscreenChart) {
+            fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
+            const newSpacing = window.innerWidth / totalSlots;
+            fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
+            applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
+        }
+        lockLandscape();
+    });
+
+    // Listener per rotazione (risolve mezzo schermo)
     window.addEventListener('orientationchange', () => {
       lockLandscape();
       setTimeout(() => {
+        // Forza relayout
         document.body.style.display = 'none';
-        document.body.offsetHeight;
+        document.body.offsetHeight;  // Trigger reflow
         document.body.style.display = 'block';
-        Object.keys(charts).forEach(id => charts[id]?.resize());
-      }, 300);
+        Object.keys(charts).forEach(id => charts[id]?.resize());  // Resize grafici
+      }, 300);  // Delay per rotazione completata
     });
 };
 
+// Riprova lock quando torna visibile
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) lockLandscape();
 });
