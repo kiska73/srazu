@@ -409,7 +409,7 @@ async function fetchPairs() {
 
         if (currentExchange === "binance") {
             const infoRes = await fetch(baseUrl);
-            if (!infoRes.ok) throw new Error('Exchange info fetch failed');
+            if (!infoRes.ok) return;
             const info = await infoRes.json();
 
             activeSymbols = info.symbols
@@ -418,7 +418,7 @@ async function fetchPairs() {
         }
 
         const tickerRes = await fetch(currentExchange === "bybit" ? baseUrl : tickerUrl);
-        if (!tickerRes.ok) throw new Error('Ticker fetch failed');
+        if (!tickerRes.ok) return;
         const tickerData = await tickerRes.json();
 
         let rawList = currentExchange === "bybit" ? (tickerData.result?.list || []) : tickerData;
@@ -438,9 +438,9 @@ async function fetchPairs() {
     } catch (e) {
         console.error("Fetch pairs error:", e);
         document.getElementById("pairs-list").innerHTML = `
-            <div class='loading' style="color:#ff5252;">Error loading pairs. Check connection or try later.</div>
-            <button onclick="fetchPairs()" style="margin:10px auto; display:block; background:#00ff85; color:#000; border:none; padding:8px 16px; cursor:pointer;">Retry</button>
-        `;
+            <div class='loading' style="color:#ff5252;">Error loading pairs.<br>
+            <button onclick="fetchPairs()" style="margin:10px auto;display:block;background:#00ff85;color:#000;border:none;padding:8px 16px;cursor:pointer;">Retry</button>
+            </div>`;
     }
 }
 
@@ -511,9 +511,7 @@ async function createChart(containerId) {
     textSpan.textContent = klines.length ? `${currentSymbol} - ${label}` : "No data – check connection";
     titleEl.className = "chart-title neutral";
 
-    if (!klines.length) {
-        return;
-    }
+    if (!klines.length) return;
 
     symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
 
@@ -528,11 +526,7 @@ async function createChart(containerId) {
     });
 
     const series = chart.addCandlestickSeries({
-        priceFormat: { 
-            type: "price", 
-            precision: symbolPricePrecision, 
-            minMove: 10 ** -symbolPricePrecision 
-        },
+        priceFormat: { type: "price", precision: symbolPricePrecision, minMove: 10 ** -symbolPricePrecision },
         upColor: '#ffffff',
         downColor: '#0051D4',
         wickUpColor: '#cccccc',
@@ -763,7 +757,7 @@ document.getElementById("set-local-alert").onclick = () => {
 function completeAlertSetup(alertPrice, syncPrice) {
     alertPrices[currentSymbol] = alertPrice;
     syncPrices[currentSymbol] = syncPrice;
-    savedHorizPrices[currentSymbol] = syncPrice; // salva come orizzontale persistente
+    savedHorizPrices[currentSymbol] = syncPrice;
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
     localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
@@ -939,18 +933,38 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ====================== FORZA LANDSCAPE SU CELLULARE/TABLET ======================
+// ====================== FORZA LANDSCAPE + FULL SCREEN FIX ======================
 async function lockLandscape() {
   if (!screen.orientation || !screen.orientation.lock) return;
   try {
     await screen.orientation.lock('landscape-primary');
-    console.log('✅ Locked in landscape');
-  } catch (e) {
-    console.log('Lock non supportato (iOS):', e);
-    // Fallback iOS: simula con resize forzato
-    setTimeout(() => window.scrollTo(0, 1), 100);  // Nascondi barra browser
-  }
+  } catch (e) {}
 }
+
+window.addEventListener("resize", () => {
+    const totalSlots = visibleBarsCount + spaceBarsCount;
+    document.getElementById("app").style.width = window.innerWidth + "px";
+    document.getElementById("app").style.height = window.innerHeight + "px";
+
+    for (const id in charts) {
+        const el = document.getElementById(id);
+        if (charts[id] && el) {
+            const w = Math.max(200, el.clientWidth);
+            const h = Math.max(150, el.clientHeight);
+            charts[id].resize(w, h);
+            const newSpacing = w / totalSlots;
+            charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
+            applyVisibleRange(charts[id], candleSeries[id]);
+        }
+    }
+    if (fullscreenActive && fullscreenChart) {
+        fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
+        const newSpacing = window.innerWidth / totalSlots;
+        fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
+        applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
+    }
+    lockLandscape();
+});
 
 window.onload = async () => {
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
@@ -988,43 +1002,19 @@ window.onload = async () => {
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 
-    // FORZA LANDSCAPE (integrato)
     lockLandscape();
 
-    window.addEventListener("resize", () => {
-        const totalSlots = visibleBarsCount + spaceBarsCount;
-        for (const id in charts) {
-            const el = document.getElementById(id);
-            if (charts[id] && el) {
-                charts[id].resize(el.clientWidth, el.clientHeight);
-                const newSpacing = el.clientWidth / totalSlots;
-                charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
-                applyVisibleRange(charts[id], candleSeries[id]);
-            }
-        }
-        if (fullscreenActive && fullscreenChart) {
-            fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
-            const newSpacing = window.innerWidth / totalSlots;
-            fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
-            applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
-        }
-        lockLandscape();
-    });
-
-    // Listener per rotazione (risolve mezzo schermo)
     window.addEventListener('orientationchange', () => {
       lockLandscape();
       setTimeout(() => {
-        // Forza relayout
         document.body.style.display = 'none';
-        document.body.offsetHeight;  // Trigger reflow
+        document.body.offsetHeight;
         document.body.style.display = 'block';
-        Object.keys(charts).forEach(id => charts[id]?.resize());  // Resize grafici
-      }, 300);  // Delay per rotazione completata
+        Object.keys(charts).forEach(id => charts[id]?.resize());
+      }, 300);
     });
 };
 
-// Riprova lock quando torna visibile
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) lockLandscape();
 });
