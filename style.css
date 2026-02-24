@@ -1,233 +1,5 @@
-body {
-  margin: 0;
-  padding: 0;
-  background: #0f1117;
-  color: #ffffff;
-  font-family: Arial, sans-serif;
-  height: 100dvh;
-  width: 100vw;
-  overflow: hidden;
-}
-
-#app {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  height: 100dvh;
-  width: 100vw;
-}
-
-#charts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  height: 100dvh;
-  gap: 2px;
-  background: #222;
-}
-
-.chart-wrapper {
-  display: flex;
-  flex-direction: column;
-  background: #0f1117;
-}
-
-.chart-title, .fullscreen-title {
-  position: relative;
-  padding: 8px 40px 8px 8px;
-  background: #161a25;
-  font-weight: bold;
-  text-align: center;
-  border-bottom: 1px solid #222;
-  flex-shrink: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.title-text {
-  flex: 1;
-  text-align: center;
-  font-size: 16px;
-  font-weight: bold;
-  margin: 0 10px;
-}
-
-.fullscreen-title {
-  padding: 8px 50px 8px 8px;
-  height: 40px;
-}
-
-.chart-container {
-  flex: 1;
-  position: relative;
-}
-
-#pairs {
-  border-left: 1px solid #222;
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  min-width: 280px;
-}
-
-.pairs-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: #161a25;
-  font-weight: bold;
-  border-bottom: 1px solid #222;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.header-left,
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-#exchange-select,
-#sort-select {
-  background: #1f2433;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-#settings-btn {
-  background: #2a3150;
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-#pairs-list {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.pair {
-  padding: 10px 12px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  align-items: center;
-}
-
-.pair:hover { background: #1f2433; }
-.pair.active { background: #2a3150; font-weight: bold; }
-
-.pair-symbol {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.star {
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.star.favorite {
-  color: #FFD700;
-}
-
-.green { color: #00ff85; }
-.red { color: #ff5252; }
-
-.loading {
-  padding: 40px;
-  text-align: center;
-  color: #aaa;
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 100;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.8);
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-}
-
-.modal-content {
-  background: #161a25;
-  padding: 20px;
-  width: 340px;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow-y: auto;
-  border-radius: 8px;
-  border: 1px solid #222;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-}
-
-.close {
-  float: right;
-  font-size: 28px;
-  cursor: pointer;
-  color: #aaa;
-}
-
-.modal label {
-  display: block;
-  margin: 12px 0 6px;
-}
-
-.modal input[type=number], .modal input[type=text], .modal input[type=password] {
-  width: 100%;
-  padding: 6px;
-  background: #1f2433;
-  border: none;
-  color: white;
-}
-
-.modal button {
-  margin-top: 20px;
-  padding: 10px 16px;
-  background: #2a3150;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-#apply-settings {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  margin-top: 20px;
-  padding: 12px;
-  background: #2a3150;
-  font-size: 16px;
-}
-
-.chart-title.green { background: #004d26 !important; }
-.chart-title.red { background: #4d0000 !important; }
-.chart-title.neutral { background: #161a25 !important; }
-
-#toggle-ema.active, #toggle-bb.active {
-  background: #00ff85 !important;
-  color: black !important;
-}
-
-/* Tablet e desktop */
-@media (min-width: 768px) {
+/* ====================== TABLET E DESKTOP ====================== */
+@media (min-width: 769px) {
   #app {
     grid-template-columns: 1fr 280px;
   }
@@ -242,26 +14,26 @@ body {
   }
 }
 
-@media (max-width: 1024px) and (min-width: 768px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   #app { grid-template-columns: 1fr 250px; }
 }
 
-/* Mobile landscape - sidebar forzata */
-@media (max-width: 767px) and (orientation: landscape) {
+/* ====================== MOBILE LANDSCAPE - SIDEBAR VISIBILE (stesso layout PC) ====================== */
+@media (max-width: 768px) and (orientation: landscape) {
   #app {
-    grid-template-columns: 1fr 200px !important;
-    height: 100dvh !important;
+    grid-template-columns: 1fr 175px !important;
+    height: 100vh !important;
     width: 100vw !important;
   }
 
   #pairs {
     display: flex !important;
     position: static !important;
-    width: 200px !important;
-    min-width: 200px !important;
+    width: 175px !important;
+    min-width: 175px !important;
     border-left: 1px solid #222;
     flex-direction: column;
-    height: 100dvh !important;
+    height: 100vh;
   }
 
   #charts {
@@ -289,7 +61,7 @@ body {
   }
 
   .chart-container {
-    height: calc(100dvh - 27px) !important;
+    height: calc(100vh - 27px) !important;
   }
 
   #mobile-pairs-toggle,
@@ -300,58 +72,40 @@ body {
 
 /* Ancora più stretto (iPhone SE, vecchi Android ecc.) */
 @media (max-width: 680px) and (orientation: landscape) {
-  #app { grid-template-columns: 1fr 180px !important; }
-  #pairs { width: 180px !important; min-width: 180px !important; }
+  #app { grid-template-columns: 1fr 158px !important; }
+  #pairs { width: 158px !important; min-width: 158px !important; }
   .chart-title { height: 23px !important; font-size: 10px !important; }
 }
 
 /* Forza dimensioni corrette su tutti i landscape */
 @media (orientation: landscape) {
   html, body, #app, #charts, #pairs {
-    height: 100dvh !important;
+    height: 100vh !important;
     width: 100vw !important;
   }
 }
 
-/* Mobile portrait: messaggio ruota */
-@media (max-width: 767px) and (orientation: portrait) {
-  #app, #charts, #pairs, #fullscreen-overlay { display: none !important; }
+/* ====================== MOBILE PORTRAIT - Messaggio ruota ====================== */
+@media (max-width: 768px) and (orientation: portrait) {
+  #app, #charts, #pairs, #fullscreen-overlay,
+  #mobile-pairs-toggle, #mobile-pairs-close {
+    display: none !important;
+  }
   body::before {
-    content: "Ruota il dispositivo in orizzontale per usare SRAZU al meglio!";
+    content: "Ruota il dispositivo in orizzontale per usare SRAZU (tocca per ritentare)";
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
+    top: 0; left: 0; width: 100vw; height: 100vh;
     background: #0f1117;
     color: #00ff85;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     padding: 20px;
-    box-sizing: border-box;
     z-index: 99999;
+    cursor: pointer;
   }
-}
-
-/* Icona metro */
-.title-ruler {
-  color: #888888;
-  opacity: 0.5;
-  transition: color 0.3s, opacity 0.3s, filter 0.3s;
-}
-
-.title-ruler.active {
-  color: #ffffff;
-  opacity: 1;
-  filter: brightness(1.5);
-}
-
-/* Forza pieno schermo su mobile/tablet */
-html, body {
-  height: 100dvh;
-  width: 100vw;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+  body::before:active { opacity: 0.8; }
 }
