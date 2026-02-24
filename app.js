@@ -836,22 +836,26 @@ async function updateLive() {
     }
 }
 
-// ====================== FORZA SIDEBAR CON PROPORZIONE CORRETTA (195px) ======================
+// ====================== FORZA SIDEBAR 200px + LAYOUT PERFETTO SU MOBILE ======================
 function enforceMobileSidebar() {
   if (window.matchMedia("(orientation: landscape)").matches && window.innerWidth <= 1024) {
     const app = document.getElementById('app');
     const pairs = document.getElementById('pairs');
-    if (app) app.style.gridTemplateColumns = '1fr 195px';
+    if (app) app.style.gridTemplateColumns = '1fr 200px';
     if (pairs) {
       pairs.style.cssText = `
         display: flex !important;
         position: static !important;
-        width: 195px !important;
-        min-width: 195px !important;
+        width: 200px !important;
+        min-width: 200px !important;
         height: 100dvh !important;
         overflow: hidden !important;
       `;
     }
+    // Forza resize immediato dei grafici
+    Object.keys(charts).forEach(id => {
+      if (charts[id]) charts[id].resize();
+    });
   }
 }
 
@@ -1002,9 +1006,10 @@ window.onload = async () => {
 
     lockLandscape();
 
-    // Forza proporzione perfetta (195px)
+    // FORZA MASSIMA SIDEBAR (multi-tentativo + reflow)
     enforceMobileSidebar();
-    setTimeout(enforceMobileSidebar, 100);
+    setTimeout(enforceMobileSidebar, 50);
+    setTimeout(enforceMobileSidebar, 150);
     setTimeout(enforceMobileSidebar, 300);
     setTimeout(enforceMobileSidebar, 600);
     setTimeout(enforceMobileSidebar, 1000);
@@ -1038,10 +1043,10 @@ window.onload = async () => {
         setTimeout(enforceMobileSidebar, 300);
         setTimeout(enforceMobileSidebar, 600);
         document.body.style.display = 'none';
-        document.body.offsetHeight;
+        document.body.offsetHeight; // force reflow
         document.body.style.display = 'block';
         Object.keys(charts).forEach(id => charts[id]?.resize());
-      }, 350);
+      }, 300);
     });
 };
 
