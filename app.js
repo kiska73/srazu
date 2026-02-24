@@ -838,14 +838,18 @@ async function updateLive() {
 
 // ====================== FORZA SIDEBAR VISIBILE SU CELLULARE IN LANDSCAPE ======================
 function enforceMobileSidebar() {
-  if (window.innerWidth <= 768 && window.matchMedia("(orientation: landscape)").matches) {
-    const pairsEl = document.getElementById('pairs');
-    if (pairsEl) {
-      pairsEl.style.cssText = `
+  if (window.matchMedia("(orientation: landscape)").matches && window.innerWidth <= 1024) {
+    const app = document.getElementById('app');
+    const pairs = document.getElementById('pairs');
+    if (app) app.style.gridTemplateColumns = '1fr 175px';
+    if (pairs) {
+      pairs.style.cssText = `
         display: flex !important;
         position: static !important;
-        width: auto !important;
-        min-width: 158px !important;
+        width: 175px !important;
+        min-width: 175px !important;
+        height: 100dvh !important;
+        overflow: hidden !important;
       `;
     }
   }
@@ -998,8 +1002,11 @@ window.onload = async () => {
 
     lockLandscape();
 
-    // Forza sidebar su mobile landscape
+    // Forza sidebar su mobile landscape (multi-tentativo)
     enforceMobileSidebar();
+    setTimeout(enforceMobileSidebar, 100);
+    setTimeout(enforceMobileSidebar, 300);
+    setTimeout(enforceMobileSidebar, 600);
 
     window.addEventListener("resize", () => {
         const totalSlots = visibleBarsCount + spaceBarsCount;
@@ -1026,6 +1033,8 @@ window.onload = async () => {
       lockLandscape();
       setTimeout(() => {
         enforceMobileSidebar();
+        setTimeout(enforceMobileSidebar, 100);
+        setTimeout(enforceMobileSidebar, 300);
         document.body.style.display = 'none';
         document.body.offsetHeight;
         document.body.style.display = 'block';
