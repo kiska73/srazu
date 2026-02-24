@@ -4,7 +4,7 @@ body {
   background: #0f1117;
   color: #ffffff;
   font-family: Arial, sans-serif;
-  height: 100vh;
+  height: 100dvh;
   width: 100vw;
   overflow: hidden;
 }
@@ -12,14 +12,15 @@ body {
 #app {
   display: grid;
   grid-template-columns: 1fr 280px;
-  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
 }
 
 #charts {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  height: 100vh;
+  height: 100dvh;
   gap: 2px;
   background: #222;
 }
@@ -68,7 +69,8 @@ body {
   border-left: 1px solid #222;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
+  min-width: 175px;
 }
 
 .pairs-header {
@@ -224,87 +226,17 @@ body {
   color: black !important;
 }
 
-#mobile-pairs-toggle {
-  display: none;
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 100;
-  background: #2a3150;
-  color: white;
-  padding: 12px 18px;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  font-size: 20px;
-}
-
-#mobile-pairs-close {
-  display: none;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 32px;
-  cursor: pointer;
-  color: #aaa;
-  z-index: 10;
-}
-
-/* Pulsanti Alert Panel */
-#alert-setup button {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 14px;
-  margin: 0 4px;
-}
-
-#set-local-alert {
-  background: #FFD700 !important;
-  color: #000000 !important;
-}
-
-#open-in-exchange {
-  background: #00ff85 !important;
-  color: #000000 !important;
-}
-
-#set-local-alert:hover {
-  background: #e6c200 !important;
-}
-
-#open-in-exchange:hover {
-  background: #00cc6a !important;
-}
-
 /* ====================== TABLET E DESKTOP ====================== */
 @media (min-width: 769px) {
-  #app {
-    grid-template-columns: 1fr 280px;
-  }
-  #pairs {
-    position: static !important;
-    right: auto !important;
-    transition: none !important;
-  }
-  #mobile-pairs-toggle,
-  #mobile-pairs-close {
-    display: none !important;
-  }
+  #app { grid-template-columns: 1fr 280px; }
+  #pairs { position: static !important; min-width: 280px; }
 }
 
-@media (max-width: 1024px) and (min-width: 769px) {
-  #app { grid-template-columns: 1fr 250px; }
-}
-
-/* ====================== MOBILE LANDSCAPE - SIDEBAR VISIBILE ====================== */
-@media (max-width: 768px) and (orientation: landscape) {
+/* ====================== MOBILE LANDSCAPE - SIDEBAR FORZATA ====================== */
+@media (max-width: 1024px) and (orientation: landscape) {
   #app {
     grid-template-columns: 1fr 175px !important;
-    height: 100vh !important;
+    height: 100dvh !important;
     width: 100vw !important;
   }
 
@@ -315,7 +247,8 @@ body {
     min-width: 175px !important;
     border-left: 1px solid #222;
     flex-direction: column;
-    height: 100vh;
+    height: 100dvh !important;
+    overflow: hidden;
   }
 
   #charts {
@@ -343,7 +276,7 @@ body {
   }
 
   .chart-container {
-    height: calc(100vh - 27px) !important;
+    height: calc(100dvh - 27px) !important;
   }
 
   #mobile-pairs-toggle,
@@ -352,23 +285,23 @@ body {
   }
 }
 
-/* Ancora più stretto (iPhone SE, vecchi Android) */
+/* Ancora più stretto (vecchi cellulari) */
 @media (max-width: 680px) and (orientation: landscape) {
   #app { grid-template-columns: 1fr 158px !important; }
   #pairs { width: 158px !important; min-width: 158px !important; }
   .chart-title { height: 23px !important; font-size: 10px !important; }
 }
 
-/* Forza dimensioni corrette su tutti i landscape */
+/* Forza su tutti i landscape */
 @media (orientation: landscape) {
   html, body, #app, #charts, #pairs {
-    height: 100vh !important;
+    height: 100dvh !important;
     width: 100vw !important;
   }
 }
 
 /* ====================== MOBILE PORTRAIT - Messaggio ruota ====================== */
-@media (max-width: 768px) and (orientation: portrait) {
+@media (max-width: 1024px) and (orientation: portrait) {
   #app, #charts, #pairs, #fullscreen-overlay,
   #mobile-pairs-toggle, #mobile-pairs-close {
     display: none !important;
@@ -376,7 +309,7 @@ body {
   body::before {
     content: "Ruota il dispositivo in orizzontale per usare SRAZU (tocca per ritentare)";
     position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
+    top: 0; left: 0; width: 100vw; height: 100dvh;
     background: #0f1117;
     color: #00ff85;
     font-size: 24px;
@@ -392,7 +325,7 @@ body {
   body::before:active { opacity: 0.8; }
 }
 
-/* Icona metro – cambia colore quando attivo */
+/* Icona metro */
 .title-ruler {
   color: #888888;
   opacity: 0.5;
@@ -403,13 +336,4 @@ body {
   color: #ffffff;
   opacity: 1;
   filter: brightness(1.5);
-}
-
-/* Forza pieno schermo */
-html, body {
-  height: 100vh;
-  width: 100vw;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
 }
