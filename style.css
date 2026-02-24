@@ -70,7 +70,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  min-width: 175px;
+  min-width: 200px;
 }
 
 .pairs-header {
@@ -226,16 +226,10 @@ body {
   color: black !important;
 }
 
-/* ====================== TABLET E DESKTOP ====================== */
-@media (min-width: 769px) {
-  #app { grid-template-columns: 1fr 280px; }
-  #pairs { position: static !important; min-width: 280px; }
-}
-
-/* ====================== MOBILE LANDSCAPE - SIDEBAR FORZATA ====================== */
+/* ====================== MOBILE LANDSCAPE - SIDEBAR FORZATA 200px ====================== */
 @media (max-width: 1024px) and (orientation: landscape) {
   #app {
-    grid-template-columns: 1fr 175px !important;
+    grid-template-columns: 1fr 200px !important;
     height: 100dvh !important;
     width: 100vw !important;
   }
@@ -243,11 +237,11 @@ body {
   #pairs {
     display: flex !important;
     position: static !important;
-    width: 175px !important;
-    min-width: 175px !important;
+    width: 200px !important;
+    min-width: 200px !important;
+    height: 100dvh !important;
     border-left: 1px solid #222;
     flex-direction: column;
-    height: 100dvh !important;
     overflow: hidden;
   }
 
@@ -278,18 +272,12 @@ body {
   .chart-container {
     height: calc(100dvh - 27px) !important;
   }
-
-  #mobile-pairs-toggle,
-  #mobile-pairs-close {
-    display: none !important;
-  }
 }
 
-/* Ancora più stretto (vecchi cellulari) */
+/* Ancora più stretto */
 @media (max-width: 680px) and (orientation: landscape) {
-  #app { grid-template-columns: 1fr 158px !important; }
-  #pairs { width: 158px !important; min-width: 158px !important; }
-  .chart-title { height: 23px !important; font-size: 10px !important; }
+  #app { grid-template-columns: 1fr 180px !important; }
+  #pairs { width: 180px !important; min-width: 180px !important; }
 }
 
 /* Forza su tutti i landscape */
@@ -300,12 +288,9 @@ body {
   }
 }
 
-/* ====================== MOBILE PORTRAIT - Messaggio ruota ====================== */
+/* PORTRAIT - messaggio ruota */
 @media (max-width: 1024px) and (orientation: portrait) {
-  #app, #charts, #pairs, #fullscreen-overlay,
-  #mobile-pairs-toggle, #mobile-pairs-close {
-    display: none !important;
-  }
+  #app, #charts, #pairs, #fullscreen-overlay { display: none !important; }
   body::before {
     content: "Ruota il dispositivo in orizzontale per usare SRAZU (tocca per ritentare)";
     position: fixed;
@@ -322,7 +307,6 @@ body {
     z-index: 99999;
     cursor: pointer;
   }
-  body::before:active { opacity: 0.8; }
 }
 
 /* Icona metro */
