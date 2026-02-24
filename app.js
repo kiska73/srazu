@@ -836,18 +836,18 @@ async function updateLive() {
     }
 }
 
-// ====================== FORZA SIDEBAR VISIBILE SU CELLULARE IN LANDSCAPE ======================
+// ====================== FORZA SIDEBAR CON PROPORZIONE CORRETTA (195px) ======================
 function enforceMobileSidebar() {
   if (window.matchMedia("(orientation: landscape)").matches && window.innerWidth <= 1024) {
     const app = document.getElementById('app');
     const pairs = document.getElementById('pairs');
-    if (app) app.style.gridTemplateColumns = '1fr 175px';
+    if (app) app.style.gridTemplateColumns = '1fr 195px';
     if (pairs) {
       pairs.style.cssText = `
         display: flex !important;
         position: static !important;
-        width: 175px !important;
-        min-width: 175px !important;
+        width: 195px !important;
+        min-width: 195px !important;
         height: 100dvh !important;
         overflow: hidden !important;
       `;
@@ -1002,11 +1002,12 @@ window.onload = async () => {
 
     lockLandscape();
 
-    // Forza sidebar su mobile landscape (multi-tentativo)
+    // Forza proporzione perfetta (195px)
     enforceMobileSidebar();
     setTimeout(enforceMobileSidebar, 100);
     setTimeout(enforceMobileSidebar, 300);
     setTimeout(enforceMobileSidebar, 600);
+    setTimeout(enforceMobileSidebar, 1000);
 
     window.addEventListener("resize", () => {
         const totalSlots = visibleBarsCount + spaceBarsCount;
@@ -1035,6 +1036,7 @@ window.onload = async () => {
         enforceMobileSidebar();
         setTimeout(enforceMobileSidebar, 100);
         setTimeout(enforceMobileSidebar, 300);
+        setTimeout(enforceMobileSidebar, 600);
         document.body.style.display = 'none';
         document.body.offsetHeight;
         document.body.style.display = 'block';
