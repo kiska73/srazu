@@ -759,7 +759,7 @@ document.getElementById("set-local-alert").onclick = () => {
 function completeAlertSetup(alertPrice, syncPrice) {
     alertPrices[currentSymbol] = alertPrice;
     syncPrices[currentSymbol] = syncPrice;
-    savedHorizPrices[currentSymbol] = syncPrice;
+    savedHorizPrices[currentSymbol] = syncPrice; // salva come orizzontale persistente
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
     localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
@@ -834,25 +834,6 @@ async function updateLive() {
         else if (btcLatest.close < btcLatest.open) colorClass = "red";
         document.querySelectorAll('.chart-title').forEach(t => t.className = "chart-title " + colorClass);
     }
-}
-
-// ====================== FORZA SIDEBAR VISIBILE SU CELLULARE IN LANDSCAPE ======================
-function enforceMobileSidebar() {
-  if (window.matchMedia("(orientation: landscape)").matches && window.innerWidth <= 1024) {
-    const app = document.getElementById('app');
-    const pairs = document.getElementById('pairs');
-    if (app) app.style.gridTemplateColumns = '1fr 175px';
-    if (pairs) {
-      pairs.style.cssText = `
-        display: flex !important;
-        position: static !important;
-        width: 175px !important;
-        min-width: 175px !important;
-        height: 100dvh !important;
-        overflow: hidden !important;
-      `;
-    }
-  }
 }
 
 setInterval(updateLive, 2000);
@@ -954,13 +935,16 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ====================== FORZA LANDSCAPE ======================
+// ====================== FORZA LANDSCAPE SU CELLULARE/TABLET ======================
 async function lockLandscape() {
   if (!screen.orientation || !screen.orientation.lock) return;
   try {
     await screen.orientation.lock('landscape-primary');
+    console.log('✅ Locked in landscape');
   } catch (e) {
-    console.log('Lock non supportato:', e);
+    console.log('Lock non supportato (iOS):', e);
+    // Fallback iOS: simula con resize forzato
+    setTimeout(() => window.scrollTo(0, 1), 100);  // Nascondi barra browser
   }
 }
 
@@ -1000,13 +984,8 @@ window.onload = async () => {
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 
+    // FORZA LANDSCAPE (integrato)
     lockLandscape();
-
-    // Forza sidebar su mobile landscape (multi-tentativo)
-    enforceMobileSidebar();
-    setTimeout(enforceMobileSidebar, 100);
-    setTimeout(enforceMobileSidebar, 300);
-    setTimeout(enforceMobileSidebar, 600);
 
     window.addEventListener("resize", () => {
         const totalSlots = visibleBarsCount + spaceBarsCount;
@@ -1025,21 +1004,19 @@ window.onload = async () => {
             fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
             applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
         }
-        enforceMobileSidebar();
         lockLandscape();
     });
 
+    // Listener per rotazione (risolve mezzo schermo)
     window.addEventListener('orientationchange', () => {
       lockLandscape();
       setTimeout(() => {
-        enforceMobileSidebar();
-        setTimeout(enforceMobileSidebar, 100);
-        setTimeout(enforceMobileSidebar, 300);
+        // Forza relayout
         document.body.style.display = 'none';
-        document.body.offsetHeight;
+        document.body.offsetHeight;  // Trigger reflow
         document.body.style.display = 'block';
-        Object.keys(charts).forEach(id => charts[id]?.resize());
-      }, 350);
+        Object.keys(charts).forEach(id => charts[id]?.resize());  // Resize grafici
+      }, 300);  // Delay per rotazione completata
     });
 };
 
