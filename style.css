@@ -1,25 +1,40 @@
-body {
+/* =========================
+   BASE LAYOUT FIXED MOBILE
+========================= */
+
+html, body {
   margin: 0;
   padding: 0;
   background: #0f1117;
   color: #ffffff;
   font-family: Arial, sans-serif;
-  height: 100vh;
+  height: 100dvh;
   width: 100vw;
-  overflow: hidden;
+  overflow-x: hidden;   /* NON bloccare tutto */
+}
+
+/* Dynamic viewport support */
+@supports (height: 100dvh) {
+  html, body {
+    height: 100dvh;
+  }
 }
 
 #app {
   display: grid;
   grid-template-columns: 1fr 280px;
-  height: 100vh;
+  height: 100dvh;
 }
+
+/* =========================
+   CHARTS GRID
+========================= */
 
 #charts {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  height: 100vh;
+  height: 100%;
   gap: 2px;
   background: #222;
 }
@@ -30,7 +45,8 @@ body {
   background: #0f1117;
 }
 
-.chart-title, .fullscreen-title {
+.chart-title,
+.fullscreen-title {
   position: relative;
   padding: 8px 40px 8px 8px;
   background: #161a25;
@@ -55,7 +71,6 @@ body {
 }
 
 .fullscreen-title {
-  padding: 8px 50px 8px 8px;
   height: 40px;
 }
 
@@ -64,49 +79,27 @@ body {
   position: relative;
 }
 
+/* =========================
+   PAIRS LIST
+========================= */
+
 #pairs {
   border-left: 1px solid #222;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
 }
 
 .pairs-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
+  padding: 10px;
   background: #161a25;
   font-weight: bold;
   border-bottom: 1px solid #222;
   flex-wrap: wrap;
-  gap: 10px;
-}
-
-.header-left,
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-#exchange-select,
-#sort-select {
-  background: #1f2433;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-#settings-btn {
-  background: #2a3150;
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
+  gap: 6px;
 }
 
 #pairs-list {
@@ -115,47 +108,29 @@ body {
 }
 
 .pair {
-  padding: 10px 12px;
+  padding: 8px 10px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: 13px;
   align-items: center;
 }
 
 .pair:hover { background: #1f2433; }
 .pair.active { background: #2a3150; font-weight: bold; }
 
-.pair-symbol {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.star {
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.star.favorite {
-  color: #FFD700;
-}
-
 .green { color: #00ff85; }
 .red { color: #ff5252; }
 
-.loading {
-  padding: 40px;
-  text-align: center;
-  color: #aaa;
-}
+/* =========================
+   MODALS
+========================= */
 
 .modal {
   display: none;
   position: fixed;
   z-index: 100;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
+  inset: 0;
   background: rgba(0,0,0,0.8);
   align-items: center;
   justify-content: center;
@@ -171,142 +146,20 @@ body {
   overflow-y: auto;
   border-radius: 8px;
   border: 1px solid #222;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
-.close {
-  float: right;
-  font-size: 28px;
-  cursor: pointer;
-  color: #aaa;
-}
+/* =========================
+   MOBILE PORTRAIT
+========================= */
 
-.modal label {
-  display: block;
-  margin: 12px 0 6px;
-}
+@media (max-width: 1024px) and (orientation: portrait) {
 
-.modal input[type=number], .modal input[type=text], .modal input[type=password] {
-  width: 100%;
-  padding: 6px;
-  background: #1f2433;
-  border: none;
-  color: white;
-}
+  #app { display: none !important; }
 
-.modal button {
-  margin-top: 20px;
-  padding: 10px 16px;
-  background: #2a3150;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-#apply-settings {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  margin-top: 20px;
-  padding: 12px;
-  background: #2a3150;
-  font-size: 16px;
-}
-
-.chart-title.green { background: #004d26 !important; }
-.chart-title.red { background: #4d0000 !important; }
-.chart-title.neutral { background: #161a25 !important; }
-
-#toggle-ema.active, #toggle-bb.active {
-  background: #00ff85 !important;
-  color: black !important;
-}
-
-#mobile-pairs-toggle {
-  display: none;
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 100;
-  background: #2a3150;
-  color: white;
-  padding: 12px 18px;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  font-size: 20px;
-}
-
-#mobile-pairs-close {
-  display: none;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 32px;
-  cursor: pointer;
-  color: #aaa;
-  z-index: 10;
-}
-
-/* Pulsanti Alert Panel */
-#alert-setup button {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 14px;
-  margin: 0 4px;
-}
-
-#set-local-alert {
-  background: #FFD700 !important;
-  color: #000000 !important;
-}
-
-#open-in-exchange {
-  background: #00ff85 !important;
-  color: #000000 !important;
-}
-
-#set-local-alert:hover {
-  background: #e6c200 !important;
-}
-
-#open-in-exchange:hover {
-  background: #00cc6a !important;
-}
-
-/* Tablet e desktop */
-@media (min-width: 769px) {
-  #app {
-    grid-template-columns: 1fr 280px;
-  }
-  #pairs {
-    position: static !important;
-    right: auto !important;
-    transition: none !important;
-  }
-  #mobile-pairs-toggle,
-  #mobile-pairs-close {
-    display: none !important;
-  }
-}
-
-@media (max-width: 1024px) and (min-width: 769px) {
-  #app { grid-template-columns: 1fr 250px; }
-}
-
-/* Mobile: forza landscape (tutto visibile in orizzontale) */
-@media (max-width: 768px) and (orientation: portrait) {
-  #app, #charts, #pairs, #fullscreen-overlay { display: none !important; }
   body::before {
-    content: "Ruota il dispositivo in orizzontale per usare SRAZU al meglio!";
+    content: "Ruota il dispositivo in orizzontale per usare SRAZU";
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
+    inset: 0;
     background: #0f1117;
     color: #00ff85;
     font-size: 22px;
@@ -316,69 +169,60 @@ body {
     justify-content: center;
     text-align: center;
     padding: 20px;
-    box-sizing: border-box;
     z-index: 99999;
   }
 }
 
-@media (max-width: 768px) and (orientation: landscape) {
-  #app { grid-template-columns: 1fr 180px; }
-  #charts { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; }
-  .chart-title { height: 22px; padding: 2px 20px 2px 2px; font-size: 10px; }
-  .title-text { font-size: 11px; }
-  .title-bell, .title-ruler, .title-fullscreen { font-size: 14px !important; }
-  .title-pct { font-size: 12px; }
-  .pair { font-size: 10px; padding: 5px 8px; }
-  .pairs-header { font-size: 10px; padding: 4px; }
-  body { font-size: 11px; }
-}
+/* =========================
+   MOBILE LANDSCAPE FIX
+========================= */
 
-/* Icona metro – cambia colore quando attivo */
-.title-ruler {
-  color: #888888;
-  opacity: 0.5;
-  transition: color 0.3s, opacity 0.3s, filter 0.3s;
-}
-
-.title-ruler.active {
-  color: #ffffff;
-  opacity: 1;
-  filter: brightness(1.5);
-}
-
-/* Forza pieno schermo su mobile/tablet */
-html, body {
-  height: 100vh;
-  width: 100vw;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-/* Migliora portrait: messaggio più aggressivo + blocco totale */
-@media (max-width: 1024px) and (orientation: portrait) {
-  #app, #charts, #pairs, #fullscreen-overlay { display: none !important; }
-  body::before {
-    content: "Ruota il dispositivo in orizzontale per usare SRAZU (tocca per ritentare)";
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: #0f1117;
-    color: #00ff85;
-    font-size: 24px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 20px;
-    z-index: 99999;
-    cursor: pointer;
-  }
-  body::before:active { opacity: 0.8; }  // Effetto tocco per ritentare
-}
-
-/* Landscape: forza resize pieno schermo senza barra */
 @media (max-width: 1024px) and (orientation: landscape) {
-  html, body, #app, #charts { height: 100vh !important; width: 100vw !important; }
-  .chart-container { height: calc(100vh - 30px) !important; }  // Sottrai altezza titolo
+
+  html, body, #app {
+    height: 100dvh !important;
+    width: 100vw !important;
+  }
+
+  #app {
+    grid-template-columns: 1fr minmax(150px, 25vw);
+  }
+
+  #charts {
+    height: 100%;
+    gap: 1px;
+  }
+
+  .chart-title {
+    height: 22px;
+    font-size: 11px;
+    padding: 2px 20px 2px 4px;
+  }
+
+  .pair {
+    font-size: 11px;
+    padding: 5px 6px;
+  }
+
+  .pairs-header {
+    font-size: 11px;
+    padding: 5px;
+  }
+}
+
+/* =========================
+   FULLSCREEN FIX
+========================= */
+
+#fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  background: #0f1117;
+  z-index: 9999;
+  height: 100dvh;
+}
+
+#fullscreen-chart {
+  width: 100%;
+  height: calc(100dvh - 60px);
 }
