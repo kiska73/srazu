@@ -1,5 +1,5 @@
 /* =========================
-   BASE LAYOUT FIXED MOBILE
+   BASE - STABILE OVUNQUE
 ========================= */
 
 html, body {
@@ -10,10 +10,9 @@ html, body {
   font-family: Arial, sans-serif;
   height: 100dvh;
   width: 100vw;
-  overflow-x: hidden;   /* NON bloccare tutto */
+  overflow-x: hidden;
 }
 
-/* Dynamic viewport support */
 @supports (height: 100dvh) {
   html, body {
     height: 100dvh;
@@ -27,7 +26,7 @@ html, body {
 }
 
 /* =========================
-   CHARTS GRID
+   CHART GRID
 ========================= */
 
 #charts {
@@ -45,33 +44,22 @@ html, body {
   background: #0f1117;
 }
 
-.chart-title,
-.fullscreen-title {
-  position: relative;
-  padding: 8px 40px 8px 8px;
+.chart-title {
+  height: clamp(20px, 3vh, 36px);
+  padding: 4px 20px;
   background: #161a25;
-  font-weight: bold;
-  text-align: center;
-  border-bottom: 1px solid #222;
-  flex-shrink: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: clamp(10px, 1.5vw, 16px);
+  border-bottom: 1px solid #222;
+  flex-shrink: 0;
 }
 
 .title-text {
   flex: 1;
   text-align: center;
-  font-size: 16px;
   font-weight: bold;
-  margin: 0 10px;
-}
-
-.fullscreen-title {
-  height: 40px;
 }
 
 .chart-container {
@@ -80,7 +68,7 @@ html, body {
 }
 
 /* =========================
-   PAIRS LIST
+   PAIRS
 ========================= */
 
 #pairs {
@@ -91,15 +79,11 @@ html, body {
 }
 
 .pairs-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
+  padding: clamp(6px, 1vh, 12px);
   background: #161a25;
   font-weight: bold;
   border-bottom: 1px solid #222;
-  flex-wrap: wrap;
-  gap: 6px;
+  font-size: clamp(10px, 1.2vw, 14px);
 }
 
 #pairs-list {
@@ -108,45 +92,14 @@ html, body {
 }
 
 .pair {
-  padding: 8px 10px;
-  cursor: pointer;
+  padding: clamp(4px, 1vh, 10px);
+  font-size: clamp(9px, 1.2vw, 14px);
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
-  align-items: center;
+  cursor: pointer;
 }
 
 .pair:hover { background: #1f2433; }
-.pair.active { background: #2a3150; font-weight: bold; }
-
-.green { color: #00ff85; }
-.red { color: #ff5252; }
-
-/* =========================
-   MODALS
-========================= */
-
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 100;
-  inset: 0;
-  background: rgba(0,0,0,0.8);
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-}
-
-.modal-content {
-  background: #161a25;
-  padding: 20px;
-  width: 340px;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow-y: auto;
-  border-radius: 8px;
-  border: 1px solid #222;
-}
 
 /* =========================
    MOBILE PORTRAIT
@@ -162,7 +115,7 @@ html, body {
     inset: 0;
     background: #0f1117;
     color: #00ff85;
-    font-size: 22px;
+    font-size: clamp(16px, 5vw, 26px);
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -174,40 +127,70 @@ html, body {
 }
 
 /* =========================
-   MOBILE LANDSCAPE FIX
+   TELEFONI PICCOLI
 ========================= */
 
-@media (max-width: 1024px) and (orientation: landscape) {
-
-  html, body, #app {
-    height: 100dvh !important;
-    width: 100vw !important;
-  }
+@media (max-width: 600px) and (orientation: landscape) {
 
   #app {
-    grid-template-columns: 1fr minmax(150px, 25vw);
+    grid-template-columns: 1fr 22vw;
   }
 
   #charts {
-    height: 100%;
     gap: 1px;
   }
 
   .chart-title {
-    height: 22px;
-    font-size: 11px;
-    padding: 2px 20px 2px 4px;
+    height: 18px;
+    font-size: 9px;
+    padding: 2px 6px;
   }
 
   .pair {
-    font-size: 11px;
-    padding: 5px 6px;
+    font-size: 9px;
+    padding: 4px;
   }
 
-  .pairs-header {
-    font-size: 11px;
-    padding: 5px;
+}
+
+/* =========================
+   TELEFONI GRANDI
+========================= */
+
+@media (min-width: 601px) and (max-width: 1024px) and (orientation: landscape) {
+
+  #app {
+    grid-template-columns: 1fr 20vw;
   }
+
+  .chart-title {
+    font-size: 11px;
+  }
+
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (min-width: 1025px) and (max-width: 1366px) {
+
+  #app {
+    grid-template-columns: 1fr 260px;
+  }
+
+}
+
+/* =========================
+   DESKTOP GRANDE
+========================= */
+
+@media (min-width: 1600px) {
+
+  #app {
+    grid-template-columns: 1fr 320px;
+  }
+
 }
 
 /* =========================
