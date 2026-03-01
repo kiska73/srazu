@@ -54,7 +54,7 @@ let personalTGChatID = localStorage.getItem('personalTGChatID') || '';
 // Server URL
 const SERVER_URL = "https://srazu-bot.onrender.com";
 
-// Device ID unico
+// Device ID
 let deviceId = localStorage.getItem('deviceId') || (function() {
   const id = crypto.randomUUID();
   localStorage.setItem('deviceId', id);
@@ -137,23 +137,14 @@ function toggleFavorite(symbol) {
         favorites = favorites.filter(s => s !== symbol);
         delete savedHorizPrices[symbol];
         delete syncPrices[symbol];
-
         if (hadAlert) {
             delete alertPrices[symbol];
             localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
-
             fetch(`${SERVER_URL}/set_alert`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    device_id: deviceId,
-                    exchange: currentExchange,
-                    symbol: symbol,
-                    price: null,
-                    token: personalTGToken,
-                    chatId: personalTGChatID
-                })
-            }).catch(e => console.error("Remove alert error:", e));
+                body: JSON.stringify({ device_id: deviceId, exchange: currentExchange, symbol: symbol, price: null, token: personalTGToken, chatId: personalTGChatID })
+            }).catch(() => {});
         }
     } else {
         favorites.push(symbol);
@@ -173,12 +164,8 @@ function toggleFavorite(symbol) {
 }
 
 function updatePriceLineOnSeries(series, key) {
-    if (priceLines[key]) {
-        series.removePriceLine(priceLines[key]);
-        delete priceLines[key];
-    }
+    if (priceLines[key]) { series.removePriceLine(priceLines[key]); delete priceLines[key]; }
     if (activeHorizPrice == null) return;
-
     const line = series.createPriceLine({
         price: activeHorizPrice,
         color: "#FFFF00",
@@ -190,27 +177,14 @@ function updatePriceLineOnSeries(series, key) {
         title: "",
         draggable: true
     });
-
-    line.applyOptions({
-        onDrag: l => {
-            activeHorizPrice = l.price;
-            syncHorizLines();
-            saveHorizIfFavorite();
-        }
-    });
-
+    line.applyOptions({ onDrag: l => { activeHorizPrice = l.price; syncHorizLines(); saveHorizIfFavorite(); } });
     priceLines[key] = line;
 }
 
 function updateAlertLineOnSeries(series, key) {
-    if (alertLines[key]) {
-        series.removePriceLine(alertLines[key]);
-        delete alertLines[key];
-    }
-
+    if (alertLines[key]) { series.removePriceLine(alertLines[key]); delete alertLines[key]; }
     const alertPrice = alertPrices[currentSymbol];
     if (alertPrice == null) return;
-
     const line = series.createPriceLine({
         price: alertPrice,
         color: "#FFD700",
@@ -220,15 +194,12 @@ function updateAlertLineOnSeries(series, key) {
         title: "",
         draggable: false
     });
-
     alertLines[key] = line;
 }
 
 function toggleRulerMode() {
     rulerMode = !rulerMode;
-    document.querySelectorAll('.title-ruler').forEach(el => {
-        el.classList.toggle('active', rulerMode);
-    });
+    document.querySelectorAll('.title-ruler').forEach(el => el.classList.toggle('active', rulerMode));
     if (!rulerMode) {
         rulerPrice = null;
         Object.keys(rulerLines).forEach(k => {
@@ -244,12 +215,8 @@ function toggleRulerMode() {
 }
 
 function updateRulerLineOnSeries(series, key) {
-    if (rulerLines[key]) {
-        series.removePriceLine(rulerLines[key]);
-        delete rulerLines[key];
-    }
+    if (rulerLines[key]) { series.removePriceLine(rulerLines[key]); delete rulerLines[key]; }
     if (rulerPrice === null) return;
-
     const line = series.createPriceLine({
         price: rulerPrice,
         color: "#00FF00",
@@ -269,8 +236,7 @@ function updateRulerPercentage() {
     const fsPct = document.querySelector('#fullscreen-title .title-pct');
     if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) {
         const diff = ((rulerPrice - activeHorizPrice) / activeHorizPrice * 100);
-        const sign = diff >= 0 ? '+' : '';
-        const text = `${sign}${diff.toFixed(2)}%`;
+        const text = (diff >= 0 ? '+' : '') + diff.toFixed(2) + '%';
         pctElements.forEach(el => el.textContent = text);
         if (fsPct) fsPct.textContent = text;
     } else {
@@ -280,13 +246,7 @@ function updateRulerPercentage() {
 }
 
 function createEMA(seriesArray, chart, klines, period, color) {
-    const s = chart.addLineSeries({
-        color: color,
-        lineWidth: 1.2,
-        priceLineVisible: false,
-        lastValueVisible: false
-    });
-
+    const s = chart.addLineSeries({ color: color, lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
     let ema = null;
     const data = [];
     klines.forEach((c, i) => {
@@ -294,7 +254,6 @@ function createEMA(seriesArray, chart, klines, period, color) {
         else if (i >= period) ema = nextEMA(ema, c.close, period);
         if (ema != null) data.push({ time: c.time, value: ema });
     });
-
     s.setData(data);
     const lastEma = ema || klines.at(-1)?.close || 0;
     seriesArray.push({ series: s, period, last: lastEma });
@@ -302,36 +261,31 @@ function createEMA(seriesArray, chart, klines, period, color) {
 
 function createBollinger(chart, klines, period, dev) {
     const middle = chart.addLineSeries({ color: BB_COLORS.middle, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false });
-    const upper = chart.addLineSeries({ color: BB_COLORS.upper, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
-    const lower = chart.addLineSeries({ color: BB_COLORS.lower, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+    const upper  = chart.addLineSeries({ color: BB_COLORS.upper,  lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+    const lower  = chart.addLineSeries({ color: BB_COLORS.lower,  lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
 
-    const dataMiddle = [], dataUpper = [], dataLower = [];
-
+    const dm = [], du = [], dl = [];
     for (let i = period - 1; i < klines.length; i++) {
         const slice = klines.slice(i - period + 1, i + 1);
         const closes = slice.map(c => c.close);
         const sma = closes.reduce((a,b) => a + b, 0) / period;
         const variance = closes.reduce((sum, val) => sum + Math.pow(val - sma, 2), 0) / period;
-        const stdDev = Math.sqrt(variance);
-        const upperVal = sma + dev * stdDev;
-        const lowerVal = sma - dev * stdDev;
+        const std = Math.sqrt(variance);
         const time = klines[i].time;
-        dataMiddle.push({ time, value: sma });
-        dataUpper.push({ time, value: upperVal });
-        dataLower.push({ time, value: lowerVal });
+        dm.push({ time, value: sma });
+        du.push({ time, value: sma + dev * std });
+        dl.push({ time, value: sma - dev * std });
     }
-
-    middle.setData(dataMiddle);
-    upper.setData(dataUpper);
-    lower.setData(dataLower);
+    middle.setData(dm); upper.setData(du); lower.setData(dl);
 
     return {
-        middle: { series: middle, last: dataMiddle.at(-1)?.value || 0 },
-        upper: { series: upper, last: dataUpper.at(-1)?.value || 0 },
-        lower: { series: lower, last: dataLower.at(-1)?.value || 0 }
+        middle: { series: middle, last: dm.at(-1)?.value || 0 },
+        upper:  { series: upper,  last: du.at(-1)?.value || 0 },
+        lower:  { series: lower,  last: dl.at(-1)?.value || 0 }
     };
 }
 
+// ====================== FETCH ======================
 async function fetchKlines(symbol, interval, limit = 500) {
     let baseUrl = "";
     let queryInterval = interval;
@@ -345,14 +299,11 @@ async function fetchKlines(symbol, interval, limit = 500) {
     }
 
     try {
-        const response = await fetch(baseUrl, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-        });
+        const response = await fetch(baseUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         if (!response.ok) return [];
         const data = await response.json();
-
         let rawList = currentExchange === "bybit" ? (data.result?.list || []) : data;
-        if (!Array.isArray(rawList) || rawList.length === 0) return [];
+        if (!Array.isArray(rawList)) return [];
 
         const klines = rawList.map(c => ({
             time: Number(c[0]) / 1000,
@@ -361,7 +312,6 @@ async function fetchKlines(symbol, interval, limit = 500) {
             low: Number(c[3]),
             close: Number(c[4])
         }));
-
         return currentExchange === "bybit" ? klines.reverse() : klines;
     } catch (e) {
         console.error("Fetch klines failed:", e);
@@ -395,9 +345,7 @@ async function fetchPairs() {
             }));
 
         populateList(currentSort);
-    } catch (e) {
-        console.error("Fetch pairs error:", e);
-    }
+    } catch (e) { console.error("Fetch pairs error:", e); }
 }
 
 function populateList(sort = "volume") {
@@ -414,11 +362,9 @@ function populateList(sort = "volume") {
 
     const favoritesInList = sorted.filter(p => favorites.includes(p.s));
     const others = sorted.filter(p => !favorites.includes(p.s));
-
     const display = favoritesInList.concat(others.slice(0, 80));
 
     list.innerHTML = "";
-
     display.forEach(p => {
         const isFav = favorites.includes(p.s);
         const div = document.createElement("div");
@@ -445,6 +391,7 @@ function populateList(sort = "volume") {
     });
 }
 
+// ====================== CREAZIONE GRAFICI ======================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -507,12 +454,11 @@ async function createChart(containerId) {
             const price = series.coordinateToPrice(p.point.y);
             if (rulerMode) {
                 rulerPrice = price;
-                syncHorizLines();
             } else {
                 activeHorizPrice = price;
-                syncHorizLines();
                 saveHorizIfFavorite();
             }
+            syncHorizLines();
         }
     });
 
@@ -552,8 +498,8 @@ function openFullscreen(containerId, tfLabel) {
     const fsDiv = document.getElementById("fullscreen-chart");
     fsDiv.innerHTML = "";
 
-    const fsTitle = document.getElementById("fullscreen-title");
-    fsTitle.querySelector('.title-text').textContent = `${currentSymbol} - ${tfLabel}`;
+    const fsText = document.querySelector('#fullscreen-title .title-text');
+    fsText.textContent = `${currentSymbol} - ${tfLabel}`;
 
     const newChart = LightweightCharts.createChart(fsDiv, {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
@@ -568,20 +514,14 @@ function openFullscreen(containerId, tfLabel) {
     const newSeries = newChart.addCandlestickSeries(candleSeries[containerId].options());
     newSeries.setData(candleSeries[containerId].data());
 
-    if (emaEnabled) {
-        emaSeries[containerId]?.forEach((e, i) => {
-            const s = newChart.addLineSeries({ color: EMA_COLORS[i], lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
-            s.setData(e.series.data());
-        });
-    }
+    if (emaEnabled) emaSeries[containerId]?.forEach((e, i) => {
+        const s = newChart.addLineSeries({ color: EMA_COLORS[i], lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
+        s.setData(e.series.data());
+    });
+
     if (bbEnabled && bbSeries[containerId]) {
-        ['middle', 'upper', 'lower'].forEach(key => {
-            const s = newChart.addLineSeries({
-                color: BB_COLORS[key],
-                lineWidth: key === 'middle' ? 1.5 : 1,
-                priceLineVisible: false,
-                lastValueVisible: false
-            });
+        ['middle','upper','lower'].forEach(key => {
+            const s = newChart.addLineSeries({ color: BB_COLORS[key], lineWidth: key === 'middle' ? 1.5 : 1, priceLineVisible: false, lastValueVisible: false });
             s.setData(bbSeries[containerId][key].series.data());
         });
     }
@@ -597,13 +537,9 @@ function openFullscreen(containerId, tfLabel) {
     newChart.subscribeClick(p => {
         if (p?.point) {
             const price = newSeries.coordinateToPrice(p.point.y);
-            if (rulerMode) {
-                rulerPrice = price;
-            } else {
-                activeHorizPrice = price;
-                saveHorizIfFavorite();
-            }
+            if (rulerMode) rulerPrice = price; else activeHorizPrice = price;
             syncHorizLines();
+            if (!rulerMode) saveHorizIfFavorite();
         }
     });
 
@@ -637,12 +573,13 @@ function openAlertSetup() {
 
 function completeAlertSetup(alertPrice) {
     alertPrices[currentSymbol] = alertPrice;
-    syncPrices[currentSymbol] = activeHorizPrice || alertPrice;
-    savedHorizPrices[currentSymbol] = syncPrices[currentSymbol];
+    if (activeHorizPrice === null) activeHorizPrice = alertPrice;
+    savedHorizPrices[currentSymbol] = activeHorizPrice;
+    syncPrices[currentSymbol] = activeHorizPrice;
 
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
-    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
+    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
 
     if (!favorites.includes(currentSymbol)) {
         favorites.push(currentSymbol);
@@ -671,20 +608,17 @@ async function updateLive() {
                     e.series.update({ time: latest.time, value: e.last });
                 });
             }
-
             if (bbEnabled && bbSeries[id]) {
                 const bb = bbSeries[id];
                 bb.middle.last = (bb.middle.last * (bbPeriod - 1) + latest.close) / bbPeriod;
                 bb.middle.series.update({ time: latest.time, value: bb.middle.last });
             }
-
             applyVisibleRange(charts[id], candleSeries[id]);
         }
     }
 
     if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
-        const interval = customIntervals[fullscreenContainerId];
-        const latest = await fetchLatestCandle(currentSymbol, interval);
+        const latest = await fetchLatestCandle(currentSymbol, customIntervals[fullscreenContainerId]);
         if (latest) {
             fullscreenChart.series.update(latest);
             if (latest.time > (lastCandleTime[fullscreenContainerId] || 0)) {
@@ -695,7 +629,7 @@ async function updateLive() {
     }
 }
 
-// ====================== RESIZE DEBOUNCED (FIX MOBILE) ======================
+// ====================== RESIZE CON GUARDIA (FIX FINALE) ======================
 let resizeTimeout;
 window.addEventListener("resize", () => {
     clearTimeout(resizeTimeout);
@@ -704,37 +638,43 @@ window.addEventListener("resize", () => {
 
         for (const id in charts) {
             const el = document.getElementById(id);
-            if (charts[id] && el) {
-                charts[id].resize(el.clientWidth, el.clientHeight);
-                const newSpacing = el.clientWidth / totalSlots;
-                charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
-                applyVisibleRange(charts[id], candleSeries[id]);
-            }
+            if (!charts[id] || !el) continue;
+
+            const width = el.clientWidth;
+            const height = el.clientHeight;
+            if (width === 0 || height === 0) continue;   // ← PROTEZIONE MOBILE
+
+            charts[id].resize(width, height);
+            charts[id].timeScale().applyOptions({ barSpacing: width / totalSlots });
+            applyVisibleRange(charts[id], candleSeries[id]);
         }
 
         if (fullscreenActive && fullscreenChart) {
-            fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
-            const newSpacing = window.innerWidth / totalSlots;
-            fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
-            applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
+            const width = window.innerWidth;
+            const height = window.innerHeight - 60;
+            if (width > 0 && height > 0) {
+                fullscreenChart.chart.resize(width, height);
+                fullscreenChart.chart.timeScale().applyOptions({ barSpacing: width / totalSlots });
+                applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
+            }
         }
-    }, 250);
+    }, 300);
 });
 
-// ====================== FORZA LANDSCAPE ======================
+// ====================== LOCK LANDSCAPE ======================
 async function lockLandscape() {
   if (!screen.orientation || !screen.orientation.lock) return;
   try {
     await screen.orientation.lock('landscape-primary');
-    console.log('✅ Locked in landscape');
   } catch (e) {
-    console.log('Lock non supportato (iOS):', e);
+    console.log('Landscape lock non supportato:', e);
     setTimeout(() => window.scrollTo(0, 1), 100);
   }
 }
 
 // ====================== ONLOAD ======================
 window.onload = async () => {
+    // carica salvataggi
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
     alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
@@ -757,23 +697,17 @@ window.onload = async () => {
     document.getElementById("exchange-select").value = currentExchange;
 
     document.getElementById("toggle-ema").textContent = emaEnabled ? "EMA: On" : "EMA: Off";
-    document.getElementById("toggle-ema").classList.toggle("active", emaEnabled);
-    document.getElementById("ema-periods-section").style.display = emaEnabled ? "block" : "none";
-
     document.getElementById("toggle-bb").textContent = bbEnabled ? "Bollinger Bands: On" : "Bollinger Bands: Off";
-    document.getElementById("toggle-bb").classList.toggle("active", bbEnabled);
-    document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
 
-    document.querySelectorAll('.title-ruler').forEach(el => el.classList.remove('active'));
+    lockLandscape();                    // ← PRIMA dei grafici
+    await loadAllCharts(currentSymbol); // ← con currentSymbol
 
-    await loadAllCharts("BTCUSDT");
-    await fetchPairs();
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 500); // forza resize pulito
 
-    // LOCK LANDSCAPE SOLO QUI (una volta)
-    lockLandscape();
-
-    setInterval(updateLive, 2000);
-    setInterval(fetchPairs, 2000);
+    setTimeout(() => {                  // avvia update solo dopo stabilizzazione
+        setInterval(updateLive, 2000);
+        setInterval(fetchPairs, 2000);
+    }, 1500);
 };
 
 // ====================== EVENTI BOTTONI ======================
@@ -803,7 +737,6 @@ document.getElementById("apply-settings").onclick = async () => {
         Math.max(1, Number(document.getElementById("ema3").value || 60)),
         Math.max(1, Number(document.getElementById("ema4").value || 223))
     ];
-
     bbPeriod = Math.max(1, Number(document.getElementById("bb-period").value || 20));
     bbDev = Number(document.getElementById("bb-dev").value || 2);
 
@@ -816,7 +749,6 @@ document.getElementById("apply-settings").onclick = async () => {
 
     personalTGToken = document.getElementById("personal-tg-token").value.trim();
     personalTGChatID = document.getElementById("personal-tg-chatid").value.trim();
-
     localStorage.setItem('personalTGToken', personalTGToken);
     localStorage.setItem('personalTGChatID', personalTGChatID);
 
@@ -824,10 +756,7 @@ document.getElementById("apply-settings").onclick = async () => {
     document.getElementById("settings-modal").style.display = "none";
 };
 
-document.getElementById("sort-select").onchange = e => {
-    currentSort = e.target.value;
-    populateList(currentSort);
-};
+document.getElementById("sort-select").onchange = e => { currentSort = e.target.value; populateList(currentSort); };
 
 document.getElementById("exchange-select").onchange = async (e) => {
     currentExchange = e.target.value;
@@ -845,14 +774,7 @@ document.getElementById("close-fullscreen").onclick = closeFullscreen;
 document.getElementById("set-local-alert").onclick = () => {
     const alertPrice = Number(document.getElementById("alert-price-input").value);
     if (isNaN(alertPrice) || alertPrice <= 0) return alert("Prezzo non valido");
-
-    const token = personalTGToken;
-    const chatId = personalTGChatID;
-
-    if (!token || !chatId) {
-        alert("⚠️ Configura Token e ChatID nelle impostazioni!");
-        return;
-    }
+    if (!personalTGToken || !personalTGChatID) return alert("⚠️ Configura Token e ChatID nelle impostazioni!");
 
     fetch(`${SERVER_URL}/set_alert`, {
         method: 'POST',
@@ -863,14 +785,11 @@ document.getElementById("set-local-alert").onclick = () => {
             symbol: currentSymbol,
             alert_price: alertPrice,
             sync_price: activeHorizPrice || alertPrice,
-            token: token,
-            chatId: chatId
+            token: personalTGToken,
+            chatId: personalTGChatID
         })
     }).then(() => completeAlertSetup(alertPrice))
-      .catch(() => {
-          alert("Server offline → alert locale attivo");
-          completeAlertSetup(alertPrice);
-      });
+      .catch(() => { alert("Server offline → alert locale attivo"); completeAlertSetup(alertPrice); });
 };
 
 document.getElementById("open-in-exchange").onclick = () => {
@@ -881,11 +800,9 @@ document.getElementById("open-in-exchange").onclick = () => {
     document.getElementById("alert-setup").style.display = "none";
 };
 
-document.getElementById("close-alert-setup").onclick = () => {
-    document.getElementById("alert-setup").style.display = "none";
-};
+document.getElementById("close-alert-setup").onclick = () => document.getElementById("alert-setup").style.display = "none";
 
-// Fullscreen buttons (5m, 30m, 4h, 1d)
+// Fullscreen buttons
 const fsButtons = document.querySelectorAll('.title-fullscreen');
 const ids = ["5m", "30m", "4h", "1d"];
 fsButtons.forEach((btn, i) => {
