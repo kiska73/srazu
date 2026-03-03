@@ -167,15 +167,8 @@ function updatePriceLineOnSeries(series, key) {
     if (priceLines[key]) { series.removePriceLine(priceLines[key]); delete priceLines[key]; }
     if (activeHorizPrice == null) return;
     const line = series.createPriceLine({
-        price: activeHorizPrice,
-        color: "#FFFF00",
-        lineWidth: 1,
-        lineStyle: LightweightCharts.LineStyle.Solid,
-        axisLabelVisible: true,
-        axisLabelColor: "#FFFF00",
-        axisLabelBackgroundColor: "#161a25",
-        title: "",
-        draggable: true
+        price: activeHorizPrice, color: "#FFFF00", lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true, axisLabelColor: "#FFFF00", axisLabelBackgroundColor: "#161a25", title: "", draggable: true
     });
     line.applyOptions({ onDrag: l => { activeHorizPrice = l.price; syncHorizLines(); saveHorizIfFavorite(); } });
     priceLines[key] = line;
@@ -186,13 +179,8 @@ function updateAlertLineOnSeries(series, key) {
     const alertPrice = alertPrices[currentSymbol];
     if (alertPrice == null) return;
     const line = series.createPriceLine({
-        price: alertPrice,
-        color: "#FFD700",
-        lineWidth: 1,
-        lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: false,
-        title: "",
-        draggable: false
+        price: alertPrice, color: "#FFD700", lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: false, title: "", draggable: false
     });
     alertLines[key] = line;
 }
@@ -218,15 +206,8 @@ function updateRulerLineOnSeries(series, key) {
     if (rulerLines[key]) { series.removePriceLine(rulerLines[key]); delete rulerLines[key]; }
     if (rulerPrice === null) return;
     const line = series.createPriceLine({
-        price: rulerPrice,
-        color: "#00FF00",
-        lineWidth: 2,
-        lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: true,
-        axisLabelColor: "#00FF00",
-        axisLabelBackgroundColor: "#161a25",
-        title: "",
-        draggable: false
+        price: rulerPrice, color: "#00FF00", lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true, axisLabelColor: "#00FF00", axisLabelBackgroundColor: "#161a25", title: "", draggable: false
     });
     rulerLines[key] = line;
 }
@@ -344,7 +325,7 @@ async function fetchPairs() {
     } catch (e) { console.error("Fetch pairs error:", e); }
 }
 
-// ====================== SAFE RESIZE ======================
+// ====================== FORCE RESIZE (FIX GIGANTI) ======================
 function forceResizeAllCharts() {
     const totalSlots = visibleBarsCount + spaceBarsCount;
     Object.keys(charts).forEach(id => {
@@ -366,7 +347,7 @@ function forceResizeAllCharts() {
     }
 }
 
-// ====================== POPULATE LIST (FIX FINALE) ======================
+// ====================== POPULATE LIST (FIX LISTA + GRAFICI) ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -407,8 +388,10 @@ function populateList(sort = "volume") {
         starEl.onclick = (e) => { e.stopPropagation(); toggleFavorite(starEl.dataset.symbol); };
     });
 
-    // FIX: dopo che la lista ha finito di renderizzarsi, forza il resize di TUTTI i grafici
-    setTimeout(forceResizeAllCharts, 350);
+    // FIX FINALE: resize multiplo dopo lista caricata
+    setTimeout(() => requestAnimationFrame(forceResizeAllCharts), 100);
+    setTimeout(() => requestAnimationFrame(forceResizeAllCharts), 300);
+    setTimeout(() => requestAnimationFrame(forceResizeAllCharts), 600);
 }
 
 // ====================== CREAZIONE GRAFICI ======================
@@ -490,17 +473,146 @@ async function loadAllCharts(symbol) {
     const promises = Object.keys(customIntervals).map(id => createChart(id));
     await Promise.all(promises);
     syncHorizLines();
-    forceResizeAllCharts();   // forza subito dopo il caricamento iniziale
+    forceResizeAllCharts();
 }
 
-function openFullscreen(containerId, tfLabel) { /* identica a prima */ }
-function closeFullscreen() { /* identica */ }
-function openAlertSetup() { /* identica */ }
-function completeAlertSetup(alertPrice) { /* identica */ }
+function openFullscreen(containerId, tfLabel) {
+    const overlay = document.getElementById("fullscreen-overlay");
+    const fsDiv = document.getElementById("fullscreen-chart");
+    fsDiv.innerHTML = "";
 
-async function updateLive() { /* identica */ }
+    const fsText = document.querySelector('#fullscreen-title .title-text');
+    fsText.textContent = `${currentSymbol} - ${tfLabel}`;
 
-// ====================== RESIZE LISTENER ======================
+    const newChart = LightweightCharts.createChart(fsDiv, {
+        layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
+        grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(customIntervals[containerId]) },
+        rightPriceScale: { borderColor: '#222' },
+        width: window.innerWidth,
+        height: window.innerHeight - 60
+    });
+
+    const newSeries = newChart.addCandlestickSeries(candleSeries[containerId].options());
+    newSeries.setData(candleSeries[containerId].data());
+
+    if (emaEnabled) emaSeries[containerId]?.forEach((e, i) => {
+        const s = newChart.addLineSeries({ color: EMA_COLORS[i], lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
+        s.setData(e.series.data());
+    });
+
+    if (bbEnabled && bbSeries[containerId]) {
+        ['middle','upper','lower'].forEach(key => {
+            const s = newChart.addLineSeries({ color: BB_COLORS[key], lineWidth: key === 'middle' ? 1.5 : 1, priceLineVisible: false, lastValueVisible: false });
+            s.setData(bbSeries[containerId][key].series.data());
+        });
+    }
+
+    updatePriceLineOnSeries(newSeries, "fullscreen");
+    updateAlertLineOnSeries(newSeries, "fullscreen");
+    if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(newSeries, "fullscreen");
+
+    const totalSlots = visibleBarsCount + spaceBarsCount;
+    newChart.timeScale().applyOptions({ barSpacing: window.innerWidth / totalSlots });
+    applyVisibleRange(newChart, newSeries);
+
+    newChart.subscribeClick(p => {
+        if (p?.point) {
+            const price = newSeries.coordinateToPrice(p.point.y);
+            if (rulerMode) rulerPrice = price; else activeHorizPrice = price;
+            syncHorizLines();
+            if (!rulerMode) saveHorizIfFavorite();
+        }
+    });
+
+    newChart.subscribeDblClick(() => {
+        activeHorizPrice = null;
+        syncHorizLines();
+        saveHorizIfFavorite();
+    });
+
+    overlay.style.display = "block";
+    fullscreenActive = true;
+    fullscreenChart = { chart: newChart, series: newSeries };
+    fullscreenContainerId = containerId;
+}
+
+function closeFullscreen() {
+    document.getElementById("fullscreen-overlay").style.display = "none";
+    if (fullscreenChart) fullscreenChart.chart.remove();
+    fullscreenActive = false;
+    fullscreenChart = null;
+    fullscreenContainerId = null;
+    delete rulerLines["fullscreen"];
+}
+
+function openAlertSetup() {
+    document.getElementById("alert-symbol").textContent = currentSymbol;
+    const prefill = activeHorizPrice !== null ? activeHorizPrice : candleSeries["chart-5m"]?.data()?.at(-1)?.close || 0;
+    document.getElementById("alert-price-input").value = prefill.toFixed(symbolPricePrecision);
+    document.getElementById("alert-setup").style.display = "block";
+}
+
+function completeAlertSetup(alertPrice) {
+    alertPrices[currentSymbol] = alertPrice;
+    if (activeHorizPrice === null) activeHorizPrice = alertPrice;
+    savedHorizPrices[currentSymbol] = activeHorizPrice;
+    syncPrices[currentSymbol] = activeHorizPrice;
+
+    localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
+    localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
+    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
+
+    if (!favorites.includes(currentSymbol)) {
+        favorites.push(currentSymbol);
+        localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
+        populateList(currentSort);
+    }
+
+    syncHorizLines();
+    document.getElementById("alert-setup").style.display = "none";
+}
+
+async function updateLive() {
+    for (const id in customIntervals) {
+        const interval = customIntervals[id];
+        const latest = await fetchLatestCandle(currentSymbol, interval);
+        if (!latest || !candleSeries[id]) continue;
+
+        candleSeries[id].update(latest);
+
+        if (latest.time > (lastCandleTime[id] || 0)) {
+            lastCandleTime[id] = latest.time;
+
+            if (emaEnabled) {
+                emaSeries[id]?.forEach(e => {
+                    e.last = nextEMA(e.last, latest.close, e.period);
+                    e.series.update({ time: latest.time, value: e.last });
+                });
+            }
+            if (bbEnabled && bbSeries[id]) {
+                const bb = bbSeries[id];
+                bb.middle.last = (bb.middle.last * (bbPeriod - 1) + latest.close) / bbPeriod;
+                bb.middle.series.update({ time: latest.time, value: bb.middle.last });
+            }
+            applyVisibleRange(charts[id], candleSeries[id]);
+        }
+    }
+
+    if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
+        const latest = await fetchLatestCandle(currentSymbol, customIntervals[fullscreenContainerId]);
+        if (latest) {
+            fullscreenChart.series.update(latest);
+            if (latest.time > (lastCandleTime[fullscreenContainerId] || 0)) {
+                lastCandleTime[fullscreenContainerId] = latest.time;
+                applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
+            }
+        }
+    }
+}
+
+// ====================== RESIZE ======================
 let resizeTimeout;
 window.addEventListener("resize", () => {
     clearTimeout(resizeTimeout);
@@ -542,13 +654,11 @@ window.onload = async () => {
     lockLandscape();
     await loadAllCharts(currentSymbol);
 
-    // Forza resize stabile prima di caricare la lista
     setTimeout(forceResizeAllCharts, 600);
 
-    // Carica la lista SOLO quando tutto è stabile
     setTimeout(() => {
         fetchPairs();
-        setInterval(fetchPairs, 10000);   // ogni 10 secondi
+        setInterval(fetchPairs, 10000);
         setInterval(updateLive, 2000);
     }, 1400);
 };
@@ -574,7 +684,12 @@ document.getElementById("toggle-bb").onclick = () => {
 };
 
 document.getElementById("apply-settings").onclick = async () => {
-    emaPeriods = [Math.max(1, Number(document.getElementById("ema1").value || 5)), Math.max(1, Number(document.getElementById("ema2").value || 10)), Math.max(1, Number(document.getElementById("ema3").value || 60)), Math.max(1, Number(document.getElementById("ema4").value || 223))];
+    emaPeriods = [
+        Math.max(1, Number(document.getElementById("ema1").value || 5)),
+        Math.max(1, Number(document.getElementById("ema2").value || 10)),
+        Math.max(1, Number(document.getElementById("ema3").value || 60)),
+        Math.max(1, Number(document.getElementById("ema4").value || 223))
+    ];
     bbPeriod = Math.max(1, Number(document.getElementById("bb-period").value || 20));
     bbDev = Number(document.getElementById("bb-dev").value || 2);
 
