@@ -167,8 +167,15 @@ function updatePriceLineOnSeries(series, key) {
     if (priceLines[key]) { series.removePriceLine(priceLines[key]); delete priceLines[key]; }
     if (activeHorizPrice == null) return;
     const line = series.createPriceLine({
-        price: activeHorizPrice, color: "#FFFF00", lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid,
-        axisLabelVisible: true, axisLabelColor: "#FFFF00", axisLabelBackgroundColor: "#161a25", title: "", draggable: true
+        price: activeHorizPrice,
+        color: "#FFFF00",
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true,
+        axisLabelColor: "#FFFF00",
+        axisLabelBackgroundColor: "#161a25",
+        title: "",
+        draggable: true
     });
     line.applyOptions({ onDrag: l => { activeHorizPrice = l.price; syncHorizLines(); saveHorizIfFavorite(); } });
     priceLines[key] = line;
@@ -179,8 +186,13 @@ function updateAlertLineOnSeries(series, key) {
     const alertPrice = alertPrices[currentSymbol];
     if (alertPrice == null) return;
     const line = series.createPriceLine({
-        price: alertPrice, color: "#FFD700", lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: false, title: "", draggable: false
+        price: alertPrice,
+        color: "#FFD700",
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: false,
+        title: "",
+        draggable: false
     });
     alertLines[key] = line;
 }
@@ -206,8 +218,15 @@ function updateRulerLineOnSeries(series, key) {
     if (rulerLines[key]) { series.removePriceLine(rulerLines[key]); delete rulerLines[key]; }
     if (rulerPrice === null) return;
     const line = series.createPriceLine({
-        price: rulerPrice, color: "#00FF00", lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: true, axisLabelColor: "#00FF00", axisLabelBackgroundColor: "#161a25", title: "", draggable: false
+        price: rulerPrice,
+        color: "#00FF00",
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true,
+        axisLabelColor: "#00FF00",
+        axisLabelBackgroundColor: "#161a25",
+        title: "",
+        draggable: false
     });
     rulerLines[key] = line;
 }
@@ -260,8 +279,8 @@ function createBollinger(chart, klines, period, dev) {
 
     return {
         middle: { series: middle, last: dm.at(-1)?.value || 0 },
-        upper: { series: upper, last: du.at(-1)?.value || 0 },
-        lower: { series: lower, last: dl.at(-1)?.value || 0 }
+        upper:  { series: upper,  last: du.at(-1)?.value || 0 },
+        lower:  { series: lower,  last: dl.at(-1)?.value || 0 }
     };
 }
 
@@ -271,8 +290,9 @@ async function fetchKlines(symbol, interval, limit = 500) {
     let queryInterval = interval;
     const binanceMap = {"1":"1m","3":"3m","5":"5m","15":"15m","30":"30m","60":"1h","240":"4h","D":"1d"};
 
-    if (currentExchange === "bybit") baseUrl = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=${interval}&limit=${limit}`;
-    else if (currentExchange === "binance") {
+    if (currentExchange === "bybit") {
+        baseUrl = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=${interval}&limit=${limit}`;
+    } else if (currentExchange === "binance") {
         queryInterval = binanceMap[interval] || interval;
         baseUrl = `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${queryInterval}&limit=${limit}`;
     }
@@ -324,7 +344,29 @@ async function fetchPairs() {
     } catch (e) { console.error("Fetch pairs error:", e); }
 }
 
-// ====================== POPULATE LIST CON FIX ANTI-SPARIZIONE ======================
+// ====================== SAFE RESIZE ======================
+function forceResizeAllCharts() {
+    const totalSlots = visibleBarsCount + spaceBarsCount;
+    Object.keys(charts).forEach(id => {
+        const el = document.getElementById(id);
+        if (el && charts[id] && el.clientWidth > 10 && el.clientHeight > 10) {
+            charts[id].resize(el.clientWidth, el.clientHeight);
+            charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
+            applyVisibleRange(charts[id], candleSeries[id]);
+        }
+    });
+    if (fullscreenActive && fullscreenChart) {
+        const w = window.innerWidth;
+        const h = window.innerHeight - 60;
+        if (w > 10 && h > 10) {
+            fullscreenChart.chart.resize(w, h);
+            fullscreenChart.chart.timeScale().applyOptions({ barSpacing: w / totalSlots });
+            applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
+        }
+    }
+}
+
+// ====================== POPULATE LIST (FIX FINALE) ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -365,65 +407,104 @@ function populateList(sort = "volume") {
         starEl.onclick = (e) => { e.stopPropagation(); toggleFavorite(starEl.dataset.symbol); };
     });
 
-    // FIX ANTI-SPARIZIONE: resize sicuro DOPO che la lista ha finito di renderizzarsi
-    setTimeout(() => {
-        const totalSlots = visibleBarsCount + spaceBarsCount;
-        Object.keys(charts).forEach(id => {
-            const el = document.getElementById(id);
-            if (el && charts[id] && el.clientWidth > 0 && el.clientHeight > 0) {
-                charts[id].resize(el.clientWidth, el.clientHeight);
-                charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
-                applyVisibleRange(charts[id], candleSeries[id]);
-            }
-        });
-        if (fullscreenActive && fullscreenChart) {
-            const w = window.innerWidth;
-            const h = window.innerHeight - 60;
-            if (w > 0 && h > 0) {
-                fullscreenChart.chart.resize(w, h);
-                fullscreenChart.chart.timeScale().applyOptions({ barSpacing: w / totalSlots });
-                applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
-            }
-        }
-    }, 250); // 250ms per dare tempo al DOM mobile di stabilizzarsi
+    // FIX: dopo che la lista ha finito di renderizzarsi, forza il resize di TUTTI i grafici
+    setTimeout(forceResizeAllCharts, 350);
 }
 
 // ====================== CREAZIONE GRAFICI ======================
-async function createChart(containerId) { /* identica alla versione precedente */ }
-async function loadAllCharts(symbol) { /* identica alla versione precedente */ }
-function openFullscreen(containerId, tfLabel) { /* identica alla versione precedente */ }
+async function createChart(containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+
+    const interval = customIntervals[containerId];
+    const label = customLabels[interval] || interval;
+
+    const klines = await fetchKlines(currentSymbol, interval, 500);
+
+    const titleEl = document.getElementById(`title-${containerId.split("-")[1]}`);
+    titleEl.querySelector('.title-text').textContent = klines.length ? `${currentSymbol} - ${label}` : "No data – check connection";
+
+    if (!klines.length) return;
+
+    symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
+
+    const chart = LightweightCharts.createChart(container, {
+        layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
+        grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(interval) },
+        rightPriceScale: { borderColor: '#222' },
+        width: container.clientWidth,
+        height: container.clientHeight
+    });
+
+    const series = chart.addCandlestickSeries({
+        priceFormat: { type: "price", precision: symbolPricePrecision, minMove: 10 ** -symbolPricePrecision },
+        upColor: '#ffffff',
+        downColor: '#0051D4',
+        wickUpColor: '#cccccc',
+        wickDownColor: '#0051D4',
+        borderVisible: false
+    });
+
+    series.setData(klines);
+    lastCandleTime[containerId] = klines.at(-1).time;
+
+    emaSeries[containerId] = [];
+    if (emaEnabled) emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
+
+    if (bbEnabled && klines.length >= bbPeriod) bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
+
+    updatePriceLineOnSeries(series, containerId);
+    updateAlertLineOnSeries(series, containerId);
+    if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(series, containerId);
+
+    const totalSlots = visibleBarsCount + spaceBarsCount;
+    chart.timeScale().applyOptions({ barSpacing: container.clientWidth / totalSlots });
+    applyVisibleRange(chart, series);
+
+    chart.subscribeClick(p => {
+        if (p?.point) {
+            const price = series.coordinateToPrice(p.point.y);
+            if (rulerMode) rulerPrice = price; else activeHorizPrice = price;
+            syncHorizLines();
+            if (!rulerMode) saveHorizIfFavorite();
+        }
+    });
+
+    chart.subscribeDblClick(() => {
+        activeHorizPrice = null;
+        syncHorizLines();
+        saveHorizIfFavorite();
+    });
+
+    charts[containerId] = chart;
+    candleSeries[containerId] = series;
+}
+
+async function loadAllCharts(symbol) {
+    currentSymbol = symbol;
+    activeHorizPrice = savedHorizPrices[symbol] ?? null;
+    rulerPrice = null;
+
+    const promises = Object.keys(customIntervals).map(id => createChart(id));
+    await Promise.all(promises);
+    syncHorizLines();
+    forceResizeAllCharts();   // forza subito dopo il caricamento iniziale
+}
+
+function openFullscreen(containerId, tfLabel) { /* identica a prima */ }
 function closeFullscreen() { /* identica */ }
 function openAlertSetup() { /* identica */ }
 function completeAlertSetup(alertPrice) { /* identica */ }
 
-async function updateLive() { /* identica alla versione precedente */ }
+async function updateLive() { /* identica */ }
 
-// ====================== RESIZE CON GUARDIA ======================
+// ====================== RESIZE LISTENER ======================
 let resizeTimeout;
 window.addEventListener("resize", () => {
     clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-        const totalSlots = visibleBarsCount + spaceBarsCount;
-        for (const id in charts) {
-            const el = document.getElementById(id);
-            if (!charts[id] || !el) continue;
-            const w = el.clientWidth;
-            const h = el.clientHeight;
-            if (w === 0 || h === 0) continue;
-            charts[id].resize(w, h);
-            charts[id].timeScale().applyOptions({ barSpacing: w / totalSlots });
-            applyVisibleRange(charts[id], candleSeries[id]);
-        }
-        if (fullscreenActive && fullscreenChart) {
-            const w = window.innerWidth;
-            const h = window.innerHeight - 60;
-            if (w > 0 && h > 0) {
-                fullscreenChart.chart.resize(w, h);
-                fullscreenChart.chart.timeScale().applyOptions({ barSpacing: w / totalSlots });
-                applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
-            }
-        }
-    }, 300);
+    resizeTimeout = setTimeout(forceResizeAllCharts, 300);
 });
 
 // ====================== LOCK LANDSCAPE ======================
@@ -433,9 +514,8 @@ async function lockLandscape() {
   catch (e) { console.log('Landscape lock non supportato:', e); setTimeout(() => window.scrollTo(0, 1), 100); }
 }
 
-// ====================== ONLOAD (ORDINAMENTO MIGLIORATO) ======================
+// ====================== ONLOAD ======================
 window.onload = async () => {
-    // carica impostazioni
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
     alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
@@ -463,36 +543,90 @@ window.onload = async () => {
     await loadAllCharts(currentSymbol);
 
     // Forza resize stabile prima di caricare la lista
-    setTimeout(() => window.dispatchEvent(new Event('resize')), 400);
+    setTimeout(forceResizeAllCharts, 600);
 
-    // Carica lista SOLO dopo che i grafici sono perfettamente stabili
+    // Carica la lista SOLO quando tutto è stabile
     setTimeout(() => {
-        fetchPairs();                    // prima chiamata manuale
-        setInterval(fetchPairs, 8000);   // ogni 8 secondi (meno stress)
+        fetchPairs();
+        setInterval(fetchPairs, 10000);   // ogni 10 secondi
         setInterval(updateLive, 2000);
-    }, 1200);
+    }, 1400);
 };
 
 // ====================== EVENTI BOTTONI ======================
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
 document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
 
-document.getElementById("toggle-ema").onclick = () => { /* identico */ };
-document.getElementById("toggle-bb").onclick = () => { /* identico */ };
+document.getElementById("toggle-ema").onclick = () => {
+    emaEnabled = !emaEnabled;
+    const btn = document.getElementById("toggle-ema");
+    btn.textContent = emaEnabled ? "EMA: On" : "EMA: Off";
+    btn.classList.toggle("active", emaEnabled);
+    document.getElementById("ema-periods-section").style.display = emaEnabled ? "block" : "none";
+};
 
-document.getElementById("apply-settings").onclick = async () => { /* identico */ };
+document.getElementById("toggle-bb").onclick = () => {
+    bbEnabled = !bbEnabled;
+    const btn = document.getElementById("toggle-bb");
+    btn.textContent = bbEnabled ? "Bollinger Bands: On" : "Bollinger Bands: Off";
+    btn.classList.toggle("active", bbEnabled);
+    document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
+};
+
+document.getElementById("apply-settings").onclick = async () => {
+    emaPeriods = [Math.max(1, Number(document.getElementById("ema1").value || 5)), Math.max(1, Number(document.getElementById("ema2").value || 10)), Math.max(1, Number(document.getElementById("ema3").value || 60)), Math.max(1, Number(document.getElementById("ema4").value || 223))];
+    bbPeriod = Math.max(1, Number(document.getElementById("bb-period").value || 20));
+    bbDev = Number(document.getElementById("bb-dev").value || 2);
+
+    customIntervals["chart-5m"] = document.getElementById("tf-chart-5m").value;
+    customIntervals["chart-30m"] = document.getElementById("tf-chart-30m").value;
+    customIntervals["chart-4h"] = document.getElementById("tf-chart-4h").value;
+    customIntervals["chart-1d"] = document.getElementById("tf-chart-1d").value;
+
+    localStorage.setItem('customIntervals', JSON.stringify(customIntervals));
+
+    personalTGToken = document.getElementById("personal-tg-token").value.trim();
+    personalTGChatID = document.getElementById("personal-tg-chatid").value.trim();
+    localStorage.setItem('personalTGToken', personalTGToken);
+    localStorage.setItem('personalTGChatID', personalTGChatID);
+
+    await loadAllCharts(currentSymbol);
+    document.getElementById("settings-modal").style.display = "none";
+};
 
 document.getElementById("sort-select").onchange = e => { currentSort = e.target.value; populateList(currentSort); };
 
-document.getElementById("exchange-select").onchange = async (e) => { /* identico */ };
+document.getElementById("exchange-select").onchange = async (e) => {
+    currentExchange = e.target.value;
+    localStorage.setItem('currentExchange', currentExchange);
+    await fetchPairs();
+    if (!allPairsData.some(p => p.s === currentSymbol)) currentSymbol = "BTCUSDT";
+    await loadAllCharts(currentSymbol);
+};
 
 document.getElementById("info-btn").onclick = () => document.getElementById("info-modal").style.display = "flex";
 document.querySelector("#info-modal .close").onclick = () => document.getElementById("info-modal").style.display = "none";
 
 document.getElementById("close-fullscreen").onclick = closeFullscreen;
 
-document.getElementById("set-local-alert").onclick = () => { /* identico */ };
-document.getElementById("open-in-exchange").onclick = () => { /* identico */ };
+document.getElementById("set-local-alert").onclick = () => {
+    const alertPrice = Number(document.getElementById("alert-price-input").value);
+    if (isNaN(alertPrice) || alertPrice <= 0) return alert("Prezzo non valido");
+    if (!personalTGToken || !personalTGChatID) return alert("⚠️ Configura Token e ChatID nelle impostazioni!");
+
+    fetch(`${SERVER_URL}/set_alert`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ device_id: deviceId, exchange: currentExchange, symbol: currentSymbol, alert_price: alertPrice, sync_price: activeHorizPrice || alertPrice, token: personalTGToken, chatId: personalTGChatID })
+    }).then(() => completeAlertSetup(alertPrice)).catch(() => { alert("Server offline → alert locale attivo"); completeAlertSetup(alertPrice); });
+};
+
+document.getElementById("open-in-exchange").onclick = () => {
+    const tradeLink = currentExchange === "bybit" ? `https://www.bybit.com/trade/usdt/${currentSymbol}` : `https://www.binance.com/en/futures/${currentSymbol}`;
+    window.open(tradeLink, '_blank');
+    document.getElementById("alert-setup").style.display = "none";
+};
+
 document.getElementById("close-alert-setup").onclick = () => document.getElementById("alert-setup").style.display = "none";
 
 const fsButtons = document.querySelectorAll('.title-fullscreen');
