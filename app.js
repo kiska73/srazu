@@ -1,4 +1,3 @@
-// ====================== VARIABILI GLOBALI ======================
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
 let charts = {};
@@ -54,7 +53,7 @@ let personalTGChatID = localStorage.getItem('personalTGChatID') || '';
 // Server URL
 const SERVER_URL = "https://srazu-bot.onrender.com";
 
-// Device ID
+// Device ID unico
 let deviceId = localStorage.getItem('deviceId') || (function() {
   const id = crypto.randomUUID();
   localStorage.setItem('deviceId', id);
@@ -68,7 +67,6 @@ const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-// ====================== FUNZIONI UTILITY ======================
 function formatPrice(price) {
     const num = parseFloat(price);
     if (isNaN(num)) return "0";
@@ -137,14 +135,23 @@ function toggleFavorite(symbol) {
         favorites = favorites.filter(s => s !== symbol);
         delete savedHorizPrices[symbol];
         delete syncPrices[symbol];
+
         if (hadAlert) {
             delete alertPrices[symbol];
             localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
+
             fetch(`${SERVER_URL}/set_alert`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ device_id: deviceId, exchange: currentExchange, symbol: symbol, price: null, token: personalTGToken, chatId: personalTGChatID })
-            }).catch(() => {});
+                body: JSON.stringify({
+                    device_id: deviceId,
+                    exchange: currentExchange,
+                    symbol: symbol,
+                    price: null,
+                    token: personalTGToken,
+                    chatId: personalTGChatID
+                })
+            }).catch(e => console.error("Remove alert error:", e));
         }
     } else {
         favorites.push(symbol);
@@ -164,8 +171,12 @@ function toggleFavorite(symbol) {
 }
 
 function updatePriceLineOnSeries(series, key) {
-    if (priceLines[key]) { series.removePriceLine(priceLines[key]); delete priceLines[key]; }
+    if (priceLines[key]) {
+        series.removePriceLine(priceLines[key]);
+        delete priceLines[key];
+    }
     if (activeHorizPrice == null) return;
+
     const line = series.createPriceLine({
         price: activeHorizPrice,
         color: "#FFFF00",
@@ -177,14 +188,27 @@ function updatePriceLineOnSeries(series, key) {
         title: "",
         draggable: true
     });
-    line.applyOptions({ onDrag: l => { activeHorizPrice = l.price; syncHorizLines(); saveHorizIfFavorite(); } });
+
+    line.applyOptions({
+        onDrag: l => {
+            activeHorizPrice = l.price;
+            syncHorizLines();
+            saveHorizIfFavorite();
+        }
+    });
+
     priceLines[key] = line;
 }
 
 function updateAlertLineOnSeries(series, key) {
-    if (alertLines[key]) { series.removePriceLine(alertLines[key]); delete alertLines[key]; }
+    if (alertLines[key]) {
+        series.removePriceLine(alertLines[key]);
+        delete alertLines[key];
+    }
+
     const alertPrice = alertPrices[currentSymbol];
     if (alertPrice == null) return;
+
     const line = series.createPriceLine({
         price: alertPrice,
         color: "#FFD700",
@@ -194,12 +218,19 @@ function updateAlertLineOnSeries(series, key) {
         title: "",
         draggable: false
     });
+
     alertLines[key] = line;
 }
 
 function toggleRulerMode() {
     rulerMode = !rulerMode;
-    document.querySelectorAll('.title-ruler').forEach(el => el.classList.toggle('active', rulerMode));
+    document.querySelectorAll('.title-ruler').forEach(el => {
+        if (rulerMode) {
+            el.classList.add('active');
+        } else {
+            el.classList.remove('active');
+        }
+    });
     if (!rulerMode) {
         rulerPrice = null;
         Object.keys(rulerLines).forEach(k => {
@@ -215,8 +246,12 @@ function toggleRulerMode() {
 }
 
 function updateRulerLineOnSeries(series, key) {
-    if (rulerLines[key]) { series.removePriceLine(rulerLines[key]); delete rulerLines[key]; }
+    if (rulerLines[key]) {
+        series.removePriceLine(rulerLines[key]);
+        delete rulerLines[key];
+    }
     if (rulerPrice === null) return;
+
     const line = series.createPriceLine({
         price: rulerPrice,
         color: "#00FF00",
@@ -236,7 +271,8 @@ function updateRulerPercentage() {
     const fsPct = document.querySelector('#fullscreen-title .title-pct');
     if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) {
         const diff = ((rulerPrice - activeHorizPrice) / activeHorizPrice * 100);
-        const text = (diff >= 0 ? '+' : '') + diff.toFixed(2) + '%';
+        const sign = diff >= 0 ? '+' : '';
+        const text = `${sign}${diff.toFixed(2)}%`;
         pctElements.forEach(el => el.textContent = text);
         if (fsPct) fsPct.textContent = text;
     } else {
@@ -246,7 +282,13 @@ function updateRulerPercentage() {
 }
 
 function createEMA(seriesArray, chart, klines, period, color) {
-    const s = chart.addLineSeries({ color: color, lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
+    const s = chart.addLineSeries({
+        color: color,
+        lineWidth: 1.2,
+        priceLineVisible: false,
+        lastValueVisible: false
+    });
+
     let ema = null;
     const data = [];
     klines.forEach((c, i) => {
@@ -254,8 +296,10 @@ function createEMA(seriesArray, chart, klines, period, color) {
         else if (i >= period) ema = nextEMA(ema, c.close, period);
         if (ema != null) data.push({ time: c.time, value: ema });
     });
+
     s.setData(data);
-    seriesArray.push({ series: s, period, last: ema || klines.at(-1)?.close || 0 });
+    const lastEma = ema || klines.at(-1)?.close || 0;
+    seriesArray.push({ series: s, period, last: lastEma });
 }
 
 function createBollinger(chart, klines, period, dev) {
@@ -263,31 +307,36 @@ function createBollinger(chart, klines, period, dev) {
     const upper = chart.addLineSeries({ color: BB_COLORS.upper, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
     const lower = chart.addLineSeries({ color: BB_COLORS.lower, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
 
-    const dm = [], du = [], dl = [];
+    const dataMiddle = [], dataUpper = [], dataLower = [];
+
     for (let i = period - 1; i < klines.length; i++) {
         const slice = klines.slice(i - period + 1, i + 1);
         const closes = slice.map(c => c.close);
         const sma = closes.reduce((a,b) => a + b, 0) / period;
         const variance = closes.reduce((sum, val) => sum + Math.pow(val - sma, 2), 0) / period;
-        const std = Math.sqrt(variance);
+        const stdDev = Math.sqrt(variance);
+        const upperVal = sma + dev * stdDev;
+        const lowerVal = sma - dev * stdDev;
         const time = klines[i].time;
-        dm.push({ time, value: sma });
-        du.push({ time, value: sma + dev * std });
-        dl.push({ time, value: sma - dev * std });
+        dataMiddle.push({ time, value: sma });
+        dataUpper.push({ time, value: upperVal });
+        dataLower.push({ time, value: lowerVal });
     }
-    middle.setData(dm); upper.setData(du); lower.setData(dl);
 
-    return {
-        middle: { series: middle, last: dm.at(-1)?.value || 0 },
-        upper:  { series: upper,  last: du.at(-1)?.value || 0 },
-        lower:  { series: lower,  last: dl.at(-1)?.value || 0 }
-    };
+    middle.setData(dataMiddle);
+    upper.setData(dataUpper);
+    lower.setData(dataLower);
+
+    const lastSma = dataMiddle.at(-1)?.value || 0;
+    return { middle: { series: middle, last: lastSma },
+             upper: { series: upper, last: dataUpper.at(-1)?.value || 0 },
+             lower: { series: lower, last: dataLower.at(-1)?.value || 0 } };
 }
 
-// ====================== FETCH ======================
 async function fetchKlines(symbol, interval, limit = 500) {
     let baseUrl = "";
     let queryInterval = interval;
+
     const binanceMap = {"1":"1m","3":"3m","5":"5m","15":"15m","30":"30m","60":"1h","240":"4h","D":"1d"};
 
     if (currentExchange === "bybit") {
@@ -298,11 +347,32 @@ async function fetchKlines(symbol, interval, limit = 500) {
     }
 
     try {
-        const response = await fetch(baseUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (!response.ok) return [];
+        const response = await fetch(baseUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
+        if (!response.ok) {
+            console.error(`Fetch error: ${response.status} ${response.statusText}`);
+            return [];
+        }
         const data = await response.json();
-        let rawList = currentExchange === "bybit" ? (data.result?.list || []) : data;
-        if (!Array.isArray(rawList)) return [];
+
+        let rawList = [];
+        if (currentExchange === "bybit") {
+            if (data.retCode !== 0) {
+                console.error("Bybit error:", data.retMsg);
+                return [];
+            }
+            rawList = data.result?.list || [];
+        } else {
+            rawList = data;
+        }
+
+        if (!Array.isArray(rawList) || rawList.length === 0) {
+            console.error("No data in response");
+            return [];
+        }
 
         const klines = rawList.map(c => ({
             time: Number(c[0]) / 1000,
@@ -311,8 +381,12 @@ async function fetchKlines(symbol, interval, limit = 500) {
             low: Number(c[3]),
             close: Number(c[4])
         }));
+
         return currentExchange === "bybit" ? klines.reverse() : klines;
-    } catch (e) { console.error("Fetch klines failed:", e); return []; }
+    } catch (e) {
+        console.error("Fetch klines failed:", e);
+        return [];
+    }
 }
 
 async function fetchLatestCandle(symbol, interval) {
@@ -321,52 +395,51 @@ async function fetchLatestCandle(symbol, interval) {
 }
 
 async function fetchPairs() {
-    let baseUrl = currentExchange === "bybit" 
-        ? "https://api.bybit.com/v5/market/tickers?category=linear" 
-        : "https://fapi.binance.com/fapi/v1/ticker/24hr";
+    let baseUrl = "";
+    let tickerUrl = "";
+    if (currentExchange === "bybit") {
+        baseUrl = "https://api.bybit.com/v5/market/tickers?category=linear";
+    } else if (currentExchange === "binance") {
+        baseUrl = "https://fapi.binance.com/fapi/v1/exchangeInfo";
+        tickerUrl = "https://fapi.binance.com/fapi/v1/ticker/24hr";
+    }
 
     try {
-        const res = await fetch(baseUrl);
-        if (!res.ok) return;
-        const data = await res.json();
-        let rawList = currentExchange === "bybit" ? (data.result?.list || []) : data;
+        let activeSymbols = [];
 
-        allPairsData = rawList
-            .filter(t => t.symbol && t.symbol.endsWith("USDT"))
-            .map(t => ({
-                s: t.symbol,
-                price: t.lastPrice || "0",
-                p: currentExchange === "bybit" ? Number(t.price24hPcnt || 0) * 100 : Number(t.priceChangePercent || 0),
-                v: currentExchange === "bybit" ? Number(t.turnover24h || 0) : Number(t.quoteVolume || 0)
-            }));
+        if (currentExchange === "binance") {
+            const infoRes = await fetch(baseUrl);
+            if (!infoRes.ok) return;
+            const info = await infoRes.json();
+
+            activeSymbols = info.symbols
+                .filter(s => s.contractType === "PERPETUAL" && s.status === "TRADING" && s.symbol.endsWith("USDT"))
+                .map(s => s.symbol);
+        }
+
+        const tickerRes = await fetch(currentExchange === "bybit" ? baseUrl : tickerUrl);
+        if (!tickerRes.ok) return;
+        const tickerData = await tickerRes.json();
+
+        let rawList = currentExchange === "bybit" ? (tickerData.result?.list || []) : tickerData;
+
+        const filtered = rawList.filter(t => 
+            currentExchange === "bybit" ? true : activeSymbols.includes(t.symbol)
+        );
+
+        allPairsData = filtered.map(t => ({
+            s: t.symbol || "",
+            price: t.lastPrice || "0",
+            p: currentExchange === "bybit" ? Number(t.price24hPcnt || 0) * 100 : Number(t.priceChangePercent || 0),
+            v: currentExchange === "bybit" ? Number(t.turnover24h || 0) : Number(t.quoteVolume || 0)
+        }));
 
         populateList(currentSort);
-    } catch (e) { console.error("Fetch pairs error:", e); }
-}
-
-// ====================== FORCE RESIZE (SOLO RESIZE, NO BARSPACING) ======================
-function forceResizeAllCharts() {
-    Object.keys(charts).forEach(id => {
-        const el = document.getElementById(id);
-        if (!charts[id] || !el) return;
-        const rect = el.getBoundingClientRect();
-        if (rect.width < 10 || rect.height < 10) return;
-
-        charts[id].resize(rect.width, rect.height);
-        applyVisibleRange(charts[id], candleSeries[id]);
-    });
-
-    if (fullscreenActive && fullscreenChart) {
-        const w = window.innerWidth;
-        const h = window.innerHeight - 60;
-        if (w > 10 && h > 10) {
-            fullscreenChart.chart.resize(w, h);
-            applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
-        }
+    } catch (e) {
+        console.error("Fetch pairs error:", e);
     }
 }
 
-// ====================== POPULATE LIST (PULITO) ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -381,6 +454,7 @@ function populateList(sort = "volume") {
 
     const favoritesInList = sorted.filter(p => favorites.includes(p.s));
     const others = sorted.filter(p => !favorites.includes(p.s));
+
     const display = favoritesInList.concat(others.slice(0, 80));
 
     list.innerHTML = "";
@@ -404,14 +478,13 @@ function populateList(sort = "volume") {
     });
 
     document.querySelectorAll('.star').forEach(starEl => {
-        starEl.onclick = (e) => { e.stopPropagation(); toggleFavorite(starEl.dataset.symbol); };
+        starEl.onclick = (e) => {
+            e.stopPropagation();
+            toggleFavorite(starEl.dataset.symbol);
+        };
     });
-
-    // Un solo resize sicuro dopo la lista
-    setTimeout(forceResizeAllCharts, 150);
 }
 
-// ====================== CREAZIONE GRAFICI (BARSPACING FISSO) ======================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -422,9 +495,21 @@ async function createChart(containerId) {
     const klines = await fetchKlines(currentSymbol, interval, 500);
 
     const titleEl = document.getElementById(`title-${containerId.split("-")[1]}`);
-    titleEl.querySelector('.title-text').textContent = klines.length ? `${currentSymbol} - ${label}` : "No data – check connection";
+    const bellSpan = titleEl.querySelector('.title-bell');
+    const rulerSpan = titleEl.querySelector('.title-ruler');
+    const fsSpan = titleEl.querySelector('.title-fullscreen');
+    const textSpan = titleEl.querySelector('.title-text');
 
-    if (!klines.length) return;
+    bellSpan.onclick = () => openAlertSetup();
+    rulerSpan.onclick = toggleRulerMode;
+    fsSpan.onclick = () => openFullscreen(containerId, label);
+
+    textSpan.textContent = klines.length ? `${currentSymbol} - ${label}` : "No data – check connection";
+    titleEl.className = "chart-title neutral";
+
+    if (!klines.length) {
+        return;
+    }
 
     symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
 
@@ -432,56 +517,60 @@ async function createChart(containerId) {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        timeScale: { 
-            timeVisible: true, 
-            tickMarkFormatter: getTimeFormatter(interval),
-            lockVisibleTimeRangeOnResize: true,
-            fixLeftEdge: true,
-            fixRightEdge: true,
-            rightBarStaysOnScroll: true,
-            handleScroll: false,
-            handleScale: false
-        },
+        timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(interval) },
         rightPriceScale: { borderColor: '#222' },
         width: container.clientWidth,
         height: container.clientHeight
     });
 
     const series = chart.addCandlestickSeries({
-        priceFormat: { type: "price", precision: symbolPricePrecision, minMove: 10 ** -symbolPricePrecision },
+        priceFormat: { 
+            type: "price", 
+            precision: symbolPricePrecision, 
+            minMove: 10 ** -symbolPricePrecision 
+        },
         upColor: '#ffffff',
         downColor: '#0051D4',
         wickUpColor: '#cccccc',
         wickDownColor: '#0051D4',
-        borderVisible: false
+        borderVisible: false,
+        wickVisible: true
     });
 
     series.setData(klines);
     lastCandleTime[containerId] = klines.at(-1).time;
 
     emaSeries[containerId] = [];
-    if (emaEnabled) emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
+    if (emaEnabled) {
+        emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
+    }
 
-    if (bbEnabled && klines.length >= bbPeriod) bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
-
-    // BARSPACING FISSO UNA VOLTA SOLA
-    const totalSlots = visibleBarsCount + spaceBarsCount;
-    chart.timeScale().applyOptions({
-        barSpacing: container.clientWidth / totalSlots
-    });
+    if (bbEnabled && klines.length >= bbPeriod) {
+        bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
+    } else {
+        bbSeries[containerId] = null;
+    }
 
     updatePriceLineOnSeries(series, containerId);
     updateAlertLineOnSeries(series, containerId);
     if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(series, containerId);
 
+    const totalSlots = visibleBarsCount + spaceBarsCount;
+    const barSpacing = container.clientWidth / totalSlots;
+    chart.timeScale().applyOptions({ barSpacing: barSpacing });
     applyVisibleRange(chart, series);
 
     chart.subscribeClick(p => {
         if (p?.point) {
             const price = series.coordinateToPrice(p.point.y);
-            if (rulerMode) rulerPrice = price; else activeHorizPrice = price;
-            syncHorizLines();
-            if (!rulerMode) saveHorizIfFavorite();
+            if (rulerMode) {
+                rulerPrice = price;
+                syncHorizLines();
+            } else {
+                activeHorizPrice = price;
+                syncHorizLines();
+                saveHorizIfFavorite();
+            }
         }
     });
 
@@ -502,70 +591,254 @@ async function loadAllCharts(symbol) {
 
     const promises = Object.keys(customIntervals).map(id => createChart(id));
     await Promise.all(promises);
+
     syncHorizLines();
-    forceResizeAllCharts();
+
+    const totalSlots = visibleBarsCount + spaceBarsCount;
+    Object.keys(charts).forEach(id => {
+        const el = document.getElementById(id);
+        if (charts[id] && el) {
+            charts[id].resize(el.clientWidth, el.clientHeight);
+            const newSpacing = el.clientWidth / totalSlots;
+            charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
+            applyVisibleRange(charts[id], candleSeries[id]);
+        }
+    });
 }
 
-// ====================== FULLSCREEN, ALERT, UPDATE LIVE (identici) ======================
-function openFullscreen(containerId, tfLabel) { /* identica alla tua ultima versione */ }
-function closeFullscreen() { /* identica */ }
-function openAlertSetup() { /* identica */ }
-function completeAlertSetup(alertPrice) { /* identica */ }
+function openFullscreen(containerId, tfLabel) {
+    const overlay = document.getElementById("fullscreen-overlay");
+    const fsDiv = document.getElementById("fullscreen-chart");
+    fsDiv.innerHTML = "";
 
-async function updateLive() { /* identica */ }
+    const fsTitle = document.getElementById("fullscreen-title");
+    const fsBell = fsTitle.querySelector('.title-bell');
+    const fsRuler = fsTitle.querySelector('.title-ruler');
+    const fsText = fsTitle.querySelector('.title-text');
+    const fsFs = fsTitle.querySelector('.title-fullscreen');
 
-// ====================== RESIZE ======================
-let resizeTimeout;
-window.addEventListener("resize", () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(forceResizeAllCharts, 250);
-});
+    fsBell.onclick = () => openAlertSetup();
+    fsRuler.onclick = toggleRulerMode;
+    fsFs.onclick = closeFullscreen;
+    fsText.textContent = `${currentSymbol} - ${tfLabel}`;
 
-// ====================== LOCK LANDSCAPE ======================
-async function lockLandscape() {
-  if (!screen.orientation || !screen.orientation.lock) return;
-  try { await screen.orientation.lock('landscape-primary'); }
-  catch (e) { console.log('Landscape lock non supportato:', e); setTimeout(() => window.scrollTo(0, 1), 100); }
-}
-
-// ====================== ONLOAD ======================
-window.onload = async () => {
-    favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
-    savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
-    alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
-    syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}');
-
-    const savedIntervals = localStorage.getItem('customIntervals');
-    if (savedIntervals) customIntervals = JSON.parse(savedIntervals);
-
-    personalTGToken = localStorage.getItem('personalTGToken') || '';
-    personalTGChatID = localStorage.getItem('personalTGChatID') || '';
-
-    document.getElementById("personal-tg-token").value = personalTGToken;
-    document.getElementById("personal-tg-chatid").value = personalTGChatID;
-
-    Object.keys(customIntervals).forEach(id => {
-        const select = document.getElementById("tf-" + id);
-        if (select) select.value = customIntervals[id];
+    const newChart = LightweightCharts.createChart(fsDiv, {
+        layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
+        grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(customIntervals[containerId]) },
+        rightPriceScale: { borderColor: '#222' },
+        width: window.innerWidth,
+        height: window.innerHeight - 60
     });
 
-    document.getElementById("exchange-select").value = currentExchange;
-    document.getElementById("toggle-ema").textContent = emaEnabled ? "EMA: On" : "EMA: Off";
-    document.getElementById("toggle-bb").textContent = bbEnabled ? "Bollinger Bands: On" : "Bollinger Bands: Off";
+    const newSeries = newChart.addCandlestickSeries(candleSeries[containerId].options());
+    newSeries.setData(candleSeries[containerId].data());
 
-    lockLandscape();
-    await loadAllCharts(currentSymbol);
+    if (emaEnabled) {
+        emaSeries[containerId]?.forEach((e, i) => {
+            const s = newChart.addLineSeries({ color: EMA_COLORS[i], lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
+            s.setData(e.series.data());
+        });
+    }
 
-    setTimeout(forceResizeAllCharts, 600);
+    if (bbEnabled && bbSeries[containerId]) {
+        ['middle', 'upper', 'lower'].forEach(key => {
+            const s = newChart.addLineSeries({
+                color: BB_COLORS[key],
+                lineWidth: key === 'middle' ? 1.5 : 1,
+                priceLineVisible: false,
+                lastValueVisible: false
+            });
+            s.setData(bbSeries[containerId][key].series.data());
+        });
+    }
 
-    setTimeout(() => {
-        fetchPairs();
-        setInterval(fetchPairs, 10000);
-        setInterval(updateLive, 2000);
-    }, 1800);
+    updatePriceLineOnSeries(newSeries, "fullscreen");
+    updateAlertLineOnSeries(newSeries, "fullscreen");
+    if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(newSeries, "fullscreen");
+
+    const totalSlots = visibleBarsCount + spaceBarsCount;
+    const barSpacing = window.innerWidth / totalSlots;
+    newChart.timeScale().applyOptions({ barSpacing: barSpacing });
+    applyVisibleRange(newChart, newSeries);
+
+    newChart.subscribeClick(p => {
+        if (p?.point) {
+            const price = newSeries.coordinateToPrice(p.point.y);
+            if (rulerMode) {
+                rulerPrice = price;
+                syncHorizLines();
+            } else {
+                activeHorizPrice = price;
+                syncHorizLines();
+                saveHorizIfFavorite();
+            }
+        }
+    });
+
+    newChart.subscribeDblClick(() => {
+        activeHorizPrice = null;
+        syncHorizLines();
+        saveHorizIfFavorite();
+    });
+
+    overlay.style.display = "block";
+    fullscreenActive = true;
+    fullscreenChart = { chart: newChart, series: newSeries };
+    fullscreenContainerId = containerId;
+}
+
+function closeFullscreen() {
+    document.getElementById("fullscreen-overlay").style.display = "none";
+    if (fullscreenChart) fullscreenChart.chart.remove();
+    fullscreenActive = false;
+    fullscreenChart = null;
+    fullscreenContainerId = null;
+    delete rulerLines["fullscreen"];
+}
+
+document.getElementById("close-fullscreen").onclick = closeFullscreen;
+
+function openAlertSetup() {
+    document.getElementById("alert-symbol").textContent = currentSymbol;
+    const prefill = activeHorizPrice !== null ? activeHorizPrice : candleSeries["chart-5m"]?.data()?.at(-1)?.close || 0;
+    document.getElementById("alert-price-input").value = prefill.toFixed(symbolPricePrecision);
+    document.getElementById("alert-setup").style.display = "block";
+}
+
+document.getElementById("close-alert-setup").onclick = () => {
+    document.getElementById("alert-setup").style.display = "none";
 };
 
-// ====================== EVENTI BOTTONI ======================
+document.getElementById("set-local-alert").onclick = () => {
+    const alertPrice = Number(document.getElementById("alert-price-input").value);
+    const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice;
+
+    if (isNaN(alertPrice) || alertPrice <= 0) {
+        alert("Prezzo non valido");
+        return;
+    }
+
+    const token = document.getElementById("personal-tg-token")?.value.trim() || localStorage.getItem('personalTGToken') || '';
+    const chatId = document.getElementById("personal-tg-chatid")?.value.trim() || localStorage.getItem('personalTGChatID') || '';
+
+    if (!token || !chatId) {
+        alert("⚠️ Errore: Configura Token e ChatID nelle impostazioni prima di mettere un alert!");
+        return;
+    }
+
+    fetch(`${SERVER_URL}/set_alert`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            device_id: deviceId,
+            exchange: currentExchange,
+            symbol: currentSymbol,
+            alert_price: alertPrice,
+            sync_price: syncPrice,
+            token: token,
+            chatId: chatId
+        })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Server error');
+        return response.json();
+    })
+    .then(data => {
+        console.log("✅ Server sincronizzato:", data);
+        completeAlertSetup(alertPrice, syncPrice);
+    })
+    .catch(e => {
+        console.error("❌ Errore sincronizzazione server:", e);
+        alert("Il server non risponde, ma l'alert locale è attivo (linea visibile).");
+        completeAlertSetup(alertPrice, syncPrice);
+    });
+};
+
+function completeAlertSetup(alertPrice, syncPrice) {
+    alertPrices[currentSymbol] = alertPrice;
+    syncPrices[currentSymbol] = syncPrice;
+    savedHorizPrices[currentSymbol] = syncPrice; // salva come orizzontale persistente
+    localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
+    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
+    localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
+    syncHorizLines();
+
+    if (!favorites.includes(currentSymbol)) {
+        favorites.push(currentSymbol);
+        localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
+        populateList(currentSort);
+    }
+
+    document.getElementById("alert-setup").style.display = "none";
+}
+
+document.getElementById("open-in-exchange").onclick = () => {
+    const price = Number(document.getElementById("alert-price-input").value);
+    if (isNaN(price) || price <= 0) return alert("Invalid price");
+
+    const tradeLink = currentExchange === "bybit" 
+        ? `https://www.bybit.com/trade/usdt/${currentSymbol}`
+        : `https://www.binance.com/en/futures/${currentSymbol}`;
+
+    window.open(tradeLink, '_blank');
+
+    document.getElementById("alert-setup").style.display = "none";
+};
+
+async function updateLive() {
+    for (const id in customIntervals) {
+        const interval = customIntervals[id];
+        const latest = await fetchLatestCandle(currentSymbol, interval);
+        if (!latest || !candleSeries[id]) continue;
+
+        candleSeries[id].update(latest);
+
+        if (latest.time > (lastCandleTime[id] || 0)) {
+            lastCandleTime[id] = latest.time;
+
+            if (emaEnabled) {
+                emaSeries[id]?.forEach(e => {
+                    e.last = nextEMA(e.last, latest.close, e.period);
+                    e.series.update({ time: latest.time, value: e.last });
+                });
+            }
+
+            if (bbEnabled && bbSeries[id]) {
+                const bb = bbSeries[id];
+                bb.middle.last = (bb.middle.last * (bbPeriod - 1) + latest.close) / bbPeriod;
+                bb.middle.series.update({ time: latest.time, value: bb.middle.last });
+            }
+
+            applyVisibleRange(charts[id], candleSeries[id]);
+        }
+    }
+
+    if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
+        const interval = customIntervals[fullscreenContainerId];
+        const latest = await fetchLatestCandle(currentSymbol, interval);
+        if (latest) {
+            fullscreenChart.series.update(latest);
+            if (latest.time > (lastCandleTime[fullscreenContainerId] || 0)) {
+                lastCandleTime[fullscreenContainerId] = latest.time;
+                applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
+            }
+        }
+    }
+
+    const btcLatest = await fetchLatestCandle("BTCUSDT", "30");
+    if (btcLatest) {
+        let colorClass = "neutral";
+        if (btcLatest.close > btcLatest.open) colorClass = "green";
+        else if (btcLatest.close < btcLatest.open) colorClass = "red";
+        document.querySelectorAll('.chart-title').forEach(t => t.className = "chart-title " + colorClass);
+    }
+}
+
+setInterval(updateLive, 2000);
+setInterval(fetchPairs, 2000);
+
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
 document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
 
@@ -592,6 +865,7 @@ document.getElementById("apply-settings").onclick = async () => {
         Math.max(1, Number(document.getElementById("ema3").value || 60)),
         Math.max(1, Number(document.getElementById("ema4").value || 223))
     ];
+
     bbPeriod = Math.max(1, Number(document.getElementById("bb-period").value || 20));
     bbDev = Number(document.getElementById("bb-dev").value || 2);
 
@@ -604,6 +878,7 @@ document.getElementById("apply-settings").onclick = async () => {
 
     personalTGToken = document.getElementById("personal-tg-token").value.trim();
     personalTGChatID = document.getElementById("personal-tg-chatid").value.trim();
+
     localStorage.setItem('personalTGToken', personalTGToken);
     localStorage.setItem('personalTGChatID', personalTGChatID);
 
@@ -611,50 +886,141 @@ document.getElementById("apply-settings").onclick = async () => {
     document.getElementById("settings-modal").style.display = "none";
 };
 
-document.getElementById("sort-select").onchange = e => { currentSort = e.target.value; populateList(currentSort); };
+document.getElementById("sort-select").onchange = e => {
+    currentSort = e.target.value;
+    populateList(currentSort);
+};
 
 document.getElementById("exchange-select").onchange = async (e) => {
+    const oldSymbol = currentSymbol;
     currentExchange = e.target.value;
     localStorage.setItem('currentExchange', currentExchange);
+
+    allPairsData = [];
+    document.getElementById("pairs-list").innerHTML = "<div class='loading'>Loading pairs...</div>";
+
     await fetchPairs();
-    if (!allPairsData.some(p => p.s === currentSymbol)) currentSymbol = "BTCUSDT";
+
+    if (!allPairsData.some(p => p.s === oldSymbol)) {
+        currentSymbol = "BTCUSDT";
+    }
+
     await loadAllCharts(currentSymbol);
 };
 
-document.getElementById("info-btn").onclick = () => document.getElementById("info-modal").style.display = "flex";
-document.querySelector("#info-modal .close").onclick = () => document.getElementById("info-modal").style.display = "none";
-
-document.getElementById("close-fullscreen").onclick = closeFullscreen;
-
-document.getElementById("set-local-alert").onclick = () => {
-    const alertPrice = Number(document.getElementById("alert-price-input").value);
-    if (isNaN(alertPrice) || alertPrice <= 0) return alert("Prezzo non valido");
-    if (!personalTGToken || !personalTGChatID) return alert("⚠️ Configura Token e ChatID nelle impostazioni!");
-
-    fetch(`${SERVER_URL}/set_alert`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ device_id: deviceId, exchange: currentExchange, symbol: currentSymbol, alert_price: alertPrice, sync_price: activeHorizPrice || alertPrice, token: personalTGToken, chatId: personalTGChatID })
-    }).then(() => completeAlertSetup(alertPrice)).catch(() => { alert("Server offline → alert locale attivo"); completeAlertSetup(alertPrice); });
+document.getElementById("info-btn").onclick = () => {
+    document.getElementById("info-modal").style.display = "flex";
 };
 
-document.getElementById("open-in-exchange").onclick = () => {
-    const tradeLink = currentExchange === "bybit" ? `https://www.bybit.com/trade/usdt/${currentSymbol}` : `https://www.binance.com/en/futures/${currentSymbol}`;
-    window.open(tradeLink, '_blank');
-    document.getElementById("alert-setup").style.display = "none";
+document.querySelector("#info-modal .close").onclick = () => {
+    document.getElementById("info-modal").style.display = "none";
 };
 
-document.getElementById("close-alert-setup").onclick = () => document.getElementById("alert-setup").style.display = "none";
+window.onclick = (event) => {
+    const infoModal = document.getElementById("info-modal");
+    const settingsModal = document.getElementById("settings-modal");
+    if (event.target === infoModal) infoModal.style.display = "none";
+    if (event.target === settingsModal) settingsModal.style.display = "none";
+};
 
-const fsButtons = document.querySelectorAll('.title-fullscreen');
-const ids = ["5m", "30m", "4h", "1d"];
-fsButtons.forEach((btn, i) => {
-    btn.onclick = () => {
-        const containerId = "chart-" + ids[i];
-        const label = document.getElementById("title-" + ids[i]).querySelector('.title-text').textContent.split(' - ')[1] || "5m";
-        openFullscreen(containerId, label);
-    };
+document.getElementById('open-botfather-btn').onclick = () => {
+    window.open('https://t.me/BotFather', '_blank');
+};
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('SW registered: ', reg))
+            .catch(err => console.log('SW registration failed: ', err));
+    });
+}
+
+// ====================== FORZA LANDSCAPE SU CELLULARE/TABLET ======================
+async function lockLandscape() {
+  if (!screen.orientation || !screen.orientation.lock) return;
+  try {
+    await screen.orientation.lock('landscape-primary');
+    console.log('✅ Locked in landscape');
+  } catch (e) {
+    console.log('Lock non supportato (iOS):', e);
+    // Fallback iOS: simula con resize forzato
+    setTimeout(() => window.scrollTo(0, 1), 100);  // Nascondi barra browser
+  }
+}
+
+window.onload = async () => {
+    favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
+    savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
+    alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
+    syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}');
+    const savedIntervals = localStorage.getItem('customIntervals');
+    if (savedIntervals) customIntervals = JSON.parse(savedIntervals);
+
+    personalTGToken = localStorage.getItem('personalTGToken') || '';
+    personalTGChatID = localStorage.getItem('personalTGChatID') || '';
+
+    document.getElementById("personal-tg-token").value = personalTGToken;
+    document.getElementById("personal-tg-chatid").value = personalTGChatID;
+
+    Object.keys(customIntervals).forEach(id => {
+        const select = document.getElementById("tf-" + id);
+        if (select) select.value = customIntervals[id];
+    });
+
+    document.getElementById("exchange-select").value = currentExchange;
+
+    document.getElementById("toggle-ema").textContent = emaEnabled ? "EMA: On" : "EMA: Off";
+    document.getElementById("toggle-ema").classList.toggle("active", emaEnabled);
+    document.getElementById("ema-periods-section").style.display = emaEnabled ? "block" : "none";
+
+    document.getElementById("toggle-bb").textContent = bbEnabled ? "Bollinger Bands: On" : "Bollinger Bands: Off";
+    document.getElementById("toggle-bb").classList.toggle("active", bbEnabled);
+    document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
+
+    document.querySelectorAll('.title-ruler').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    await loadAllCharts("BTCUSDT");
+    await fetchPairs();
+
+    // FORZA LANDSCAPE (integrato)
+    lockLandscape();
+
+    window.addEventListener("resize", () => {
+        const totalSlots = visibleBarsCount + spaceBarsCount;
+        for (const id in charts) {
+            const el = document.getElementById(id);
+            if (charts[id] && el) {
+                charts[id].resize(el.clientWidth, el.clientHeight);
+                const newSpacing = el.clientWidth / totalSlots;
+                charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
+                applyVisibleRange(charts[id], candleSeries[id]);
+            }
+        }
+        if (fullscreenActive && fullscreenChart) {
+            fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
+            const newSpacing = window.innerWidth / totalSlots;
+            fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
+            applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
+        }
+        lockLandscape();
+    });
+
+    // Listener per rotazione (risolve mezzo schermo)
+    window.addEventListener('orientationchange', () => {
+      lockLandscape();
+      setTimeout(() => {
+        // Forza relayout
+        document.body.style.display = 'none';
+        document.body.offsetHeight;  // Trigger reflow
+        document.body.style.display = 'block';
+        Object.keys(charts).forEach(id => charts[id]?.resize());  // Resize grafici
+      }, 300);  // Delay per rotazione completata
+    });
+};
+
+// Riprova lock quando torna visibile
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) lockLandscape();
 });
-
-document.querySelectorAll('.title-bell').forEach(el => el.onclick = openAlertSetup);
-document.querySelectorAll('.title-ruler').forEach(el => el.onclick = toggleRulerMode);
