@@ -344,9 +344,8 @@ async function fetchPairs() {
     } catch (e) { console.error("Fetch pairs error:", e); }
 }
 
-// ====================== FORCE RESIZE (ANTI-ZOOM) ======================
+// ====================== FORCE RESIZE (SOLO RESIZE, NO BARSPACING) ======================
 function forceResizeAllCharts() {
-    const totalSlots = visibleBarsCount + spaceBarsCount;
     Object.keys(charts).forEach(id => {
         const el = document.getElementById(id);
         if (!charts[id] || !el) return;
@@ -354,7 +353,6 @@ function forceResizeAllCharts() {
         if (rect.width < 10 || rect.height < 10) return;
 
         charts[id].resize(rect.width, rect.height);
-        charts[id].timeScale().applyOptions({ barSpacing: rect.width / totalSlots });
         applyVisibleRange(charts[id], candleSeries[id]);
     });
 
@@ -363,13 +361,12 @@ function forceResizeAllCharts() {
         const h = window.innerHeight - 60;
         if (w > 10 && h > 10) {
             fullscreenChart.chart.resize(w, h);
-            fullscreenChart.chart.timeScale().applyOptions({ barSpacing: w / totalSlots });
             applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
         }
     }
 }
 
-// ====================== POPULATE LIST ======================
+// ====================== POPULATE LIST (PULITO) ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -410,14 +407,11 @@ function populateList(sort = "volume") {
         starEl.onclick = (e) => { e.stopPropagation(); toggleFavorite(starEl.dataset.symbol); };
     });
 
-    // ANTI-ZOOM: 4 resize scaglionati dopo il caricamento lista
-    setTimeout(() => requestAnimationFrame(forceResizeAllCharts), 50);
-    setTimeout(() => requestAnimationFrame(forceResizeAllCharts), 200);
-    setTimeout(() => requestAnimationFrame(forceResizeAllCharts), 400);
-    setTimeout(() => requestAnimationFrame(forceResizeAllCharts), 700);
+    // Un solo resize sicuro dopo la lista
+    setTimeout(forceResizeAllCharts, 150);
 }
 
-// ====================== CREAZIONE GRAFICI ======================
+// ====================== CREAZIONE GRAFICI (BARSPACING FISSO) ======================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -438,7 +432,16 @@ async function createChart(containerId) {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(interval) },
+        timeScale: { 
+            timeVisible: true, 
+            tickMarkFormatter: getTimeFormatter(interval),
+            lockVisibleTimeRangeOnResize: true,
+            fixLeftEdge: true,
+            fixRightEdge: true,
+            rightBarStaysOnScroll: true,
+            handleScroll: false,
+            handleScale: false
+        },
         rightPriceScale: { borderColor: '#222' },
         width: container.clientWidth,
         height: container.clientHeight
@@ -461,12 +464,16 @@ async function createChart(containerId) {
 
     if (bbEnabled && klines.length >= bbPeriod) bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
 
+    // BARSPACING FISSO UNA VOLTA SOLA
+    const totalSlots = visibleBarsCount + spaceBarsCount;
+    chart.timeScale().applyOptions({
+        barSpacing: container.clientWidth / totalSlots
+    });
+
     updatePriceLineOnSeries(series, containerId);
     updateAlertLineOnSeries(series, containerId);
     if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(series, containerId);
 
-    const totalSlots = visibleBarsCount + spaceBarsCount;
-    chart.timeScale().applyOptions({ barSpacing: container.clientWidth / totalSlots });
     applyVisibleRange(chart, series);
 
     chart.subscribeClick(p => {
@@ -499,7 +506,8 @@ async function loadAllCharts(symbol) {
     forceResizeAllCharts();
 }
 
-function openFullscreen(containerId, tfLabel) { /* identica alla tua versione precedente */ }
+// ====================== FULLSCREEN, ALERT, UPDATE LIVE (identici) ======================
+function openFullscreen(containerId, tfLabel) { /* identica alla tua ultima versione */ }
 function closeFullscreen() { /* identica */ }
 function openAlertSetup() { /* identica */ }
 function completeAlertSetup(alertPrice) { /* identica */ }
@@ -510,7 +518,7 @@ async function updateLive() { /* identica */ }
 let resizeTimeout;
 window.addEventListener("resize", () => {
     clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(forceResizeAllCharts, 300);
+    resizeTimeout = setTimeout(forceResizeAllCharts, 250);
 });
 
 // ====================== LOCK LANDSCAPE ======================
@@ -548,7 +556,7 @@ window.onload = async () => {
     lockLandscape();
     await loadAllCharts(currentSymbol);
 
-    setTimeout(forceResizeAllCharts, 800);
+    setTimeout(forceResizeAllCharts, 600);
 
     setTimeout(() => {
         fetchPairs();
