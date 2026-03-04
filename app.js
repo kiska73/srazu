@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - ZERO SCROLL ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - ZERO SCROLL + SHORT TITLE MOBILE ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -232,11 +232,8 @@ function updateAlertLineOnSeries(series, key) {
 function toggleRulerMode() {
     rulerMode = !rulerMode;
     document.querySelectorAll('.title-ruler').forEach(el => {
-        if (rulerMode) {
-            el.classList.add('active');
-        } else {
-            el.classList.remove('active');
-        }
+        if (rulerMode) el.classList.add('active');
+        else el.classList.remove('active');
     });
     if (!rulerMode) {
         rulerPrice = null;
@@ -804,6 +801,30 @@ async function updateLive() {
         else if (btcLatest.close < btcLatest.open) colorClass = "red";
         document.querySelectorAll('.chart-title').forEach(t => t.className = "chart-title " + colorClass);
     }
+
+    // ====================== SHORT TITLE SOLO SU CELLULARE ======================
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+        const pairData = allPairsData.find(p => p.s === currentSymbol);
+        let livePrice = pairData ? pairData.price : (candleSeries["chart-5m"] ? candleSeries["chart-5m"].data().at(-1)?.close : 0);
+        const shortSymbol = currentSymbol.replace(/USDT$/, '');
+        const shortPrice = Number(livePrice).toFixed(0);
+
+        // Aggiorna tutti i 4 grafici
+        Object.keys(customIntervals).forEach(id => {
+            const titleEl = document.getElementById(`title-${id.split("-")[1]}`);
+            if (titleEl) {
+                const textSpan = titleEl.querySelector('.title-text');
+                if (textSpan) textSpan.textContent = `${shortSymbol} ${shortPrice}`;
+            }
+        });
+
+        // Aggiorna anche fullscreen se aperto
+        if (fullscreenActive) {
+            const fsText = document.querySelector('#fullscreen-title .title-text');
+            if (fsText) fsText.textContent = `${shortSymbol} ${shortPrice}`;
+        }
+    }
 }
 
 setInterval(updateLive, 2000);
@@ -916,7 +937,7 @@ async function lockLandscape() {
 }
 
 window.onload = async () => {
-    setRealViewportHeight();   // 🔥 ALTEZZA REALE SUBITO
+    setRealViewportHeight();
 
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
