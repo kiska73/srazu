@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - ZERO SCROLL ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -68,6 +68,11 @@ const spaceBarsCount = 1;
 const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// ====================== ALTEZZA REALE SCHERMO (ZERO SCROLL) ======================
+function setRealViewportHeight() {
+  document.documentElement.style.setProperty('--real-vh', `${window.innerHeight}px`);
+}
 
 function formatPrice(price) {
     const num = parseFloat(price);
@@ -351,31 +356,13 @@ async function fetchKlines(symbol, interval, limit = 500) {
 
     try {
         const response = await fetch(baseUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            }
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
         });
-        if (!response.ok) {
-            console.error(`Fetch error: ${response.status} ${response.statusText}`);
-            return [];
-        }
+        if (!response.ok) return [];
         const data = await response.json();
 
-        let rawList = [];
-        if (currentExchange === "bybit") {
-            if (data.retCode !== 0) {
-                console.error("Bybit error:", data.retMsg);
-                return [];
-            }
-            rawList = data.result?.list || [];
-        } else {
-            rawList = data;
-        }
-
-        if (!Array.isArray(rawList) || rawList.length === 0) {
-            console.error("No data in response");
-            return [];
-        }
+        let rawList = currentExchange === "bybit" ? (data.result?.list || []) : data;
+        if (!Array.isArray(rawList) || rawList.length === 0) return [];
 
         const klines = rawList.map(c => ({
             time: Number(c[0]) / 1000,
@@ -400,24 +387,22 @@ async function fetchLatestCandle(symbol, interval) {
 async function fetchPairs() {
     let baseUrl = "";
     let tickerUrl = "";
-    if (currentExchange === "bybit") {
-        baseUrl = "https://api.bybit.com/v5/market/tickers?category=linear";
-    } else if (currentExchange === "binance") {
+    if (currentExchange === "bybit") baseUrl = "https://api.bybit.com/v5/market/tickers?category=linear";
+    else if (currentExchange === "binance") {
         baseUrl = "https://fapi.binance.com/fapi/v1/exchangeInfo";
         tickerUrl = "https://fapi.binance.com/fapi/v1/ticker/24hr";
     }
 
     try {
         let activeSymbols = [];
-
         if (currentExchange === "binance") {
             const infoRes = await fetch(baseUrl);
-            if (!infoRes.ok) return;
-            const info = await infoRes.json();
-
-            activeSymbols = info.symbols
-                .filter(s => s.contractType === "PERPETUAL" && s.status === "TRADING" && s.symbol.endsWith("USDT"))
-                .map(s => s.symbol);
+            if (infoRes.ok) {
+                const info = await infoRes.json();
+                activeSymbols = info.symbols
+                    .filter(s => s.contractType === "PERPETUAL" && s.status === "TRADING" && s.symbol.endsWith("USDT"))
+                    .map(s => s.symbol);
+            }
         }
 
         const tickerRes = await fetch(currentExchange === "bybit" ? baseUrl : tickerUrl);
@@ -425,10 +410,7 @@ async function fetchPairs() {
         const tickerData = await tickerRes.json();
 
         let rawList = currentExchange === "bybit" ? (tickerData.result?.list || []) : tickerData;
-
-        const filtered = rawList.filter(t => 
-            currentExchange === "bybit" ? true : activeSymbols.includes(t.symbol)
-        );
+        const filtered = rawList.filter(t => currentExchange === "bybit" ? true : activeSymbols.includes(t.symbol));
 
         allPairsData = filtered.map(t => ({
             s: t.symbol || "",
@@ -439,11 +421,7 @@ async function fetchPairs() {
 
         populateList(currentSort);
 
-        // 🔥 FORZA RESIZE DOPO CHE LA LISTA HA MODIFICATO LA GRID (fix definitivo)
-        setTimeout(() => {
-            window.dispatchEvent(new Event("resize"));
-        }, 80);
-
+        setTimeout(() => window.dispatchEvent(new Event("resize")), 80);
     } catch (e) {
         console.error("Fetch pairs error:", e);
     }
@@ -516,9 +494,7 @@ async function createChart(containerId) {
     textSpan.textContent = klines.length ? `${currentSymbol} - ${label}` : "No data – check connection";
     titleEl.className = "chart-title neutral";
 
-    if (!klines.length) {
-        return;
-    }
+    if (!klines.length) return;
 
     symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
 
@@ -533,40 +509,26 @@ async function createChart(containerId) {
     });
 
     const series = chart.addCandlestickSeries({
-        priceFormat: { 
-            type: "price", 
-            precision: symbolPricePrecision, 
-            minMove: 10 ** -symbolPricePrecision 
-        },
-        upColor: '#ffffff',
-        downColor: '#0051D4',
-        wickUpColor: '#cccccc',
-        wickDownColor: '#0051D4',
-        borderVisible: false,
-        wickVisible: true
+        priceFormat: { type: "price", precision: symbolPricePrecision, minMove: 10 ** -symbolPricePrecision },
+        upColor: '#ffffff', downColor: '#0051D4',
+        wickUpColor: '#cccccc', wickDownColor: '#0051D4',
+        borderVisible: false, wickVisible: true
     });
 
     series.setData(klines);
     lastCandleTime[containerId] = klines.at(-1).time;
 
     emaSeries[containerId] = [];
-    if (emaEnabled) {
-        emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
-    }
+    if (emaEnabled) emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
 
-    if (bbEnabled && klines.length >= bbPeriod) {
-        bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
-    } else {
-        bbSeries[containerId] = null;
-    }
+    if (bbEnabled && klines.length >= bbPeriod) bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
 
     updatePriceLineOnSeries(series, containerId);
     updateAlertLineOnSeries(series, containerId);
     if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(series, containerId);
 
     const totalSlots = visibleBarsCount + spaceBarsCount;
-    const barSpacing = container.clientWidth / totalSlots;
-    chart.timeScale().applyOptions({ barSpacing: barSpacing });
+    chart.timeScale().applyOptions({ barSpacing: container.clientWidth / totalSlots });
     applyVisibleRange(chart, series);
 
     chart.subscribeClick(p => {
@@ -608,8 +570,7 @@ async function loadAllCharts(symbol) {
         const el = document.getElementById(id);
         if (charts[id] && el) {
             charts[id].resize(el.clientWidth, el.clientHeight);
-            const newSpacing = el.clientWidth / totalSlots;
-            charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
+            charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
             applyVisibleRange(charts[id], candleSeries[id]);
         }
     });
@@ -944,7 +905,6 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ====================== FORZA LANDSCAPE ======================
 async function lockLandscape() {
   if (!screen.orientation || !screen.orientation.lock) return;
   try {
@@ -956,6 +916,8 @@ async function lockLandscape() {
 }
 
 window.onload = async () => {
+    setRealViewportHeight();   // 🔥 ALTEZZA REALE SUBITO
+
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
     alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
@@ -984,33 +946,33 @@ window.onload = async () => {
     document.getElementById("toggle-bb").classList.toggle("active", bbEnabled);
     document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
 
-    document.querySelectorAll('.title-ruler').forEach(el => {
-        el.classList.remove('active');
-    });
+    document.querySelectorAll('.title-ruler').forEach(el => el.classList.remove('active'));
 
     await loadAllCharts("BTCUSDT");
-    await fetchPairs();   // ← qui dentro c'è già il dispatchEvent("resize")
+    await fetchPairs();
 
     lockLandscape();
 };
 
-// ====================== RESIZE (potenziato) ======================
+// ====================== RESIZE CON ALTEZZA REALE ======================
 window.addEventListener("resize", () => {
-    const totalSlots = visibleBarsCount + spaceBarsCount;
-    setTimeout(() => {
-        for (const id in charts) {
-            const el = document.getElementById(id);
-            if (charts[id] && el) {
-                charts[id].resize(el.clientWidth, el.clientHeight);
-                const newSpacing = el.clientWidth / totalSlots;
-                charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
-                applyVisibleRange(charts[id], candleSeries[id]);
-            }
-        }
-        if (fullscreenActive && fullscreenChart) {
-            fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
-        }
-    }, 100);
+  setRealViewportHeight();
+
+  const totalSlots = visibleBarsCount + spaceBarsCount;
+  setTimeout(() => {
+    for (const id in charts) {
+      const el = document.getElementById(id);
+      if (charts[id] && el) {
+        charts[id].resize(el.clientWidth, el.clientHeight);
+        const newSpacing = el.clientWidth / totalSlots;
+        charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
+        applyVisibleRange(charts[id], candleSeries[id]);
+      }
+    }
+    if (fullscreenActive && fullscreenChart) {
+      fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
+    }
+  }, 100);
 });
 
 window.addEventListener('orientationchange', () => {
