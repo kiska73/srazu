@@ -1,3 +1,5 @@
+// ====================== APP.JS COMPLETO E AGGIORNATO (MARZO 2026) ======================
+
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
 let charts = {};
@@ -759,7 +761,7 @@ document.getElementById("set-local-alert").onclick = () => {
 function completeAlertSetup(alertPrice, syncPrice) {
     alertPrices[currentSymbol] = alertPrice;
     syncPrices[currentSymbol] = syncPrice;
-    savedHorizPrices[currentSymbol] = syncPrice; // salva come orizzontale persistente
+    savedHorizPrices[currentSymbol] = syncPrice;
     localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
     localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
@@ -935,16 +937,14 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ====================== FORZA LANDSCAPE SU CELLULARE/TABLET ======================
+// ====================== FORZA LANDSCAPE ======================
 async function lockLandscape() {
   if (!screen.orientation || !screen.orientation.lock) return;
   try {
     await screen.orientation.lock('landscape-primary');
-    console.log('✅ Locked in landscape');
   } catch (e) {
-    console.log('Lock non supportato (iOS):', e);
-    // Fallback iOS: simula con resize forzato
-    setTimeout(() => window.scrollTo(0, 1), 100);  // Nascondi barra browser
+    console.log('Lock non supportato:', e);
+    setTimeout(() => window.scrollTo(0, 1), 100);
   }
 }
 
@@ -984,11 +984,31 @@ window.onload = async () => {
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 
-    // FORZA LANDSCAPE (integrato)
-    lockLandscape();
-
-    window.addEventListener("resize", () => {
+    // 🔥 FORZA RENDER GRAFICI SOTTO (risolve spazio nero)
+    setTimeout(() => {
         const totalSlots = visibleBarsCount + spaceBarsCount;
+        Object.keys(charts).forEach(id => {
+            const el = document.getElementById(id);
+            if (charts[id] && el) {
+                charts[id].resize(el.clientWidth, el.clientHeight);
+                const newSpacing = el.clientWidth / totalSlots;
+                charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
+                applyVisibleRange(charts[id], candleSeries[id]);
+            }
+        });
+        if (fullscreenActive && fullscreenChart) {
+            fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
+        }
+    }, 350);
+
+    lockLandscape();
+};
+
+// ====================== RESIZE MIGLIORATO ======================
+window.addEventListener("resize", () => {
+    const totalSlots = visibleBarsCount + spaceBarsCount;
+
+    setTimeout(() => {
         for (const id in charts) {
             const el = document.getElementById(id);
             if (charts[id] && el) {
@@ -1000,27 +1020,20 @@ window.onload = async () => {
         }
         if (fullscreenActive && fullscreenChart) {
             fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
-            const newSpacing = window.innerWidth / totalSlots;
-            fullscreenChart.chart.timeScale().applyOptions({ barSpacing: newSpacing });
-            applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
         }
-        lockLandscape();
-    });
+    }, 150);
+});
 
-    // Listener per rotazione (risolve mezzo schermo)
-    window.addEventListener('orientationchange', () => {
-      lockLandscape();
-      setTimeout(() => {
-        // Forza relayout
-        document.body.style.display = 'none';
-        document.body.offsetHeight;  // Trigger reflow
-        document.body.style.display = 'block';
-        Object.keys(charts).forEach(id => charts[id]?.resize());  // Resize grafici
-      }, 300);  // Delay per rotazione completata
-    });
-};
+window.addEventListener('orientationchange', () => {
+  lockLandscape();
+  setTimeout(() => {
+    document.body.style.display = 'none';
+    document.body.offsetHeight;
+    document.body.style.display = 'block';
+    Object.keys(charts).forEach(id => charts[id]?.resize());
+  }, 300);
+});
 
-// Riprova lock quando torna visibile
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) lockLandscape();
 });
