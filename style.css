@@ -4,13 +4,13 @@ body {
   background: #0f1117;
   color: #ffffff;
   font-family: Arial, sans-serif;
-  height: 100dvh;           /* 🔥 FISSO: usa dvh invece di vh */
+  height: 100dvh;
   width: 100vw;
 }
 
 #app {
   display: grid;
-  grid-template-columns: 1fr minmax(130px, 18vw);   /* 🔥 20% più stretta della versione precedente */
+  grid-template-columns: 1fr minmax(165px, 21vw);   /* VIA DI MEZZO PERFETTA */
   height: 100dvh;
 }
 
@@ -19,7 +19,7 @@ body {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   height: 100%;
-  min-height: 0;                    /* 🔥 IMPORTANTISSIMO */
+  min-height: 0;                    /* 🔥 FISSO grafici sotto neri */
   gap: 2px;
   background: #222;
 }
@@ -28,7 +28,7 @@ body {
   display: flex;
   flex-direction: column;
   background: #0f1117;
-  min-height: 0;                    /* 🔥 IMPORTANTISSIMO */
+  min-height: 0;
 }
 
 .chart-title, .fullscreen-title {
@@ -63,7 +63,7 @@ body {
 .chart-container {
   flex: 1;
   position: relative;
-  min-height: 0;                    /* 🔥 IMPORTANTISSIMO */
+  min-height: 0;                    /* 🔥 FISSO grafici sotto neri */
 }
 
 #pairs {
@@ -71,7 +71,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-width: 130px;
+  min-width: 165px;
 }
 
 .pairs-header {
@@ -226,51 +226,24 @@ body {
 
 @media (max-width: 1024px) {
   #app {
-    grid-template-columns: 1fr 20vw;     /* ancora più stretta su tablet */
+    grid-template-columns: 1fr minmax(165px, 21vw);
   }
 
-  #charts {
-    gap: 1px;
-  }
+  #charts { gap: 1px; }
 
-  #pairs {
-    min-width: 130px;
-  }
+  #pairs { min-width: 165px; }
 
-  .pair {
-    font-size: 11px;
-    padding: 6px 8px;
-  }
-
-  .pairs-header {
-    font-size: 11px;
-    padding: 6px;
-  }
-
-  .chart-title {
-    height: 24px;
-    font-size: 11px;
-    padding: 2px 4px;
-  }
-
-  .title-text {
-    font-size: 12px;
-  }
-
-  .title-bell, .title-ruler, .title-fullscreen {
-    font-size: 18px !important;
-  }
-
-  .title-pct {
-    font-size: 13px;
-  }
+  .pair { font-size: 11px; padding: 6px 8px; }
+  .pairs-header { font-size: 11px; padding: 6px; }
+  .chart-title { height: 24px; font-size: 11px; padding: 2px 4px; }
+  .title-text { font-size: 12px; }
+  .title-bell, .title-ruler, .title-fullscreen { font-size: 18px !important; }
+  .title-pct { font-size: 13px; }
 }
 
-/* Nascondi in portrait (solo sui telefoni piccoli) */
+/* Portrait telefoni piccoli */
 @media (max-width: 768px) and (orientation: portrait) {
-  #app, #charts, #pairs, #fullscreen-overlay {
-    display: none !important;
-  }
+  #app, #charts, #pairs, #fullscreen-overlay { display: none !important; }
   body::before {
     content: "Ruota il dispositivo in orizzontale per usare SRAZU!";
     position: fixed;
@@ -288,16 +261,10 @@ body {
   }
 }
 
-/* Telefoni in landscape */
+/* Landscape telefoni piccoli */
 @media (max-width: 768px) and (orientation: landscape) {
-  #app {
-    grid-template-columns: 1fr 16vw;     /* ancora più stretta su telefono */
-  }
-  .chart-title {
-    height: 22px;
-    padding: 2px 20px 2px 2px;
-    font-size: 10px;
-  }
+  #app { grid-template-columns: 1fr minmax(155px, 19vw); }
+  .chart-title { height: 22px; padding: 2px 20px 2px 2px; font-size: 10px; }
   .title-text { font-size: 11px; }
 }
 
@@ -307,7 +274,6 @@ body {
   opacity: 0.5;
   transition: all 0.3s;
 }
-
 .title-ruler.active {
   color: #ffffff;
   opacity: 1;
@@ -315,12 +281,5 @@ body {
 }
 
 /* Pulsanti alert */
-#set-local-alert {
-  background: #FFD700 !important;
-  color: #000000 !important;
-}
-
-#open-in-exchange {
-  background: #00ff85 !important;
-  color: #000000 !important;
-}
+#set-local-alert { background: #FFD700 !important; color: #000 !important; }
+#open-in-exchange { background: #00ff85 !important; color: #000 !important; }
