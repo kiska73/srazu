@@ -1,4 +1,4 @@
-/* ====================== SRAZU STYLE.CSS COMPLETO - ZERO SCROLL (MARZO 2026) ====================== */
+/* ====================== SRAZU STYLE.CSS COMPLETO - ZERO SCROLL + COLORI FIX (MARZO 2026) ====================== */
 
 html, body {
   margin: 0;
@@ -8,13 +8,13 @@ html, body {
   font-family: Arial, sans-serif;
   height: 100%;
   width: 100%;
-  overflow: hidden;                    /* 🔥 BLOCCA OGNI SCROLL */
+  overflow: hidden;
 }
 
 #app {
   display: grid;
-  grid-template-columns: 1fr minmax(165px, 21vw);   /* via di mezzo perfetta */
-  height: var(--real-vh);              /* 🔥 ALTEZZA REALE DELLO SCHERMO */
+  grid-template-columns: 1fr minmax(165px, 21vw);
+  height: var(--real-vh);
   overflow: hidden;
 }
 
@@ -81,6 +81,7 @@ html, body {
   overflow: hidden;
 }
 
+/* ====================== HEADER LISTA - FIX COLORI BIANCHI SU NERO ====================== */
 .pairs-header {
   display: flex;
   justify-content: space-between;
@@ -92,8 +93,36 @@ html, body {
   flex-shrink: 0;
   flex-wrap: wrap;
   gap: 8px;
+  color: #ffffff !important;
 }
 
+.pairs-header span,
+.pairs-header select,
+.pairs-header button,
+.pairs-header div {
+  color: #ffffff !important;
+}
+
+#exchange-select,
+#sort-select {
+  background: #1f2433;
+  color: #ffffff !important;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+#settings-btn {
+  background: #2a3150;
+  color: #ffffff !important;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* ====================== LISTA PAIRS ====================== */
 #pairs-list {
   flex: 1;
   overflow-y: auto;
@@ -135,7 +164,6 @@ html, body {
 }
 
 /* ====================== MODALI ====================== */
-
 .modal {
   display: none;
   position: fixed;
@@ -199,8 +227,7 @@ html, body {
   font-size: 16px;
 }
 
-/* ====================== COLORI E PULSANTI ====================== */
-
+/* ====================== COLORI TITOLI ====================== */
 .chart-title.green { background: #004d26 !important; }
 .chart-title.red { background: #4d0000 !important; }
 .chart-title.neutral { background: #161a25 !important; }
@@ -210,11 +237,35 @@ html, body {
   color: black !important;
 }
 
+/* ====================== ALERT & FULLSCREEN ====================== */
+#alert-setup {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: #161a25;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #222;
+  z-index: 10000;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  width: 320px;
+  color: white;
+  display: none;
+}
+
 #set-local-alert { background: #FFD700 !important; color: #000 !important; }
 #open-in-exchange { background: #00ff85 !important; color: #000 !important; }
 
-/* ====================== RULER ====================== */
+#fullscreen-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: #0f1117;
+  z-index: 9999;
+}
 
+/* ====================== RULER ====================== */
 .title-ruler {
   color: #888888;
   opacity: 0.5;
@@ -227,19 +278,7 @@ html, body {
   filter: brightness(1.5);
 }
 
-/* ====================== FULLSCREEN ====================== */
-
-#fullscreen-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  background: #0f1117;
-  z-index: 9999;
-}
-
 /* ====================== RESPONSIVE ====================== */
-
 @media (max-width: 1024px) {
   #app { grid-template-columns: 1fr minmax(165px, 21vw); }
   .chart-title { height: 22px; font-size: 11px; }
