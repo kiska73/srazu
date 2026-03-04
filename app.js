@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E AGGIORNATO (MARZO 2026) ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -329,10 +329,11 @@ function createBollinger(chart, klines, period, dev) {
     upper.setData(dataUpper);
     lower.setData(dataLower);
 
-    const lastSma = dataMiddle.at(-1)?.value || 0;
-    return { middle: { series: middle, last: lastSma },
-             upper: { series: upper, last: dataUpper.at(-1)?.value || 0 },
-             lower: { series: lower, last: dataLower.at(-1)?.value || 0 } };
+    return { 
+        middle: { series: middle, last: dataMiddle.at(-1)?.value || 0 },
+        upper: { series: upper, last: dataUpper.at(-1)?.value || 0 },
+        lower: { series: lower, last: dataLower.at(-1)?.value || 0 } 
+    };
 }
 
 async function fetchKlines(symbol, interval, limit = 500) {
@@ -437,6 +438,12 @@ async function fetchPairs() {
         }));
 
         populateList(currentSort);
+
+        // 🔥 FORZA RESIZE DOPO CHE LA LISTA HA MODIFICATO LA GRID (fix definitivo)
+        setTimeout(() => {
+            window.dispatchEvent(new Event("resize"));
+        }, 80);
+
     } catch (e) {
         console.error("Fetch pairs error:", e);
     }
@@ -982,32 +989,14 @@ window.onload = async () => {
     });
 
     await loadAllCharts("BTCUSDT");
-    await fetchPairs();
-
-    // 🔥 FORZA RENDER GRAFICI SOTTO (risolve spazio nero)
-    setTimeout(() => {
-        const totalSlots = visibleBarsCount + spaceBarsCount;
-        Object.keys(charts).forEach(id => {
-            const el = document.getElementById(id);
-            if (charts[id] && el) {
-                charts[id].resize(el.clientWidth, el.clientHeight);
-                const newSpacing = el.clientWidth / totalSlots;
-                charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
-                applyVisibleRange(charts[id], candleSeries[id]);
-            }
-        });
-        if (fullscreenActive && fullscreenChart) {
-            fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
-        }
-    }, 350);
+    await fetchPairs();   // ← qui dentro c'è già il dispatchEvent("resize")
 
     lockLandscape();
 };
 
-// ====================== RESIZE MIGLIORATO ======================
+// ====================== RESIZE (potenziato) ======================
 window.addEventListener("resize", () => {
     const totalSlots = visibleBarsCount + spaceBarsCount;
-
     setTimeout(() => {
         for (const id in charts) {
             const el = document.getElementById(id);
@@ -1021,17 +1010,12 @@ window.addEventListener("resize", () => {
         if (fullscreenActive && fullscreenChart) {
             fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
         }
-    }, 150);
+    }, 100);
 });
 
 window.addEventListener('orientationchange', () => {
   lockLandscape();
-  setTimeout(() => {
-    document.body.style.display = 'none';
-    document.body.offsetHeight;
-    document.body.style.display = 'block';
-    Object.keys(charts).forEach(id => charts[id]?.resize());
-  }, 300);
+  setTimeout(() => window.dispatchEvent(new Event("resize")), 300);
 });
 
 document.addEventListener('visibilitychange', () => {
