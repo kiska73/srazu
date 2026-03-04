@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - ZERO SCROLL + SHORT TITLE MOBILE ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - SHORT TITLE SOLO SU CELLULARE ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -72,6 +72,42 @@ const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov
 // ====================== ALTEZZA REALE SCHERMO (ZERO SCROLL) ======================
 function setRealViewportHeight() {
   document.documentElement.style.setProperty('--real-vh', `${window.innerHeight}px`);
+}
+
+// ====================== SHORT TITLE SOLO SU CELLULARE ======================
+function updateShortTitles() {
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+  if (!isMobile) return;   // su desktop NON cambia niente
+
+  const pairData = allPairsData.find(p => p.s === currentSymbol);
+  let price = pairData ? Number(pairData.price) : 0;
+  let pct = pairData ? pairData.p : 0;
+
+  // fallback sul grafico se allPairsData non è ancora pronto
+  if (price === 0 && candleSeries["chart-5m"]) {
+    price = candleSeries["chart-5m"].data().at(-1)?.close || 0;
+  }
+
+  const shortSymbol = currentSymbol.replace(/USDT$/, '');
+  const shortPrice = price.toFixed(0);
+  const shortPct = pct >= 0 ? `+${pct.toFixed(2)}` : pct.toFixed(2);
+
+  const shortText = `${shortSymbol} ${shortPrice} ${shortPct}`;
+
+  // Aggiorna i 4 grafici normali
+  Object.keys(customIntervals).forEach(id => {
+    const titleEl = document.getElementById(`title-${id.split("-")[1]}`);
+    if (titleEl) {
+      const textSpan = titleEl.querySelector('.title-text');
+      if (textSpan) textSpan.textContent = shortText;
+    }
+  });
+
+  // Aggiorna anche fullscreen se aperto
+  if (fullscreenActive) {
+    const fsText = document.querySelector('#fullscreen-title .title-text');
+    if (fsText) fsText.textContent = shortText;
+  }
 }
 
 function formatPrice(price) {
@@ -418,7 +454,10 @@ async function fetchPairs() {
 
         populateList(currentSort);
 
-        setTimeout(() => window.dispatchEvent(new Event("resize")), 80);
+        setTimeout(() => {
+            window.dispatchEvent(new Event("resize"));
+            updateShortTitles();   // <-- forza short title subito dopo lista
+        }, 80);
     } catch (e) {
         console.error("Fetch pairs error:", e);
     }
@@ -571,6 +610,8 @@ async function loadAllCharts(symbol) {
             applyVisibleRange(charts[id], candleSeries[id]);
         }
     });
+
+    updateShortTitles();   // <-- applica short title subito dopo creazione grafici
 }
 
 function openFullscreen(containerId, tfLabel) {
@@ -654,6 +695,8 @@ function openFullscreen(containerId, tfLabel) {
     fullscreenActive = true;
     fullscreenChart = { chart: newChart, series: newSeries };
     fullscreenContainerId = containerId;
+
+    updateShortTitles();   // <-- anche in fullscreen
 }
 
 function closeFullscreen() {
@@ -802,29 +845,7 @@ async function updateLive() {
         document.querySelectorAll('.chart-title').forEach(t => t.className = "chart-title " + colorClass);
     }
 
-    // ====================== SHORT TITLE SOLO SU CELLULARE ======================
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile) {
-        const pairData = allPairsData.find(p => p.s === currentSymbol);
-        let livePrice = pairData ? pairData.price : (candleSeries["chart-5m"] ? candleSeries["chart-5m"].data().at(-1)?.close : 0);
-        const shortSymbol = currentSymbol.replace(/USDT$/, '');
-        const shortPrice = Number(livePrice).toFixed(0);
-
-        // Aggiorna tutti i 4 grafici
-        Object.keys(customIntervals).forEach(id => {
-            const titleEl = document.getElementById(`title-${id.split("-")[1]}`);
-            if (titleEl) {
-                const textSpan = titleEl.querySelector('.title-text');
-                if (textSpan) textSpan.textContent = `${shortSymbol} ${shortPrice}`;
-            }
-        });
-
-        // Aggiorna anche fullscreen se aperto
-        if (fullscreenActive) {
-            const fsText = document.querySelector('#fullscreen-title .title-text');
-            if (fsText) fsText.textContent = `${shortSymbol} ${shortPrice}`;
-        }
-    }
+    updateShortTitles();   // <-- aggiorna short title ogni 2 secondi su mobile
 }
 
 setInterval(updateLive, 2000);
@@ -972,10 +993,12 @@ window.onload = async () => {
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 
+    updateShortTitles();   // <-- forza subito il titolo corto su cellulare
+
     lockLandscape();
 };
 
-// ====================== RESIZE CON ALTEZZA REALE ======================
+// ====================== RESIZE ======================
 window.addEventListener("resize", () => {
   setRealViewportHeight();
 
