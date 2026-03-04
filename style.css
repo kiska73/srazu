@@ -4,14 +4,13 @@ body {
   background: #0f1117;
   color: #ffffff;
   font-family: Arial, sans-serif;
-  height: 100dvh;           /* meglio di 100vh su mobile */
+  height: 100dvh;           /* 🔥 FISSO: usa dvh invece di vh */
   width: 100vw;
-  /* overflow: hidden; ← RIMOSSO */
 }
 
 #app {
   display: grid;
-  grid-template-columns: 1fr minmax(160px, 22vw);   /* proporzionale e sempre visibile */
+  grid-template-columns: 1fr minmax(130px, 18vw);   /* 🔥 20% più stretta della versione precedente */
   height: 100dvh;
 }
 
@@ -20,6 +19,7 @@ body {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   height: 100%;
+  min-height: 0;                    /* 🔥 IMPORTANTISSIMO */
   gap: 2px;
   background: #222;
 }
@@ -28,6 +28,7 @@ body {
   display: flex;
   flex-direction: column;
   background: #0f1117;
+  min-height: 0;                    /* 🔥 IMPORTANTISSIMO */
 }
 
 .chart-title, .fullscreen-title {
@@ -62,6 +63,7 @@ body {
 .chart-container {
   flex: 1;
   position: relative;
+  min-height: 0;                    /* 🔥 IMPORTANTISSIMO */
 }
 
 #pairs {
@@ -69,7 +71,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-width: 140px;   /* evita compressione eccessiva */
+  min-width: 130px;
 }
 
 .pairs-header {
@@ -220,11 +222,11 @@ body {
   color: black !important;
 }
 
-/* ====================== RESPONSIVE MODERNO ====================== */
+/* ====================== RESPONSIVE ====================== */
 
 @media (max-width: 1024px) {
   #app {
-    grid-template-columns: 1fr 28vw;   /* proporzionale */
+    grid-template-columns: 1fr 20vw;     /* ancora più stretta su tablet */
   }
 
   #charts {
@@ -232,7 +234,7 @@ body {
   }
 
   #pairs {
-    min-width: 140px;
+    min-width: 130px;
   }
 
   .pair {
@@ -264,7 +266,7 @@ body {
   }
 }
 
-/* Solo sui telefoni piccoli in PORTRAIT → mostra messaggio (non nasconde più a 1024px) */
+/* Nascondi in portrait (solo sui telefoni piccoli) */
 @media (max-width: 768px) and (orientation: portrait) {
   #app, #charts, #pairs, #fullscreen-overlay {
     display: none !important;
@@ -286,10 +288,10 @@ body {
   }
 }
 
-/* Telefoni in LANDSCAPE */
+/* Telefoni in landscape */
 @media (max-width: 768px) and (orientation: landscape) {
   #app {
-    grid-template-columns: 1fr 180px;
+    grid-template-columns: 1fr 16vw;     /* ancora più stretta su telefono */
   }
   .chart-title {
     height: 22px;
