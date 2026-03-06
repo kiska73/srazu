@@ -427,6 +427,7 @@ async function fetchPairs() {
     }
 }
 
+// ====================== POPULATELIST AGGIORNATA (MOBILE FRIENDLY) ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -436,7 +437,7 @@ function populateList(sort = "volume") {
 
     let sorted = [...allPairsData];
     if (sort === "gainers") sorted.sort((a, b) => b.p - a.p);
-    else if (sort === "losers") sorted.sort((a, b) => a.p - b.p);
+    else if (sort === "losers") sorted.sort((a, b) => a.p - a.p);
     else sorted.sort((a, b) => b.v - a.v);
 
     const favoritesInList = sorted.filter(p => favorites.includes(p.s));
@@ -448,15 +449,19 @@ function populateList(sort = "volume") {
 
     display.forEach(p => {
         const isFav = favorites.includes(p.s);
+        const baseSymbol = p.s.replace(/USDT$/, '');   // BTC, ETH, SOL...
+
         const div = document.createElement("div");
         div.className = "pair" + (p.s === currentSymbol ? " active" : "");
-        div.innerHTML = `
-            <span class="pair-symbol">
+        div.innerHTML = 
+            `<span class="pair-symbol">
                 <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span>
-                <span>${p.s}</span>
+                <span class="symbol-main">${baseSymbol}</span>
+                <span class="symbol-quote">USDT</span>
             </span>
-            <span>${formatPrice(p.price)}</span>
-            <span class="${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>`;
+            <span class="pair-price">${formatPrice(p.price)}</span>
+            <span class="pair-change ${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>`;
+        
         div.onclick = (e) => {
             if (e.target.classList.contains('star')) return;
             loadAllCharts(p.s);
@@ -554,6 +559,8 @@ async function createChart(containerId) {
     charts[containerId] = chart;
     candleSeries[containerId] = series;
 }
+
+// ... (tutto il resto del file rimane IDENTICO al tuo originale) ...
 
 async function loadAllCharts(symbol) {
     currentSymbol = symbol;
@@ -916,7 +923,7 @@ async function lockLandscape() {
 }
 
 window.onload = async () => {
-    setRealViewportHeight();   // 🔥 ALTEZZA REALE SUBITO
+    setRealViewportHeight();
 
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
