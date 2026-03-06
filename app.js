@@ -10,6 +10,7 @@ let lastCandleTime = {};
 let priceLines = {};
 let alertLines = {};
 let rulerLines = {};
+let seriesData = {};
 
 let activeHorizPrice = null;
 let rulerMode = false;
@@ -98,9 +99,9 @@ function nextEMA(prev, price, period) {
     return price * k + prev * (1 - k);
 }
 
-function applyVisibleRange(chart, series) {
-    const data = series.data();
-    if (!data || data.length === 0) return;
+function applyVisibleRange(chart, id) {
+    const data = seriesData[id] || [];
+    if (data.length === 0) return;
     const len = data.length;
     const from = Math.max(0, len - visibleBarsCount);
     chart.timeScale().setVisibleLogicalRange({ from: from, to: len + spaceBarsCount });
@@ -276,7 +277,7 @@ function updateRulerLineOnSeries(series, key) {
 function updateRulerPercentage() {
     const pctElements = document.querySelectorAll('.title-pct');
     const fsPct = document.querySelector('#fullscreen-title .title-pct');
-    if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) {
+    if (rulerMode && rulerPrice !== null && activeHorizPrice != null && activeHorizPrice !== 0) {
         const diff = ((rulerPrice - activeHorizPrice) / activeHorizPrice * 100);
         const sign = diff >= 0 ? '+' : '';
         const text = `${sign}${diff.toFixed(2)}%`;
@@ -341,7 +342,7 @@ function createBollinger(chart, klines, period, dev) {
     };
 }
 
-async function fetchKlines(symbol, interval, limit = 500) {
+async function fetchKlines(symbol, interval, limit = 200) {
     let baseUrl = "";
     let queryInterval = interval;
 
@@ -380,8 +381,8 @@ async function fetchKlines(symbol, interval, limit = 500) {
 }
 
 async function fetchLatestCandle(symbol, interval) {
-    const k = await fetchKlines(symbol, interval, 2);
-    return k.length > 0 ? k[k.length - 1] : null;
+    const k = await fetchKlines(symbol, interval, 1);
+    return k[0] || null;
 }
 
 async function fetchPairs() {
@@ -437,7 +438,7 @@ function populateList(sort = "volume") {
 
     let sorted = [...allPairsData];
     if (sort === "gainers") sorted.sort((a, b) => b.p - a.p);
-    else if (sort === "losers") sorted.sort((a, b) => a.p - a.p);
+    else if (sort === "losers") sorted.sort((a, b) => a.p - b.p);
     else sorted.sort((a, b) => b.v - a.v);
 
     const favoritesInList = sorted.filter(p => favorites.includes(p.s));
@@ -486,7 +487,7 @@ async function createChart(containerId) {
     const interval = customIntervals[containerId];
     const label = customLabels[interval] || interval;
 
-    const klines = await fetchKlines(currentSymbol, interval, 500);
+    const klines = await fetchKlines(currentSymbol, interval);
 
     const titleEl = document.getElementById(`title-${containerId.split("-")[1]}`);
     const bellSpan = titleEl.querySelector('.title-bell');
@@ -522,7 +523,8 @@ async function createChart(containerId) {
         borderVisible: false, wickVisible: true
     });
 
-    series.setData(klines);
+    seriesData[containerId] = klines;
+    series.setData(seriesData[containerId]);
     lastCandleTime[containerId] = klines.at(-1).time;
 
     emaSeries[containerId] = [];
@@ -536,7 +538,7 @@ async function createChart(containerId) {
 
     const totalSlots = visibleBarsCount + spaceBarsCount;
     chart.timeScale().applyOptions({ barSpacing: container.clientWidth / totalSlots });
-    applyVisibleRange(chart, series);
+    applyVisibleRange(chart, containerId);
 
     chart.subscribeClick(p => {
         if (p?.point) {
@@ -578,7 +580,7 @@ async function loadAllCharts(symbol) {
         if (charts[id] && el) {
             charts[id].resize(el.clientWidth, el.clientHeight);
             charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
-            applyVisibleRange(charts[id], candleSeries[id]);
+            applyVisibleRange(charts[id], id);
         }
     });
 }
@@ -610,7 +612,7 @@ function openFullscreen(containerId, tfLabel) {
     });
 
     const newSeries = newChart.addCandlestickSeries(candleSeries[containerId].options());
-    newSeries.setData(candleSeries[containerId].data());
+    newSeries.setData(seriesData[containerId]);
 
     if (emaEnabled) {
         emaSeries[containerId]?.forEach((e, i) => {
@@ -638,7 +640,7 @@ function openFullscreen(containerId, tfLabel) {
     const totalSlots = visibleBarsCount + spaceBarsCount;
     const barSpacing = window.innerWidth / totalSlots;
     newChart.timeScale().applyOptions({ barSpacing: barSpacing });
-    applyVisibleRange(newChart, newSeries);
+    applyVisibleRange(newChart, containerId);
 
     newChart.subscribeClick(p => {
         if (p?.point) {
@@ -679,7 +681,7 @@ document.getElementById("close-fullscreen").onclick = closeFullscreen;
 
 function openAlertSetup() {
     document.getElementById("alert-symbol").textContent = currentSymbol;
-    const prefill = activeHorizPrice !== null ? activeHorizPrice : candleSeries["chart-5m"]?.data()?.at(-1)?.close || 0;
+    const prefill = activeHorizPrice !== null ? activeHorizPrice : seriesData["chart-5m"]?.at(-1)?.close || 0;
     document.getElementById("alert-price-input").value = prefill.toFixed(symbolPricePrecision);
     document.getElementById("alert-setup").style.display = "block";
 }
@@ -771,6 +773,7 @@ async function updateLive() {
         if (!latest || !candleSeries[id]) continue;
 
         candleSeries[id].update(latest);
+        seriesData[id].push(latest);
 
         if (latest.time > (lastCandleTime[id] || 0)) {
             lastCandleTime[id] = latest.time;
@@ -788,7 +791,7 @@ async function updateLive() {
                 bb.middle.series.update({ time: latest.time, value: bb.middle.last });
             }
 
-            applyVisibleRange(charts[id], candleSeries[id]);
+            applyVisibleRange(charts[id], id);
         }
     }
 
@@ -799,7 +802,7 @@ async function updateLive() {
             fullscreenChart.series.update(latest);
             if (latest.time > (lastCandleTime[fullscreenContainerId] || 0)) {
                 lastCandleTime[fullscreenContainerId] = latest.time;
-                applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
+                applyVisibleRange(fullscreenChart.chart, fullscreenContainerId);
             }
         }
     }
@@ -958,6 +961,10 @@ window.onload = async () => {
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 
+    // Aggiunta listener per change del media query
+    const mql = window.matchMedia("(max-width: 920px)");
+    mql.addEventListener("change", () => populateList(currentSort));
+
     lockLandscape();
 };
 
@@ -973,7 +980,7 @@ window.addEventListener("resize", () => {
         charts[id].resize(el.clientWidth, el.clientHeight);
         const newSpacing = el.clientWidth / totalSlots;
         charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
-        applyVisibleRange(charts[id], candleSeries[id]);
+        applyVisibleRange(charts[id], id);
       }
     }
     if (fullscreenActive && fullscreenChart) {
