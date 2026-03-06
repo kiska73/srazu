@@ -958,6 +958,10 @@ window.onload = async () => {
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 
+    // Aggiunta listener per change del media query
+    const mql = window.matchMedia("(max-width: 920px)");
+    mql.addEventListener("change", () => populateList(currentSort));
+
     lockLandscape();
 };
 
