@@ -447,8 +447,8 @@ function populateList(sort = "volume") {
 
     list.innerHTML = "";
 
-    // 🔥 DECISIONE DESKTOP vs MOBILE
-    const isMobile = window.matchMedia("(max-width: 920px)").matches;
+    // 🔥 DECISIONE DESKTOP vs MOBILE/TABLET
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     display.forEach(p => {
         const isFav = favorites.includes(p.s);
@@ -957,10 +957,6 @@ window.onload = async () => {
 
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
-
-    // Aggiunta listener per change del media query
-    const mql = window.matchMedia("(max-width: 920px)");
-    mql.addEventListener("change", () => populateList(currentSort));
 
     lockLandscape();
 };
