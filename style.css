@@ -336,10 +336,16 @@ html, body {
     .pair {
         padding: 11px 14px;
         font-size: 14.5px;
+        flex-wrap: nowrap;
+        white-space: nowrap;
     }
     
     .pair-price {
         min-width: 92px;
         font-size: 15px;
+    }
+
+    .pair-change {
+        min-width: 55px;
     }
 }
