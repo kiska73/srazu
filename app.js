@@ -447,21 +447,23 @@ function populateList(sort = "volume") {
 
     list.innerHTML = "";
 
+    // 🔥 DECISIONE DESKTOP vs MOBILE
+    const isMobile = window.innerWidth <= 920;
+
     display.forEach(p => {
         const isFav = favorites.includes(p.s);
-        const baseSymbol = p.s.replace(/USDT$/, '');   // BTC, ETH, SOL...
+        const displaySymbol = isMobile ? p.s.replace(/USDT$/, '') : p.s;   // BTC o BTCUSDT
 
         const div = document.createElement("div");
         div.className = "pair" + (p.s === currentSymbol ? " active" : "");
         div.innerHTML = 
             `<span class="pair-symbol">
                 <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span>
-                <span class="symbol-main">${baseSymbol}</span>
-                <span class="symbol-quote">USDT</span>
+                <span class="symbol-text">${displaySymbol}</span>
             </span>
             <span class="pair-price">${formatPrice(p.price)}</span>
             <span class="pair-change ${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>`;
-        
+
         div.onclick = (e) => {
             if (e.target.classList.contains('star')) return;
             loadAllCharts(p.s);
