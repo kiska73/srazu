@@ -298,3 +298,48 @@ html, body {
   #app { grid-template-columns: 1fr minmax(155px, 19vw); }
   .chart-title { height: 20px; font-size: 10px; }
 }
+/* ==================== CRYPTO LIST - DESKTOP VS MOBILE ==================== */
+.pair-symbol {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.symbol-main {
+    font-weight: 700;
+}
+
+.symbol-quote {
+    font-size: 0.74em;
+    opacity: 0.6;
+    color: #aaa;
+}
+
+.pair-price {
+    font-variant-numeric: tabular-nums;
+    min-width: 85px;
+    text-align: right;
+}
+
+.pair-change {
+    min-width: 65px;
+    text-align: right;
+    font-weight: 600;
+}
+
+/* SOLO CELLULARE E TABLET */
+@media (max-width: 920px) {
+    .symbol-quote {
+        display: none;
+    }
+    
+    .pair {
+        padding: 11px 14px;
+        font-size: 14.5px;
+    }
+    
+    .pair-price {
+        min-width: 92px;
+        font-size: 15px;
+    }
+}
