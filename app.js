@@ -448,7 +448,7 @@ function populateList(sort = "volume") {
     list.innerHTML = "";
 
     // 🔥 DECISIONE DESKTOP vs MOBILE
-    const isMobile = window.innerWidth <= 920;
+    const isMobile = window.matchMedia("(max-width: 920px)").matches;
 
     display.forEach(p => {
         const isFav = favorites.includes(p.s);
@@ -561,8 +561,6 @@ async function createChart(containerId) {
     charts[containerId] = chart;
     candleSeries[containerId] = series;
 }
-
-// ... (tutto il resto del file rimane IDENTICO al tuo originale) ...
 
 async function loadAllCharts(symbol) {
     currentSymbol = symbol;
@@ -981,6 +979,7 @@ window.addEventListener("resize", () => {
     if (fullscreenActive && fullscreenChart) {
       fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
     }
+    populateList(document.getElementById("sort-select").value);
   }, 100);
 });
 
