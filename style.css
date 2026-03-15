@@ -1,4 +1,4 @@
-/* ====================== SRAZU STYLE.CSS COMPLETO - OPTIMIZED MARCH 2026 ====================== */
+/* ====================== SRAZU STYLE - FULL FIX MARZO 2026 ====================== */
 html, body {
     margin: 0;
     padding: 0;
@@ -8,11 +8,14 @@ html, body {
     height: 100%;
     width: 100%;
     overflow: hidden;
+    /* Impedisce il ridimensionamento impazzito durante i click su mobile */
+    position: fixed; 
 }
 
 #app {
     display: grid;
     grid-template-columns: 1fr minmax(165px, 21vw);
+    height: 100vh;
     height: var(--real-vh);
     overflow: hidden;
 }
@@ -22,7 +25,6 @@ html, body {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     height: 100%;
-    min-height: 0;
     gap: 2px;
     background: #222;
 }
@@ -34,90 +36,51 @@ html, body {
     min-height: 0;
 }
 
-.chart-title, .fullscreen-title {
-    position: relative;
-    padding: 4px 40px 4px 8px;
+.chart-title {
+    height: 24px;
     background: #161a25;
     font-weight: bold;
-    text-align: center;
+    font-size: 13px;
     border-bottom: 1px solid #222;
-    flex-shrink: 0;
-    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
-    white-space: nowrap;
-    overflow: hidden;
+    flex-shrink: 0;
 }
 
-.title-text {
-    flex: 1;
-    text-align: center;
-    font-size: 13px;
-    font-weight: bold;
-    margin: 0 8px;
-}
-
-.fullscreen-title {
-    height: 40px;
-    padding: 8px 50px 8px 8px;
-    font-size: 16px;
-}
-
-.chart-container {
-    flex: 1;
-    position: relative;
-    min-height: 0;
-}
+.title-text { flex: 1; text-align: center; margin: 0 8px; }
 
 #pairs {
     border-left: 1px solid #222;
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-width: 165px;
+    background: #0f1117;
     overflow: hidden;
 }
 
-/* ====================== HEADER LISTA ====================== */
+/* HEADER LISTA */
 .pairs-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: 8px;
     background: #161a25;
-    font-weight: bold;
     border-bottom: 1px solid #222;
-    flex-shrink: 0;
+    display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    color: #ffffff !important;
+    flex-shrink: 0;
 }
 
-.pairs-header span, .pairs-header select, .pairs-header button, .pairs-header div {
-    color: #ffffff !important;
-}
-
-#exchange-select, #sort-select {
+#exchange-select, #sort-select, #settings-btn {
     background: #1f2433;
     color: #ffffff !important;
     border: none;
-    padding: 6px 10px;
+    padding: 6px;
     border-radius: 4px;
+    font-size: 12px;
     font-weight: bold;
 }
 
-#settings-btn {
-    background: #2a3150;
-    color: #ffffff !important;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-/* ====================== LISTA PAIRS ====================== */
+/* LISTA COPPIE */
 #pairs-list {
     flex: 1;
     overflow-y: auto;
@@ -129,32 +92,27 @@ html, body {
     cursor: pointer;
     display: flex;
     justify-content: space-between;
-    font-size: 13px;
     align-items: center;
+    font-size: 13px;
+    border-bottom: 1px solid #1a1e2a;
 }
 
 .pair:hover { background: #1f2433; }
 .pair.active { background: #2a3150; font-weight: bold; }
 
-.pair-symbol {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-}
+.pair-symbol { display: flex; align-items: baseline; gap: 4px; font-weight: bold; }
+.symbol-quote { font-size: 0.75em; opacity: 0.5; color: #aaa; }
 
-.symbol-main { font-weight: 700; }
-.symbol-quote { font-size: 0.74em; opacity: 0.6; color: #aaa; }
+.pair-price { font-variant-numeric: tabular-nums; text-align: right; min-width: 75px; }
+.pair-change { font-weight: 600; text-align: right; min-width: 50px; }
 
-.pair-price { font-variant-numeric: tabular-nums; min-width: 85px; text-align: right; }
-.pair-change { min-width: 65px; text-align: right; font-weight: 600; }
-
+/* UTILITY */
 .star { cursor: pointer; font-size: 18px; }
 .star.favorite { color: #FFD700; }
+.green { color: #00ff85 !important; }
+.red { color: #ff5252 !important; }
 
-.green { color: #00ff85; }
-.red { color: #ff5252; }
-
-/* ====================== MODALI E ALTRO ====================== */
+/* MODALI */
 .modal {
     display: none;
     position: fixed;
@@ -162,51 +120,49 @@ html, body {
     left: 0; top: 0;
     width: 100%; height: 100%;
     background: rgba(0,0,0,0.85);
-    align-items: center;
-    justify-content: center;
+    align-items: center; justify-content: center;
 }
 
 .modal-content {
     background: #161a25; padding: 20px; width: 340px;
-    max-width: 90vw; max-height: 90vh; overflow-y: auto;
-    border-radius: 8px; border: 1px solid #222;
+    max-width: 90vw; border-radius: 8px; border: 1px solid #222;
 }
 
-/* ====================== RESPONSIVE E FIX MOBILE LANDSCAPE ====================== */
-@media (max-width: 1024px) {
-    #app { grid-template-columns: 1fr minmax(160px, 20vw); }
-    .chart-title { height: 22px; font-size: 11px; }
+/* ====================== FIX PER MOBILE LANDSCAPE (ORIZZONTALE) ====================== */
+@media screen and (max-width: 950px) and (orientation: landscape) {
+    /* Blocca la larghezza della colonna destra per evitare che sparisca */
+    #app { grid-template-columns: 1fr 165px !important; }
+
+    /* Compattazione Titoli Grafici */
+    .chart-title { height: 20px !important; font-size: 10px !important; }
+
+    /* Compattazione Header Lista */
+    .pairs-header { padding: 4px !important; gap: 4px !important; }
+    #exchange-select, #sort-select, #settings-btn { 
+        font-size: 10px !important; 
+        padding: 3px 5px !important; 
+    }
+
+    /* COMPATTAZIONE LISTA: PIÙ COPPIE VISIBILI */
+    .pair {
+        padding: 4px 8px !important; /* Riduce lo spazio verticale */
+        font-size: 11px !important;   /* Testo più piccolo e tecnico */
+    }
+    
+    .symbol-quote { display: none !important; } /* Nasconde "USDT" per pulizia */
+    .pair-price { min-width: 60px !important; font-size: 11px !important; }
+    .pair-change { min-width: 40px !important; font-size: 11px !important; }
+    .star { font-size: 14px !important; }
 }
 
-/* MOBILE VERTICALE: Messaggio di rotazione */
+/* MOBILE VERTICALE: Messaggio obbligatorio */
 @media (max-width: 768px) and (orientation: portrait) {
-    #app, #charts, #pairs, #fullscreen-overlay { display: none !important; }
+    #app { display: none !important; }
     body::before {
         content: "Ruota in orizzontale!";
         position: fixed; top:0; left:0; width:100vw; height:100vh;
-        background:#0f1117; color:#00ff85; font-size:24px; font-weight:bold;
-        display:flex; align-items:center; justify-content:center; z-index:99999;
+        background:#0f1117; color:#00ff85; font-size:22px;
+        display:flex; align-items:center; justify-content:center;
+        z-index:99999; font-weight:bold;
     }
-}
-
-/* MOBILE ORIZZONTALE: Il vero fix per la lista */
-@media (max-width: 920px) and (orientation: landscape) {
-    #app { grid-template-columns: 1fr minmax(150px, 18vw); }
-    .chart-title { height: 18px; font-size: 10px; padding: 2px 4px; }
-    
-    /* Header lista più compatto */
-    .pairs-header { padding: 4px; gap: 4px; }
-    #exchange-select, #sort-select, #settings-btn { 
-        padding: 2px 4px; font-size: 10px; 
-    }
-    
-    /* Lista coppie: rimpicciolita per vederne di più */
-    .pair { 
-        padding: 4px 6px; 
-        font-size: 11px; 
-    }
-    .pair-price { min-width: 65px; font-size: 11px; }
-    .pair-change { min-width: 45px; font-size: 11px; }
-    .symbol-quote { display: none; } /* Nasconde USDT su mobile per pulizia */
-    .star { font-size: 14px; }
 }
