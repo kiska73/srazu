@@ -1,5 +1,6 @@
-/* ====================== SRAZU STYLE.CSS COMPLETO - ZERO SCROLL + COLORI FIX (MARZO 2026) ====================== */
+/* ====================== SRAZU STYLE COMPLETO - MARZO 2026 ====================== */
 
+/* 1. RESET E BASE */
 html, body {
   margin: 0;
   padding: 0;
@@ -9,15 +10,19 @@ html, body {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  position: fixed; /* Blocca rimbalzi scroll su iOS/Android */
 }
 
+/* 2. LAYOUT PRINCIPALE (GRID) */
 #app {
   display: grid;
+  /* La lista occupa min 165px, max 21% dello schermo */
   grid-template-columns: 1fr minmax(165px, 21vw);
   height: var(--real-vh);
   overflow: hidden;
 }
 
+/* 3. GRIGLIA GRAFICI (4 QUADRANTI) */
 #charts {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -35,35 +40,17 @@ html, body {
   min-height: 0;
 }
 
-.chart-title, .fullscreen-title {
-  position: relative;
-  padding: 4px 40px 4px 8px;
-  background: #161a25;
-  font-weight: bold;
-  text-align: center;
-  border-bottom: 1px solid #222;
-  flex-shrink: 0;
+.chart-title {
   height: 24px;
+  background: #161a25;
+  border-bottom: 1px solid #222;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.title-text {
-  flex: 1;
-  text-align: center;
-  font-size: 13px;
+  justify-content: space-between;
+  padding: 0 8px;
+  font-size: 12px;
   font-weight: bold;
-  margin: 0 8px;
-}
-
-.fullscreen-title {
-  height: 40px;
-  padding: 8px 50px 8px 8px;
-  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .chart-container {
@@ -72,190 +59,154 @@ html, body {
   min-height: 0;
 }
 
+/* 4. COLONNA LISTA (RIGHT SIDEBAR) */
 #pairs {
-  border-left: 1px solid #222;
+  border-left: 1px solid #333;
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-width: 165px;
+  background: #0f1117;
   overflow: hidden;
 }
 
-/* ====================== HEADER LISTA - FIX COLORI BIANCHI SU NERO ====================== */
+/* HEADER LISTA (Exchange/Sort) */
 .pairs-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 8px;
   background: #161a25;
-  font-weight: bold;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   flex-shrink: 0;
-  flex-wrap: wrap;
-  gap: 8px;
-  color: #ffffff !important;
 }
 
-.pairs-header span,
-.pairs-header select,
-.pairs-header button,
-.pairs-header div {
-  color: #ffffff !important;
-}
-
-#exchange-select,
-#sort-select {
+#exchange-select, #sort-select, #settings-btn {
+  width: 100%;
   background: #1f2433;
   color: #ffffff !important;
-  border: none;
-  padding: 6px 10px;
+  border: 1px solid #444;
+  padding: 5px;
   border-radius: 4px;
-  font-weight: bold;
+  font-size: 11px;
 }
 
-#settings-btn {
-  background: #2a3150;
-  color: #ffffff !important;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* ====================== LISTA PAIRS ====================== */
+/* 5. LA LISTA DELLE COPPIE (IL CUORE DEL FIX) */
 #pairs-list {
   flex: 1;
   overflow-y: auto;
-  padding: 2px;
+  overflow-x: hidden !important; /* MAI scorrimento orizzontale qui */
 }
 
 .pair {
-  padding: 8px 10px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
+  display: grid !important;
+  /* Griglia fissa: Stella (25px) | Nome (Auto) | Prezzo (65px) | Change (45px) */
+  grid-template-columns: 25px 1fr 65px 45px !important;
   align-items: center;
+  padding: 8px 5px !important;
+  cursor: pointer;
+  border-bottom: 1px solid #1a1e2a;
+  transition: background 0.2s;
 }
 
 .pair:hover { background: #1f2433; }
-.pair.active { background: #2a3150; font-weight: bold; }
+.pair.active { background: #2a3150 !important; font-weight: bold; }
 
+/* FIX NOMI LUNGHI (BANANAS / PEPE) */
 .pair-symbol {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  font-weight: bold;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Aggiunge "..." se il nome è troppo lungo */
+  padding-right: 2px;
+}
+
+.pair-price {
+  font-size: 11px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.pair-change {
+  font-size: 10px;
+  text-align: right;
+  font-weight: bold;
+  min-width: 40px;
 }
 
 .star {
-  cursor: pointer;
   font-size: 18px;
-}
-
-.star.favorite { color: #FFD700; }
-
-.green { color: #00ff85; }
-.red { color: #ff5252; }
-
-.loading {
-  padding: 40px;
+  color: #444;
   text-align: center;
-  color: #aaa;
-}
-
-/* ====================== MODALI ====================== */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 100;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.85);
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-content {
-  background: #161a25;
-  padding: 20px;
-  width: 340px;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow-y: auto;
-  border-radius: 8px;
-  border: 1px solid #222;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-}
-
-.close {
-  float: right;
-  font-size: 28px;
-  cursor: pointer;
-  color: #aaa;
-}
-
-.modal label { display: block; margin: 12px 0 6px; }
-
-.modal input[type=number],
-.modal input[type=text],
-.modal input[type=password] {
-  width: 100%;
-  padding: 6px;
-  background: #1f2433;
-  border: none;
-  color: white;
-}
-
-.modal button {
-  margin-top: 20px;
-  padding: 10px 16px;
-  background: #2a3150;
-  color: white;
-  border: none;
-  border-radius: 4px;
   cursor: pointer;
 }
+.star.favorite { color: #FFD700 !important; }
 
-#apply-settings {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  margin-top: 20px;
-  padding: 12px;
-  background: #2a3150;
-  font-size: 16px;
-}
-
-/* ====================== COLORI TITOLI ====================== */
+/* 6. COLORI DINAMICI */
+.green { color: #00ff85 !important; }
+.red { color: #ff5252 !important; }
 .chart-title.green { background: #004d26 !important; }
 .chart-title.red { background: #4d0000 !important; }
-.chart-title.neutral { background: #161a25 !important; }
 
-#toggle-ema.active, #toggle-bb.active {
-  background: #00ff85 !important;
-  color: black !important;
+/* 7. MODALI E OVERLAY */
+.modal {
+  display: none; position: fixed; z-index: 100;
+  left: 0; top: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+}
+.modal-content {
+  background: #161a25; padding: 20px; width: 320px;
+  border-radius: 8px; border: 1px solid #333;
 }
 
-/* ====================== ALERT & FULLSCREEN ====================== */
-#alert-setup {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  background: #161a25;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #222;
-  z-index: 10000;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  width: 320px;
-  color: white;
-  display: none;
+/* 8. RESPONSIVE - MOBILE / TABLET (LANDSCAPE) */
+@media (max-width: 920px) {
+  /* Restringiamo la lista su mobile */
+  #app { grid-template-columns: 1fr 155px; }
+  
+  .pair {
+    /* Colonne ancora più strette per cellulare */
+    grid-template-columns: 22px 1fr 55px 38px !important;
+    padding: 6px 3px !important; /* Più densa */
+  }
+
+  .pair-symbol { 
+    font-size: 11px !important; /* Carattere piccolo richiesto */
+  }
+  
+  .pair-price { 
+    font-size: 10px !important; 
+    max-width: 55px;
+  }
+  
+  .pair-change { 
+    font-size: 9px !important; 
+  }
+  
+  .star { 
+    font-size: 15px !important; 
+  }
+
+  .chart-title { 
+    height: 20px; 
+    font-size: 10px; 
+  }
 }
 
-#set-local-alert { background: #FFD700 !important; color: #000 !important; }
-#open-in-exchange { background: #00ff85 !important; color: #000 !important; }
+/* 9. BLOCCO ROTAZIONE (PORTRAIT) */
+@media (max-width: 768px) and (orientation: portrait) {
+  #app, #fullscreen-overlay { display: none !important; }
+  body::before {
+    content: "RUOTA IL TELEFONO";
+    position: fixed; top:0; left:0; width:100vw; height:100vh;
+    background:#0f1117; color:#00ff85; font-size:20px; font-weight:bold;
+    display:flex; align-items:center; justify-content:center; z-index:99999;
+  }
+}
 
+/* 10. FULLSCREEN */
 #fullscreen-overlay {
   display: none;
   position: fixed;
@@ -263,89 +214,4 @@ html, body {
   width: 100vw; height: 100vh;
   background: #0f1117;
   z-index: 9999;
-}
-
-/* ====================== RULER ====================== */
-.title-ruler {
-  color: #888888;
-  opacity: 0.5;
-  transition: all 0.3s;
-}
-
-.title-ruler.active {
-  color: #ffffff;
-  opacity: 1;
-  filter: brightness(1.5);
-}
-
-/* ====================== RESPONSIVE ====================== */
-@media (max-width: 1024px) {
-  #app { grid-template-columns: 1fr minmax(165px, 21vw); }
-  .chart-title { height: 22px; font-size: 11px; }
-}
-
-@media (max-width: 768px) and (orientation: portrait) {
-  #app, #charts, #pairs, #fullscreen-overlay { display: none !important; }
-  body::before {
-    content: "Ruota in orizzontale!";
-    position: fixed; top:0; left:0; width:100vw; height:100vh;
-    background:#0f1117; color:#00ff85; font-size:24px; font-weight:bold;
-    display:flex; align-items:center; justify-content:center; z-index:99999;
-  }
-}
-
-@media (max-width: 768px) and (orientation: landscape) {
-  #app { grid-template-columns: 1fr minmax(155px, 19vw); }
-  .chart-title { height: 20px; font-size: 10px; }
-}
-/* ==================== CRYPTO LIST - DESKTOP VS MOBILE ==================== */
-.pair-symbol {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-}
-
-.symbol-main {
-    font-weight: 700;
-}
-
-.symbol-quote {
-    font-size: 0.74em;
-    opacity: 0.6;
-    color: #aaa;
-}
-
-.pair-price {
-    font-variant-numeric: tabular-nums;
-    min-width: 85px;
-    text-align: right;
-}
-
-.pair-change {
-    min-width: 65px;
-    text-align: right;
-    font-weight: 600;
-}
-
-/* SOLO CELLULARE E TABLET */
-@media (max-width: 920px) {
-    .symbol-quote {
-        display: none;
-    }
-    
-    .pair {
-        padding: 11px 14px;
-        font-size: 14.5px;
-        flex-wrap: nowrap;
-        white-space: nowrap;
-    }
-    
-    .pair-price {
-        min-width: 92px;
-        font-size: 15px;
-    }
-
-    .pair-change {
-        min-width: 55px;
-    }
 }
