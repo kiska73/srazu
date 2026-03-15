@@ -1,7 +1,4 @@
-// ====================== APP.JS COMPLETO CON CACHE AUTO BUSTER + OTTIMIZZAZIONE LISTA (15 MARZO 2026) ======================
-// Cambia solo APP_VERSION ogni volta che modifichi → aggiornamento automatico!
-
-const APP_VERSION = "20260315-v7";   // ← CAMBIA IN v8 LA PROSSIMA VOLTA CHE MODIFICHI
+// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - ZERO SCROLL ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -73,7 +70,7 @@ const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-// ====================== ALTEZZA REALE SCHERMO ======================
+// ====================== ALTEZZA REALE SCHERMO (ZERO SCROLL) ======================
 function setRealViewportHeight() {
   document.documentElement.style.setProperty('--real-vh', `${window.innerHeight}px`);
 }
@@ -236,7 +233,11 @@ function updateAlertLineOnSeries(series, key) {
 function toggleRulerMode() {
     rulerMode = !rulerMode;
     document.querySelectorAll('.title-ruler').forEach(el => {
-        if (rulerMode) el.classList.add('active'); else el.classList.remove('active');
+        if (rulerMode) {
+            el.classList.add('active');
+        } else {
+            el.classList.remove('active');
+        }
     });
     if (!rulerMode) {
         rulerPrice = null;
@@ -289,7 +290,13 @@ function updateRulerPercentage() {
 }
 
 function createEMA(seriesArray, chart, klines, period, color) {
-    const s = chart.addLineSeries({ color: color, lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
+    const s = chart.addLineSeries({
+        color: color,
+        lineWidth: 1.2,
+        priceLineVisible: false,
+        lastValueVisible: false
+    });
+
     let ema = null;
     const data = [];
     klines.forEach((c, i) => {
@@ -297,6 +304,7 @@ function createEMA(seriesArray, chart, klines, period, color) {
         else if (i >= period) ema = nextEMA(ema, c.close, period);
         if (ema != null) data.push({ time: c.time, value: ema });
     });
+
     s.setData(data);
     const lastEma = ema || klines.at(-1)?.close || 0;
     seriesArray.push({ series: s, period, last: lastEma });
@@ -304,10 +312,11 @@ function createEMA(seriesArray, chart, klines, period, color) {
 
 function createBollinger(chart, klines, period, dev) {
     const middle = chart.addLineSeries({ color: BB_COLORS.middle, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false });
-    const upper  = chart.addLineSeries({ color: BB_COLORS.upper,  lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
-    const lower  = chart.addLineSeries({ color: BB_COLORS.lower,  lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+    const upper = chart.addLineSeries({ color: BB_COLORS.upper, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+    const lower = chart.addLineSeries({ color: BB_COLORS.lower, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
 
     const dataMiddle = [], dataUpper = [], dataLower = [];
+
     for (let i = period - 1; i < klines.length; i++) {
         const slice = klines.slice(i - period + 1, i + 1);
         const closes = slice.map(c => c.close);
@@ -321,20 +330,22 @@ function createBollinger(chart, klines, period, dev) {
         dataUpper.push({ time, value: upperVal });
         dataLower.push({ time, value: lowerVal });
     }
+
     middle.setData(dataMiddle);
     upper.setData(dataUpper);
     lower.setData(dataLower);
 
     return { 
         middle: { series: middle, last: dataMiddle.at(-1)?.value || 0 },
-        upper:  { series: upper,  last: dataUpper.at(-1)?.value || 0 },
-        lower:  { series: lower,  last: dataLower.at(-1)?.value || 0 } 
+        upper: { series: upper, last: dataUpper.at(-1)?.value || 0 },
+        lower: { series: lower, last: dataLower.at(-1)?.value || 0 } 
     };
 }
 
 async function fetchKlines(symbol, interval, limit = 200) {
     let baseUrl = "";
     let queryInterval = interval;
+
     const binanceMap = {"1":"1m","3":"3m","5":"5m","15":"15m","30":"30m","60":"1h","240":"4h","D":"1d"};
 
     if (currentExchange === "bybit") {
@@ -345,15 +356,21 @@ async function fetchKlines(symbol, interval, limit = 200) {
     }
 
     try {
-        const response = await fetch(baseUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const response = await fetch(baseUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+        });
         if (!response.ok) return [];
         const data = await response.json();
+
         let rawList = currentExchange === "bybit" ? (data.result?.list || []) : data;
         if (!Array.isArray(rawList) || rawList.length === 0) return [];
 
         const klines = rawList.map(c => ({
             time: Number(c[0]) / 1000,
-            open: Number(c[1]), high: Number(c[2]), low: Number(c[3]), close: Number(c[4])
+            open: Number(c[1]),
+            high: Number(c[2]),
+            low: Number(c[3]),
+            close: Number(c[4])
         }));
 
         return currentExchange === "bybit" ? klines.reverse() : klines;
@@ -369,7 +386,8 @@ async function fetchLatestCandle(symbol, interval) {
 }
 
 async function fetchPairs() {
-    let baseUrl = "", tickerUrl = "";
+    let baseUrl = "";
+    let tickerUrl = "";
     if (currentExchange === "bybit") baseUrl = "https://api.bybit.com/v5/market/tickers?category=linear";
     else if (currentExchange === "binance") {
         baseUrl = "https://fapi.binance.com/fapi/v1/exchangeInfo";
@@ -403,13 +421,14 @@ async function fetchPairs() {
         }));
 
         populateList(currentSort);
+
         setTimeout(() => window.dispatchEvent(new Event("resize")), 80);
     } catch (e) {
         console.error("Fetch pairs error:", e);
     }
 }
 
-// ====================== POPULATELIST ULTRA-OTTIMIZZATA (fix losers + favSet + slice(0,-4)) ======================
+// ====================== POPULATELIST AGGIORNATA (MOBILE FRIENDLY) ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -419,45 +438,48 @@ function populateList(sort = "volume") {
 
     let sorted = [...allPairsData];
     if (sort === "gainers") sorted.sort((a, b) => b.p - a.p);
-    else if (sort === "losers") sorted.sort((a, b) => a.p - b.p);   // ← FIX BUG
+    else if (sort === "losers") sorted.sort((a, b) => a.p - b.p);
     else sorted.sort((a, b) => b.v - a.v);
 
     const favoritesInList = sorted.filter(p => favorites.includes(p.s));
     const others = sorted.filter(p => !favorites.includes(p.s));
-    const display = favoritesInList.concat(others.slice(0, 120));
 
-    const favSet = new Set(favorites);
+    const display = favoritesInList.concat(others.slice(0, 80));
 
-    const frag = document.createDocumentFragment();
+    list.innerHTML = "";
+
+    // 🔥 DECISIONE DESKTOP vs MOBILE/TABLET
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     display.forEach(p => {
-        const isFav = favSet.has(p.s);
-        const displaySymbol = p.s.slice(0, -4);   // ← BTC, ETH, SOL... (USDT RIMOSSO)
+        const isFav = favorites.includes(p.s);
+        const displaySymbol = isMobile ? p.s.replace(/USDT$/, '') : p.s;   // BTC o BTCUSDT
 
         const div = document.createElement("div");
         div.className = "pair" + (p.s === currentSymbol ? " active" : "");
-        div.dataset.symbol = p.s;
-
-        div.innerHTML = `
-            <span class="pair-symbol">
-                <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">
-                    ${isFav ? '★' : '☆'}
-                </span>
-                <span class="symbol-main">${displaySymbol}</span>
+        div.innerHTML = 
+            `<span class="pair-symbol">
+                <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span>
+                <span class="symbol-text">${displaySymbol}</span>
             </span>
             <span class="pair-price">${formatPrice(p.price)}</span>
-            <span class="pair-change ${p.p >= 0 ? "green" : "red"}">
-                ${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%
-            </span>`;
+            <span class="pair-change ${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>`;
 
-        frag.appendChild(div);
+        div.onclick = (e) => {
+            if (e.target.classList.contains('star')) return;
+            loadAllCharts(p.s);
+        };
+        list.appendChild(div);
     });
 
-    list.innerHTML = "";
-    list.appendChild(frag);
+    document.querySelectorAll('.star').forEach(starEl => {
+        starEl.onclick = (e) => {
+            e.stopPropagation();
+            toggleFavorite(starEl.dataset.symbol);
+        };
+    });
 }
 
-// ====================== RESTO DEL CODICE (createChart, loadAllCharts, fullscreen, alert, updateLive, ecc.) ======================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -655,6 +677,8 @@ function closeFullscreen() {
     delete rulerLines["fullscreen"];
 }
 
+document.getElementById("close-fullscreen").onclick = closeFullscreen;
+
 function openAlertSetup() {
     document.getElementById("alert-symbol").textContent = currentSymbol;
     const prefill = activeHorizPrice !== null ? activeHorizPrice : seriesData["chart-5m"]?.at(-1)?.close || 0;
@@ -794,20 +818,6 @@ async function updateLive() {
 
 setInterval(updateLive, 2000);
 setInterval(fetchPairs, 2000);
-
-// ====================== EVENT LISTENER GLOBALE UNICO ======================
-document.getElementById("pairs-list").addEventListener("click", (e) => {
-    const star = e.target.closest(".star");
-    if (star) {
-        toggleFavorite(star.dataset.symbol);
-        return;
-    }
-
-    const pair = e.target.closest(".pair");
-    if (pair) {
-        loadAllCharts(pair.dataset.symbol);
-    }
-});
 
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
 document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
@@ -951,22 +961,11 @@ window.onload = async () => {
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 
-    lockLandscape();
+    // Aggiunta listener per change del media query
+    const mql = window.matchMedia("(max-width: 920px)");
+    mql.addEventListener("change", () => populateList(currentSort));
 
-    // ====================== CACHE AUTO BUSTER ======================
-    const savedVersion = localStorage.getItem('appVersion');
-    if (savedVersion !== APP_VERSION) {
-        console.log(`🚀 Aggiornamento rilevato: ${savedVersion || 'nessuna'} → ${APP_VERSION}`);
-        localStorage.setItem('appVersion', APP_VERSION);
-        if ('caches' in window) {
-            caches.keys().then(names => {
-                names.forEach(name => caches.delete(name));
-            });
-        }
-        setTimeout(() => {
-            window.location.reload(true);
-        }, 300);
-    }
+    lockLandscape();
 };
 
 // ====================== RESIZE CON ALTEZZA REALE ======================
