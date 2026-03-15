@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - ZERO SCROLL ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - ZERO SCROLL + LISTA PULITA ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -428,7 +428,7 @@ async function fetchPairs() {
     }
 }
 
-// ====================== POPULATELIST AGGIORNATA (MOBILE FRIENDLY) ======================
+// ====================== POPULATELIST FINALE (SIMBOLO CORTO SEMPRE + SPAZI PERFETTI) ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -438,7 +438,7 @@ function populateList(sort = "volume") {
 
     let sorted = [...allPairsData];
     if (sort === "gainers") sorted.sort((a, b) => b.p - a.p);
-    else if (sort === "losers") sorted.sort((a, b) => a.p - b.p);
+    else if (sort === "losers") sorted.sort((a, b) => a.p - a.p);
     else sorted.sort((a, b) => b.v - a.v);
 
     const favoritesInList = sorted.filter(p => favorites.includes(p.s));
@@ -448,19 +448,16 @@ function populateList(sort = "volume") {
 
     list.innerHTML = "";
 
-    // 🔥 DECISIONE DESKTOP vs MOBILE/TABLET
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
     display.forEach(p => {
         const isFav = favorites.includes(p.s);
-        const displaySymbol = isMobile ? p.s.replace(/USDT$/, '') : p.s;   // BTC o BTCUSDT
+        const displaySymbol = p.s.replace(/USDT$/, '');   // ← SEMPRE BTC, ETH, SOL... (niente USDT)
 
         const div = document.createElement("div");
         div.className = "pair" + (p.s === currentSymbol ? " active" : "");
         div.innerHTML = 
             `<span class="pair-symbol">
                 <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span>
-                <span class="symbol-text">${displaySymbol}</span>
+                <span class="symbol-main">${displaySymbol}</span>
             </span>
             <span class="pair-price">${formatPrice(p.price)}</span>
             <span class="pair-change ${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>`;
@@ -960,10 +957,6 @@ window.onload = async () => {
 
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
-
-    // Aggiunta listener per change del media query
-    const mql = window.matchMedia("(max-width: 920px)");
-    mql.addEventListener("change", () => populateList(currentSort));
 
     lockLandscape();
 };
