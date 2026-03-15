@@ -443,43 +443,10 @@ function populateList(sort = "volume") {
 
     const favoritesInList = sorted.filter(p => favorites.includes(p.s));
     const others = sorted.filter(p => !favorites.includes(p.s));
-    const display = favoritesInList.concat(others.slice(0, 100));
+
+    const display = favoritesInList.concat(others.slice(0, 80));
 
     list.innerHTML = "";
-
-    const isMobile = window.innerWidth < 920;
-
-    display.forEach(p => {
-        const isFav = favorites.includes(p.s);
-        // Su mobile togliamo USDT, su desktop lo teniamo piccolo
-        const symbolDisplay = isMobile ? p.s.replace(/USDT$/, '') : p.s;
-
-        const div = document.createElement("div");
-        div.className = "pair" + (p.s === currentSymbol ? " active" : "");
-        
-        // NUOVA STRUTTURA: 4 blocchi separati e piatti
-        div.innerHTML = `
-            <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span>
-            <span class="pair-symbol">${symbolDisplay}</span>
-            <span class="pair-price">${formatPrice(p.price)}</span>
-            <span class="pair-change ${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>
-        `;
-
-        div.onclick = (e) => {
-            if (e.target.classList.contains('star')) return;
-            loadAllCharts(p.s);
-        };
-        list.appendChild(div);
-    });
-
-    // Re-agganciamo l'evento alle stelle
-    div.querySelectorAll('.star').forEach(starEl => {
-        starEl.onclick = (e) => {
-            e.stopPropagation();
-            toggleFavorite(starEl.dataset.symbol);
-        };
-    });
-}
 
     // 🔥 DECISIONE DESKTOP vs MOBILE/TABLET
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
