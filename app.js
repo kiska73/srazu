@@ -1,7 +1,7 @@
 // ====================== APP.JS COMPLETO CON CACHE AUTO BUSTER + OTTIMIZZAZIONE LISTA (15 MARZO 2026) ======================
 // Cambia solo APP_VERSION ogni volta che modifichi → aggiornamento automatico!
 
-const APP_VERSION = "20260315-v6";   // ← CAMBIA IN v7 LA PROSSIMA VOLTA
+const APP_VERSION = "20260315-v7";   // ← CAMBIA IN v8 LA PROSSIMA VOLTA CHE MODIFICHI
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -409,7 +409,7 @@ async function fetchPairs() {
     }
 }
 
-// ====================== POPULATELIST ULTRA-OTTIMIZZATA (DocumentFragment + favSet + slice(0,-4)) ======================
+// ====================== POPULATELIST ULTRA-OTTIMIZZATA (fix losers + favSet + slice(0,-4)) ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -419,20 +419,20 @@ function populateList(sort = "volume") {
 
     let sorted = [...allPairsData];
     if (sort === "gainers") sorted.sort((a, b) => b.p - a.p);
-    else if (sort === "losers") sorted.sort((a, b) => a.p - b.p);   // ← FIX BUG (era a.p - a.p)
+    else if (sort === "losers") sorted.sort((a, b) => a.p - b.p);   // ← FIX BUG
     else sorted.sort((a, b) => b.v - a.v);
 
     const favoritesInList = sorted.filter(p => favorites.includes(p.s));
     const others = sorted.filter(p => !favorites.includes(p.s));
     const display = favoritesInList.concat(others.slice(0, 120));
 
-    const favSet = new Set(favorites);   // ← MICRO-OTTIMIZZAZIONE (Set invece di includes 120 volte)
+    const favSet = new Set(favorites);
 
     const frag = document.createDocumentFragment();
 
     display.forEach(p => {
         const isFav = favSet.has(p.s);
-        const displaySymbol = p.s.slice(0, -4);   // ← BTC, ETH, SOL... (USDT RIMOSSO PER SEMPRE)
+        const displaySymbol = p.s.slice(0, -4);   // ← BTC, ETH, SOL... (USDT RIMOSSO)
 
         const div = document.createElement("div");
         div.className = "pair" + (p.s === currentSymbol ? " active" : "");
@@ -564,7 +564,6 @@ async function loadAllCharts(symbol) {
 }
 
 function openFullscreen(containerId, tfLabel) {
-    // (codice identico a prima – non modificato)
     const overlay = document.getElementById("fullscreen-overlay");
     const fsDiv = document.getElementById("fullscreen-chart");
     fsDiv.innerHTML = "";
