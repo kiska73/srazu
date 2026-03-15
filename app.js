@@ -1,7 +1,7 @@
 // ====================== APP.JS COMPLETO CON CACHE AUTO BUSTER + OTTIMIZZAZIONE LISTA (15 MARZO 2026) ======================
 // Cambia solo APP_VERSION ogni volta che modifichi → aggiornamento automatico!
 
-const APP_VERSION = "20260315-v5";   // ← CAMBIA IN v6 LA PROSSIMA VOLTA
+const APP_VERSION = "20260315-v6";   // ← CAMBIA IN v7 LA PROSSIMA VOLTA
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -409,7 +409,7 @@ async function fetchPairs() {
     }
 }
 
-// ====================== POPULATELIST ULTRA-OTTIMIZZATA (DocumentFragment + 120 pair + slice(0,-4)) ======================
+// ====================== POPULATELIST ULTRA-OTTIMIZZATA (DocumentFragment + favSet + slice(0,-4)) ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -419,22 +419,24 @@ function populateList(sort = "volume") {
 
     let sorted = [...allPairsData];
     if (sort === "gainers") sorted.sort((a, b) => b.p - a.p);
-    else if (sort === "losers") sorted.sort((a, b) => a.p - a.p);
+    else if (sort === "losers") sorted.sort((a, b) => a.p - b.p);   // ← FIX BUG (era a.p - a.p)
     else sorted.sort((a, b) => b.v - a.v);
 
     const favoritesInList = sorted.filter(p => favorites.includes(p.s));
     const others = sorted.filter(p => !favorites.includes(p.s));
-    const display = favoritesInList.concat(others.slice(0, 120)); // ← aumentato a 120
+    const display = favoritesInList.concat(others.slice(0, 120));
+
+    const favSet = new Set(favorites);   // ← MICRO-OTTIMIZZAZIONE (Set invece di includes 120 volte)
 
     const frag = document.createDocumentFragment();
 
     display.forEach(p => {
-        const isFav = favorites.includes(p.s);
-        const displaySymbol = p.s.slice(0, -4);   // ← BTC, ETH, SOL... (rimuove sempre USDT)
+        const isFav = favSet.has(p.s);
+        const displaySymbol = p.s.slice(0, -4);   // ← BTC, ETH, SOL... (USDT RIMOSSO PER SEMPRE)
 
         const div = document.createElement("div");
         div.className = "pair" + (p.s === currentSymbol ? " active" : "");
-        div.dataset.symbol = p.s;   // ← per click globale
+        div.dataset.symbol = p.s;
 
         div.innerHTML = `
             <span class="pair-symbol">
@@ -455,6 +457,7 @@ function populateList(sort = "volume") {
     list.appendChild(frag);
 }
 
+// ====================== RESTO DEL CODICE (createChart, loadAllCharts, fullscreen, alert, updateLive, ecc.) ======================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -561,6 +564,7 @@ async function loadAllCharts(symbol) {
 }
 
 function openFullscreen(containerId, tfLabel) {
+    // (codice identico a prima – non modificato)
     const overlay = document.getElementById("fullscreen-overlay");
     const fsDiv = document.getElementById("fullscreen-chart");
     fsDiv.innerHTML = "";
@@ -792,7 +796,20 @@ async function updateLive() {
 setInterval(updateLive, 2000);
 setInterval(fetchPairs, 2000);
 
-// ====================== EVENTI UI ======================
+// ====================== EVENT LISTENER GLOBALE UNICO ======================
+document.getElementById("pairs-list").addEventListener("click", (e) => {
+    const star = e.target.closest(".star");
+    if (star) {
+        toggleFavorite(star.dataset.symbol);
+        return;
+    }
+
+    const pair = e.target.closest(".pair");
+    if (pair) {
+        loadAllCharts(pair.dataset.symbol);
+    }
+});
+
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
 document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
 
@@ -898,20 +915,6 @@ async function lockLandscape() {
     setTimeout(() => window.scrollTo(0, 1), 100);
   }
 }
-
-// ====================== EVENT LISTENER GLOBALE UNICO (clic su stella e su pair) ======================
-document.getElementById("pairs-list").addEventListener("click", (e) => {
-    const star = e.target.closest(".star");
-    if (star) {
-        toggleFavorite(star.dataset.symbol);
-        return;
-    }
-
-    const pair = e.target.closest(".pair");
-    if (pair) {
-        loadAllCharts(pair.dataset.symbol);
-    }
-});
 
 window.onload = async () => {
     setRealViewportHeight();
