@@ -1,4 +1,4 @@
-/* ====================== SRAZU STYLE.CSS COMPLETO - ZERO SCROLL + COLORI FIX + MOBILE FIX 2026 ====================== */
+/* ====================== SRAZU STYLE.CSS COMPLETO - ZERO SCROLL + COLORI FIX (MARZO 2026) ====================== */
 
 html, body {
   margin: 0;
@@ -81,7 +81,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ====================== HEADER LISTA ====================== */
+/* ====================== HEADER LISTA - FIX COLORI BIANCHI SU NERO ====================== */
 .pairs-header {
   display: flex;
   justify-content: space-between;
@@ -298,136 +298,54 @@ html, body {
   #app { grid-template-columns: 1fr minmax(155px, 19vw); }
   .chart-title { height: 20px; font-size: 10px; }
 }
-
 /* ==================== CRYPTO LIST - DESKTOP VS MOBILE ==================== */
 .pair-symbol {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
 }
 
 .symbol-main {
-  font-weight: 700;
+    font-weight: 700;
 }
 
 .symbol-quote {
-  font-size: 0.74em;
-  opacity: 0.6;
-  color: #aaa;
+    font-size: 0.74em;
+    opacity: 0.6;
+    color: #aaa;
 }
 
 .pair-price {
-  font-variant-numeric: tabular-nums;
-  min-width: 85px;
-  text-align: right;
+    font-variant-numeric: tabular-nums;
+    min-width: 85px;
+    text-align: right;
 }
 
 .pair-change {
-  min-width: 65px;
-  text-align: right;
-  font-weight: 600;
+    min-width: 65px;
+    text-align: right;
+    font-weight: 600;
 }
 
-/* ──────────────────────────────────────────────── */
-/*     FIX MOBILE LANDSCAPE – NASCONDE USDT SENZA ORIENTATION     */
-/* ──────────────────────────────────────────────── */
-
-/* Regola base per schermi medi-piccoli (portrait stretti / tablet) */
+/* SOLO CELLULARE E TABLET */
 @media (max-width: 920px) {
-  .symbol-quote {
-    display: none;
-  }
-  
-  .pair {
-    padding: 11px 14px;
-    font-size: 14.5px;
-    white-space: nowrap;
-  }
-  
-  .pair-price {
-    min-width: 92px;
-    font-size: 15px;
-  }
+    .symbol-quote {
+        display: none;
+    }
+    
+    .pair {
+        padding: 11px 14px;
+        font-size: 14.5px;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+    }
+    
+    .pair-price {
+        min-width: 92px;
+        font-size: 15px;
+    }
 
-  .pair-change {
-    min-width: 55px;
-  }
-}
-
-/* Regola principale per landscape mobile: width larga + height bassa + DEBUG TEMPORANEO */
-@media (min-width: 700px) and (max-width: 1400px) and (max-height: 800px) {
-  .symbol-quote {
-    display: none !important;
-    visibility: hidden !important;
-  }
-
-  #pairs {
-    min-width: 140px !important;
-  }
-
-  .pair-symbol {
-    gap: 4px !important;
-  }
-
-  .symbol-main {
-    font-size: 14.8px !important;
-  }
-
-  .pair {
-    padding: 7px 9px !important;
-    font-size: 13px !important;
-    gap: 6px !important;
-  }
-
-  .star {
-    font-size: 16px !important;
-  }
-
-  .pair-price {
-    min-width: 75px !important;
-    font-size: 13.5px !important;
-  }
-
-  .pair-change {
-    min-width: 50px !important;
-    font-size: 12.8px !important;
-  }
-
-  #pairs-list {
-    padding: 1px 4px !important;
-  }
-
-  /* DEBUG TEMPORANEO: messaggio rosso se questa media query si attiva */
-  body::before {
-    content: "Regola landscape attiva!";
-    position: fixed;
-    top: 0;
-    left: 0;
-    background: red;
-    color: white;
-    padding: 10px 15px;
-    font-size: 18px;
-    font-weight: bold;
-    z-index: 999999;
-    pointer-events: none;
-  }
-}
-
-/* Ancora più compatto quando l'altezza è veramente limitata */
-@media (min-width: 700px) and (max-width: 1400px) and (max-height: 600px) {
-  .pair {
-    padding: 6px 8px !important;
-  }
-  
-  .symbol-main {
-    font-size: 14px !important;
-  }
-  
-  .pair-price, .pair-change {
-    font-size: 13px !important;
-  }
-  
-  .star {
-    font-size: 15px !important;
-  }
+    .pair-change {
+        min-width: 55px;
+    }
 }
