@@ -1,4 +1,4 @@
-/* ====================== SRAZU STYLE.CSS COMPLETO - ZERO SCROLL + COLORI FIX (MARZO 2026) ====================== */
+/* ====================== SRAZU STYLE.CSS COMPLETO - ZERO SCROLL + COLORI FIX + MOBILE FIX (MARZO 2026) ====================== */
 
 html, body {
   margin: 0;
@@ -329,10 +329,10 @@ html, body {
 }
 
 /* ──────────────────────────────────────────────── */
-/*          MODIFICHE PRINCIPALI - MARZO 2026       */
+/*          FIX FINALE PER NASCONDERE USDT SU MOBILE (Pixel 8a incluso)     */
 /* ──────────────────────────────────────────────── */
 
-/* Nascondi USDT/quote su schermi medi-piccoli (tablet / telefoni larghi) */
+/* Nascondi USDT su tablet / telefoni larghi (regola base) */
 @media (max-width: 920px) {
   .symbol-quote {
     display: none;
@@ -341,7 +341,6 @@ html, body {
   .pair {
     padding: 11px 14px;
     font-size: 14.5px;
-    flex-wrap: nowrap;
     white-space: nowrap;
   }
   
@@ -355,10 +354,14 @@ html, body {
   }
 }
 
-/* Modalità aggressiva: solo mobile landscape + schermi stretti / bassa altezza */
-@media (max-width: 896px) and (orientation: landscape) {
+/* REGOLA AGGRESSIVA: nasconde USDT su TUTTI i telefoni in landscape (Pixel 8a ~1080px width) */
+@media (max-width: 1200px) and (orientation: landscape) {
+  .symbol-quote {
+    display: none !important;     /* Forza hide - dovrebbe sparire ora sul tuo Pixel 8a */
+  }
+
   #pairs {
-    min-width: 148px;           /* un po' più stretto per dare più spazio ai grafici */
+    min-width: 148px !important;  /* Stringi sidebar per dare più spazio ai grafici */
   }
 
   .pair-symbol {
@@ -366,53 +369,49 @@ html, body {
   }
 
   .symbol-main {
-    font-size: 14.5px;
-  }
-
-  .symbol-quote {
-    display: none !important;   /* nasconde USDT, BTC, etc. */
+    font-size: 15px;
   }
 
   .pair {
-    padding: 9px 10px;          /* meno padding → + righe visibili */
-    font-size: 13.2px;
+    padding: 8px 10px;            /* Ridotto padding → + righe visibili */
+    font-size: 13.5px;
     gap: 6px;
   }
 
   .star {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .pair-price {
-    min-width: 78px;
-    font-size: 13.8px;
+    min-width: 80px;
+    font-size: 14px;
   }
 
   .pair-change {
     min-width: 52px;
-    font-size: 12.8px;
+    font-size: 13px;
   }
 
   #pairs-list {
-    padding: 1px 3px;           /* riduce margini interni */
+    padding: 1px 3px;
   }
 }
 
-/* Extra: quando l'altezza è veramente critica (es. iPhone con notch + barra) */
-@media (max-width: 896px) and (max-height: 520px) and (orientation: landscape) {
+/* EXTRA: per telefoni con altezza bassa (es. barra notifiche visibile, ~500-650px height) */
+@media (max-width: 1200px) and (max-height: 650px) and (orientation: landscape) {
   .pair {
     padding: 7px 9px;
   }
   
-  .star {
-    font-size: 16px;
+  .symbol-main {
+    font-size: 14.5px;
   }
   
   .pair-price, .pair-change {
-    font-size: 12.8px;
+    font-size: 13.5px;
   }
   
-  .symbol-main {
-    font-size: 13.8px;
+  .star {
+    font-size: 15px;
   }
 }
