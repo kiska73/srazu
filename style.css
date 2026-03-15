@@ -336,26 +336,26 @@ html, body {
   
   .pair {
     padding: 11px 14px;
-    font-size: 11px !important;          /* molto più piccolo */
+    font-size: 10px !important;          /* molto più piccolo */
     flex-wrap: nowrap;
     white-space: nowrap;
   }
   
   .symbol-main {
-    font-size: 12.5px !important;        /* coin principale ancora leggibile */
+    font-size: 10px !important;        /* coin principale ancora leggibile */
   }
   
   .pair-price {
     min-width: 75px;
-    font-size: 11.5px !important;
+    font-size: 10px !important;
   }
 
   .pair-change {
     min-width: 45px;
-    font-size: 10.5px !important;        /* cambio piccolo ma visibile */
+    font-size: 10px !important;        /* cambio piccolo ma visibile */
   }
   
   .star {
-    font-size: 14px !important;          /* stellina ridotta */
+    font-size: 12px !important;          /* stellina ridotta */
   }
 }
