@@ -298,54 +298,64 @@ html, body {
   #app { grid-template-columns: 1fr minmax(155px, 19vw); }
   .chart-title { height: 20px; font-size: 10px; }
 }
+
 /* ==================== CRYPTO LIST - DESKTOP VS MOBILE ==================== */
 .pair-symbol {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
 }
 
 .symbol-main {
-    font-weight: 700;
+  font-weight: 700;
 }
 
 .symbol-quote {
-    font-size: 0.74em;
-    opacity: 0.6;
-    color: #aaa;
+  font-size: 0.74em;
+  opacity: 0.6;
+  color: #aaa;
 }
 
 .pair-price {
-    font-variant-numeric: tabular-nums;
-    min-width: 85px;
-    text-align: right;
+  font-variant-numeric: tabular-nums;
+  min-width: 85px;
+  text-align: right;
 }
 
 .pair-change {
-    min-width: 65px;
-    text-align: right;
-    font-weight: 600;
+  min-width: 65px;
+  text-align: right;
+  font-weight: 600;
 }
 
-/* SOLO CELLULARE E TABLET */
+/* SOLO CELLULARE E TABLET - FONT PIÙ PICCOLI PER VEDERE PIÙ RIGHE */
 @media (max-width: 920px) {
-    .symbol-quote {
-        display: none;
-    }
-    
-    .pair {
-        padding: 11px 14px;
-        font-size: 14.5px;
-        flex-wrap: nowrap;
-        white-space: nowrap;
-    }
-    
-    .pair-price {
-        min-width: 92px;
-        font-size: 15px;
-    }
+  .symbol-quote {
+    display: none;
+  }
+  
+  .pair {
+    padding: 11px 14px;
+    font-size: 12px !important;          /* ridotto da 14.5px → più righe visibili */
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+  
+  .symbol-main {
+    font-size: 13px !important;          /* base coin un po' più grande per leggibilità */
+  }
+  
+  .pair-price {
+    min-width: 80px;
+    font-size: 12.5px !important;        /* prezzo più piccolo */
+  }
 
-    .pair-change {
-        min-width: 55px;
-    }
+  .pair-change {
+    min-width: 50px;
+    font-size: 11.5px !important;        /* cambio piccolo ma ancora leggibile */
+  }
+  
+  .star {
+    font-size: 16px !important;          /* stellina ridotta per non occupare troppo */
+  }
 }
