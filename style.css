@@ -1,122 +1,129 @@
-/* ====================== SRAZU STYLE COMPLETO - FIX TOTALE ====================== */
+/* ====================== SRAZU STYLE - FIX "BANANAS" & OVERFLOW ====================== */
 html, body {
     margin: 0; padding: 0;
     background: #0f1117; color: #ffffff;
     font-family: sans-serif;
     height: 100%; width: 100%;
     overflow: hidden;
-    position: fixed; /* Blocca lo scroll della pagina intera */
+    position: fixed; /* Impedisce rimbalzi su mobile */
 }
 
 #app {
-    display: grid;
-    /* Colonna lista bloccata a 170px su desktop */
-    grid-template-columns: 1fr 170px;
+    display: flex !important; /* Forza Flexbox per controllo totale */
     height: 100vh;
     height: var(--real-vh);
-    overflow: hidden;
+    width: 100vw;
 }
 
 #charts {
+    flex: 1 !important;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     gap: 2px;
     background: #222;
-    min-width: 0; /* Impedisce ai grafici di spingere la lista */
-}
-
-.chart-wrapper { display: flex; flex-direction: column; background: #0f1117; min-height: 0; }
-
-.chart-title {
-    height: 24px; background: #161a25; font-size: 12px;
-    display: flex; align-items: center; justify-content: center;
-    border-bottom: 1px solid #222;
+    min-width: 0; /* Impedisce ai grafici di "mangiare" la lista */
 }
 
 #pairs {
-    border-left: 1px solid #333;
-    display: flex; flex-direction: column;
-    height: 100%; background: #0f1117;
-    overflow: hidden;
-    width: 170px !important;
+    width: 175px !important; /* Larghezza fissa invalicabile */
+    min-width: 175px !important;
+    max-width: 175px !important;
+    background: #161a25;
+    border-left: 2px solid #333;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
-/* HEADER LISTA */
-.pairs-header {
-    padding: 6px; background: #161a25;
-    display: flex; flex-direction: column; gap: 4px;
-    border-bottom: 1px solid #333;
-}
-
-#exchange-select, #sort-select, #settings-btn {
-    width: 100%; background: #1f2433; color: white;
-    border: 1px solid #444; padding: 4px; font-size: 11px;
-}
-
-/* LISTA COPPIE - FIX DIMENSIONI */
+/* LISTA */
 #pairs-list {
-    flex: 1; overflow-y: auto; overflow-x: hidden;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden !important; /* Blocca scorrimento laterale */
 }
 
 .pair {
     display: grid !important;
-    /* Struttura bloccata: Stella(20px) | Nome(flessibile) | Prezzo(55px) | % (35px) */
-    grid-template-columns: 20px 1fr 55px 35px !important;
-    gap: 2px;
-    padding: 8px 4px !important;
+    /* 1: Stella (24px) | 2: Nome (Auto) | 3: Prezzo (60px) | 4: % (40px) */
+    grid-template-columns: 24px 1fr 60px 40px !important;
     align-items: center;
+    padding: 8px 4px !important;
     border-bottom: 1px solid #1a1e2a;
     cursor: pointer;
+    width: 100% !important;
+    box-sizing: border-box;
 }
 
 .pair.active { background: #2a3150 !important; }
 
+/* FIX PER NOMI LUNGHI (ES: BANANAS3) */
 .pair-symbol {
-    font-weight: bold; font-size: 13px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-weight: bold;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden; 
+    text-overflow: ellipsis; /* Aggiunge i puntini se il nome è troppo lungo */
+    padding-right: 2px;
 }
-.symbol-quote { display: none !important; } /* Nasconde USDT per fare spazio */
+
+.symbol-quote { display: none !important; } /* Nascondi sempre USDT */
 
 .pair-price {
-    font-size: 12px; text-align: right;
+    font-size: 11px;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
     font-variant-numeric: tabular-nums;
-    white-space: nowrap; overflow: hidden;
 }
 
-.pair-change { font-size: 11px; text-align: right; font-weight: bold; }
+.pair-change {
+    font-size: 10px;
+    text-align: right;
+    font-weight: bold;
+}
 
-/* COLORI */
-.star { font-size: 14px; color: #444; text-align: center; }
-.star.favorite { color: #FFD700; }
-.green { color: #00ff85 !important; }
-.red { color: #ff5252 !important; }
+.star { 
+    font-size: 16px; 
+    text-align: center;
+    display: inline-block;
+}
 
-/* ====================== FIX SPECIFICO PER CELLULARE (ORIZZONTALE) ====================== */
+/* ====================== FIX MOBILE LANDSCAPE (PICCOLO) ====================== */
 @media screen and (max-width: 950px) and (orientation: landscape) {
-    #app { grid-template-columns: 1fr 145px !important; }
-    #pairs { width: 145px !important; }
-
-    /* RIGA LISTA PIU PICCOLA */
-    .pair {
-        grid-template-columns: 18px 1fr 48px 32px !important; /* Ancora più stretto */
-        padding: 4px 2px !important; /* Più denso, ne vedi di più */
+    #app { grid-template-columns: none; }
+    #pairs { 
+        width: 155px !important; 
+        min-width: 155px !important; 
     }
-
-    .pair-symbol { font-size: 11px !important; }
-    .pair-price { font-size: 10px !important; width: 48px !important; }
-    .pair-change { font-size: 9px !important; }
     
+    .pair {
+        /* Ancora più compatto su cellulare */
+        grid-template-columns: 20px 1fr 50px 35px !important;
+        padding: 4px 2px !important; 
+    }
+    
+    .pair-symbol { font-size: 11px !important; } /* Scritte piccole come richiesto */
+    .pair-price { font-size: 10px !important; }
+    .pair-change { font-size: 9px !important; }
+    .star { font-size: 14px !important; }
+
     .chart-title { height: 18px !important; font-size: 10px !important; }
 }
 
-/* ROTAZIONE OBBLIGATORIA */
+/* MESSAGGIO ROTAZIONE */
 @media (max-width: 768px) and (orientation: portrait) {
     #app { display: none !important; }
     body::before {
-        content: "RUOTA IL TELEFONO";
+        content: "RUOTA IL DISPOSITIVO";
         position: fixed; top:0; left:0; width:100vw; height:100vh;
         background:#0f1117; color:#00ff85; display:flex;
         align-items:center; justify-content:center; font-weight:bold;
+        z-index: 99999;
     }
 }
+
+/* COLORI */
+.green { color: #00ff85 !important; }
+.red { color: #ff5252 !important; }
+.star.favorite { color: #FFD700 !important; }
