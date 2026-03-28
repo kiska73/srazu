@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - ZERO SCROLL ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO - MARZO 2026 ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -49,18 +49,15 @@ let customLabels = {
 let currentSort = "volume";
 let allPairsData = [];
 
-// Personal Telegram
 let personalTGToken = localStorage.getItem('personalTGToken') || '';
 let personalTGChatID = localStorage.getItem('personalTGChatID') || '';
 
-// Server URL
 const SERVER_URL = "https://srazu-bot.onrender.com";
 
-// Device ID unico
 let deviceId = localStorage.getItem('deviceId') || (function() {
-  const id = crypto.randomUUID();
-  localStorage.setItem('deviceId', id);
-  return id;
+    const id = crypto.randomUUID();
+    localStorage.setItem('deviceId', id);
+    return id;
 })();
 
 const visibleBarsCount = 38;
@@ -70,9 +67,9 @@ const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-// ====================== ALTEZZA REALE SCHERMO ======================
+// ====================== FUNZIONI BASE ======================
 function setRealViewportHeight() {
-  document.documentElement.style.setProperty('--real-vh', `${window.innerHeight}px`);
+    document.documentElement.style.setProperty('--real-vh', `${window.innerHeight}px`);
 }
 
 function formatPrice(price) {
@@ -107,6 +104,60 @@ function applyVisibleRange(chart, id) {
     chart.timeScale().setVisibleLogicalRange({ from: from, to: len + spaceBarsCount });
 }
 
+// ====================== POPULATE LIST - CON SIMBOLO CORTO SU MOBILE ======================
+function populateList(sort = "volume") {
+    const list = document.getElementById("pairs-list");
+    if (allPairsData.length === 0) {
+        list.innerHTML = "<div class='loading'>No pairs loaded</div>";
+        return;
+    }
+
+    let sorted = [...allPairsData];
+    if (sort === "gainers") sorted.sort((a, b) => b.p - a.p);
+    else if (sort === "losers") sorted.sort((a, b) => a.p - b.p);
+    else sorted.sort((a, b) => b.v - a.v);
+
+    const favoritesInList = sorted.filter(p => favorites.includes(p.s));
+    const others = sorted.filter(p => !favorites.includes(p.s));
+
+    const display = favoritesInList.concat(others.slice(0, 80));
+
+    list.innerHTML = "";
+
+    const isMobile = window.matchMedia("(max-width: 920px)").matches;
+
+    display.forEach(p => {
+        const isFav = favorites.includes(p.s);
+        const displaySymbol = isMobile ? p.s.replace(/USDT$/, "") : p.s;
+
+        const div = document.createElement("div");
+        div.className = "pair" + (p.s === currentSymbol ? " active" : "");
+
+        div.innerHTML = `
+            <span class="pair-symbol">
+                <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span>
+                <span class="symbol-text">${displaySymbol}</span>
+            </span>
+            <span class="pair-price">${formatPrice(p.price)}</span>
+            <span class="pair-change ${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>
+        `;
+
+        div.onclick = (e) => {
+            if (e.target.classList.contains('star')) return;
+            loadAllCharts(p.s);
+        };
+        list.appendChild(div);
+    });
+
+    document.querySelectorAll('.star').forEach(starEl => {
+        starEl.onclick = (e) => {
+            e.stopPropagation();
+            toggleFavorite(starEl.dataset.symbol);
+        };
+    });
+}
+
+// ====================== FUNZIONI ORIZZONTALI E RULER ======================
 function syncHorizLines() {
     Object.keys(candleSeries).forEach(k => {
         updatePriceLineOnSeries(candleSeries[k], k);
@@ -286,6 +337,7 @@ function updateRulerPercentage() {
     }
 }
 
+// ====================== CREAZIONE GRAFICI ======================
 function createEMA(seriesArray, chart, klines, period, color) {
     const s = chart.addLineSeries({
         color: color,
@@ -424,63 +476,6 @@ async function fetchPairs() {
     }
 }
 
-// ====================== POPULATELIST - VERSIONE CORRETTA MOBILE ======================
-function populateList(sort = "volume") {
-    const list = document.getElementById("pairs-list");
-
-    if (allPairsData.length === 0) {
-        list.innerHTML = "<div class='loading'>No pairs loaded</div>";
-        return;
-    }
-
-    let sorted = [...allPairsData];
-    if (sort === "gainers") sorted.sort((a, b) => b.p - a.p);
-    else if (sort === "losers") sorted.sort((a, b) => a.p - b.p);
-    else sorted.sort((a, b) => b.v - a.v);
-
-    const favoritesInList = sorted.filter(p => favorites.includes(p.s));
-    const others = sorted.filter(p => !favorites.includes(p.s));
-
-    const display = favoritesInList.concat(others.slice(0, 80));
-
-    list.innerHTML = "";
-
-    // Rilevamento mobile/tablet
-    const isMobile = window.matchMedia("(max-width: 920px)").matches;
-
-    display.forEach(p => {
-        const isFav = favorites.includes(p.s);
-        const displaySymbol = isMobile ? p.s.replace(/USDT$/, "") : p.s;
-
-        const div = document.createElement("div");
-        div.className = "pair" + (p.s === currentSymbol ? " active" : "");
-
-        div.innerHTML = `
-            <span class="pair-symbol">
-                <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span>
-                <span class="symbol-text">${displaySymbol}</span>
-            </span>
-            <span class="pair-price">${formatPrice(p.price)}</span>
-            <span class="pair-change ${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>
-        `;
-
-        div.onclick = (e) => {
-            if (e.target.classList.contains('star')) return;
-            loadAllCharts(p.s);
-        };
-
-        list.appendChild(div);
-    });
-
-    document.querySelectorAll('.star').forEach(starEl => {
-        starEl.onclick = (e) => {
-            e.stopPropagation();
-            toggleFavorite(starEl.dataset.symbol);
-        };
-    });
-}
-
-// ====================== IL RESTO DEL CODICE (invariato) ======================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -678,8 +673,6 @@ function closeFullscreen() {
     delete rulerLines["fullscreen"];
 }
 
-document.getElementById("close-fullscreen").onclick = closeFullscreen;
-
 function openAlertSetup() {
     document.getElementById("alert-symbol").textContent = currentSymbol;
     const prefill = activeHorizPrice !== null ? activeHorizPrice : seriesData["chart-5m"]?.at(-1)?.close || 0;
@@ -700,8 +693,8 @@ document.getElementById("set-local-alert").onclick = () => {
         return;
     }
 
-    const token = document.getElementById("personal-tg-token")?.value.trim() || localStorage.getItem('personalTGToken') || '';
-    const chatId = document.getElementById("personal-tg-chatid")?.value.trim() || localStorage.getItem('personalTGChatID') || '';
+    const token = document.getElementById("personal-tg-token")?.value.trim() || personalTGToken;
+    const chatId = document.getElementById("personal-tg-chatid")?.value.trim() || personalTGChatID;
 
     if (!token || !chatId) {
         alert("⚠️ Errore: Configura Token e ChatID nelle impostazioni prima di mettere un alert!");
@@ -731,7 +724,7 @@ document.getElementById("set-local-alert").onclick = () => {
     })
     .catch(e => {
         console.error("❌ Errore sincronizzazione server:", e);
-        alert("Il server non risponde, ma l'alert locale è attivo (linea visibile).");
+        alert("Il server non risponde, ma l'alert locale è attivo.");
         completeAlertSetup(alertPrice, syncPrice);
     });
 };
@@ -816,9 +809,7 @@ async function updateLive() {
     }
 }
 
-setInterval(updateLive, 2000);
-setInterval(fetchPairs, 2000);
-
+// ====================== EVENT LISTENERS ======================
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
 document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
 
@@ -888,13 +879,8 @@ document.getElementById("exchange-select").onchange = async (e) => {
     await loadAllCharts(currentSymbol);
 };
 
-document.getElementById("info-btn").onclick = () => {
-    document.getElementById("info-modal").style.display = "flex";
-};
-
-document.querySelector("#info-modal .close").onclick = () => {
-    document.getElementById("info-modal").style.display = "none";
-};
+document.getElementById("info-btn").onclick = () => document.getElementById("info-modal").style.display = "flex";
+document.querySelector("#info-modal .close").onclick = () => document.getElementById("info-modal").style.display = "none";
 
 window.onclick = (event) => {
     const infoModal = document.getElementById("info-modal");
@@ -907,23 +893,42 @@ document.getElementById('open-botfather-btn').onclick = () => {
     window.open('https://t.me/BotFather', '_blank');
 };
 
+document.getElementById("close-alert-setup").onclick = () => {
+    document.getElementById("alert-setup").style.display = "none";
+};
+
+document.getElementById("close-fullscreen").onclick = closeFullscreen;
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('SW registered: ', reg))
-            .catch(err => console.log('SW registration failed: ', err));
+            .then(reg => console.log('SW registered:', reg))
+            .catch(err => console.log('SW registration failed:', err));
     });
 }
 
-async function lockLandscape() {
-  if (!screen.orientation || !screen.orientation.lock) return;
-  try {
-    await screen.orientation.lock('landscape-primary');
-  } catch (e) {
-    console.log('Lock non supportato:', e);
-    setTimeout(() => window.scrollTo(0, 1), 100);
-  }
-}
+// ====================== RESIZE ======================
+window.addEventListener("resize", () => {
+    setRealViewportHeight();
+    const totalSlots = visibleBarsCount + spaceBarsCount;
+    setTimeout(() => {
+        for (const id in charts) {
+            const el = document.getElementById(id);
+            if (charts[id] && el) {
+                charts[id].resize(el.clientWidth, el.clientHeight);
+                charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
+                applyVisibleRange(charts[id], id);
+            }
+        }
+        if (fullscreenActive && fullscreenChart) {
+            fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
+        }
+        populateList(document.getElementById("sort-select").value);
+    }, 100);
+});
+
+setInterval(updateLive, 2000);
+setInterval(fetchPairs, 2000);
 
 window.onload = async () => {
     setRealViewportHeight();
@@ -932,6 +937,7 @@ window.onload = async () => {
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
     alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
     syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}');
+
     const savedIntervals = localStorage.getItem('customIntervals');
     if (savedIntervals) customIntervals = JSON.parse(savedIntervals);
 
@@ -960,39 +966,4 @@ window.onload = async () => {
 
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
-
-    const mql = window.matchMedia("(max-width: 920px)");
-    mql.addEventListener("change", () => populateList(currentSort));
-
-    lockLandscape();
 };
-
-window.addEventListener("resize", () => {
-  setRealViewportHeight();
-
-  const totalSlots = visibleBarsCount + spaceBarsCount;
-  setTimeout(() => {
-    for (const id in charts) {
-      const el = document.getElementById(id);
-      if (charts[id] && el) {
-        charts[id].resize(el.clientWidth, el.clientHeight);
-        const newSpacing = el.clientWidth / totalSlots;
-        charts[id].timeScale().applyOptions({ barSpacing: newSpacing });
-        applyVisibleRange(charts[id], id);
-      }
-    }
-    if (fullscreenActive && fullscreenChart) {
-      fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
-    }
-    populateList(document.getElementById("sort-select").value);
-  }, 100);
-});
-
-window.addEventListener('orientationchange', () => {
-  lockLandscape();
-  setTimeout(() => window.dispatchEvent(new Event("resize")), 300);
-});
-
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) lockLandscape();
-});
