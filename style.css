@@ -139,6 +139,10 @@ html, body {
   min-width: 85px;
 }
 
+.symbol-text{
+  white-space: nowrap;
+}
+
 .star {
   cursor: pointer;
   font-size: 18px;
@@ -153,12 +157,14 @@ html, body {
   font-variant-numeric: tabular-nums;
   min-width: 85px;
   text-align: right;
+  white-space: nowrap;
 }
 
 .pair-change {
   min-width: 65px;
   text-align: right;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .loading {
@@ -278,39 +284,49 @@ html, body {
 }
 
 /* ====================== MOBILE LIST FIX ====================== */
+
 @media (max-width: 920px) {
+
   .pair {
     display: grid !important;
-    grid-template-columns: 1fr 78px 58px !important;
+    grid-template-columns: 1fr 70px 50px !important;
     align-items: center !important;
     padding: 9px 12px !important;
-    font-size: 14.5px !important;
-    gap: 8px !important;
+    font-size: 14px !important;
+    gap: 6px !important;
   }
 
   .pair-symbol {
     min-width: 0 !important;
     gap: 6px !important;
+    overflow: hidden !important;
   }
 
   .symbol-text {
     font-weight: 700 !important;
-    font-size: 15px !important;
+    font-size: 14px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .pair-price {
     text-align: right !important;
-    font-size: 14.5px !important;
+    font-size: 13.5px !important;
     min-width: 0 !important;
+    white-space: nowrap !important;
   }
 
   .pair-change {
     text-align: right !important;
     font-weight: 600 !important;
     min-width: 0 !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
   }
 
   .star {
-    font-size: 15.5px !important;
+    font-size: 15px !important;
   }
+
 }
