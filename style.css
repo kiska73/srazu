@@ -1,4 +1,4 @@
-/* ====================== SRAZU STYLE.CSS COMPLETO - ZERO SCROLL + COLORI FIX (MARZO 2026) ====================== */
+/* ====================== SRAZU STYLE.CSS COMPLETO - ZERO SCROLL + MOBILE FIX (MARZO 2026) ====================== */
 
 html, body {
   margin: 0;
@@ -302,11 +302,11 @@ html, body {
   .chart-title { height: 20px; font-size: 10px; }
 }
 
-/* ====================== CRYPTO LIST - OTTIMIZZATA ====================== */
+/* ====================== CRYPTO LIST - DESKTOP ====================== */
 .pair-symbol {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .symbol-text {
@@ -325,23 +325,41 @@ html, body {
   font-weight: 600;
 }
 
-/* SOLO SU CELLULARE E TABLET */
+/* ================= MOBILE LIST FIX - VERSIONE MIGLIORE ================= */
 @media (max-width: 920px) {
-    .pair {
-        padding: 11px 14px;
-        font-size: 14.5px;
-    }
-    
-    .pair-symbol {
-        min-width: 68px;
-    }
-    
-    .pair-price {
-        min-width: 90px;
-        font-size: 15px;
-    }
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr 78px 58px;   /* simbolo | prezzo | variazione */
+    align-items: center;
+    padding: 9px 12px;
+    font-size: 14.5px;
+    gap: 8px;
+  }
 
-    .pair-change {
-        min-width: 58px;
-    }
+  .pair-symbol {
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .symbol-text {
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .pair-price {
+    text-align: right;
+    font-size: 14.5px;
+    min-width: 0;
+  }
+
+  .pair-change {
+    text-align: right;
+    font-weight: 600;
+    min-width: 0;
+  }
+
+  /* Stella più piccola su mobile */
+  .star {
+    font-size: 15.5px;
+  }
 }
