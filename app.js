@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO - CON FIX GRAFICO + LANDSCAPE ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -104,7 +104,7 @@ function applyVisibleRange(chart, id) {
     chart.timeScale().setVisibleLogicalRange({ from: from, to: len + spaceBarsCount });
 }
 
-// ====================== POPULATE LIST - SIMBOLO CORTO SU MOBILE ======================
+// ====================== POPULATE LIST ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -156,7 +156,7 @@ function populateList(sort = "volume") {
     });
 }
 
-// ====================== UPDATE LIVE - FIX DEFINITIVO (NO SPOSTAMENTO) ======================
+// ====================== UPDATE LIVE - FIX GRAFICO ======================
 async function updateLive() {
     for (const id in customIntervals) {
         const interval = customIntervals[id];
@@ -194,7 +194,6 @@ async function updateLive() {
         }
     }
 
-    // Fullscreen
     if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
         const interval = customIntervals[fullscreenContainerId];
         const latest = await fetchLatestCandle(currentSymbol, interval);
@@ -207,7 +206,6 @@ async function updateLive() {
         }
     }
 
-    // Colore titolo basato su BTC
     const btcLatest = await fetchLatestCandle("BTCUSDT", "30");
     if (btcLatest) {
         let colorClass = "neutral";
@@ -397,7 +395,6 @@ function updateRulerPercentage() {
     }
 }
 
-// ====================== CREAZIONE GRAFICI ======================
 function createEMA(seriesArray, chart, klines, period, color) {
     const s = chart.addLineSeries({
         color: color,
@@ -595,7 +592,7 @@ async function createChart(containerId) {
     const totalSlots = visibleBarsCount + spaceBarsCount;
     chart.timeScale().applyOptions({ 
         barSpacing: container.clientWidth / totalSlots,
-        shiftVisibleRangeOnNewBar: true   // Fix importante per realtime
+        shiftVisibleRangeOnNewBar: true
     });
     applyVisibleRange(chart, containerId);
 
@@ -745,6 +742,83 @@ function openAlertSetup() {
     document.getElementById("alert-setup").style.display = "block";
 }
 
+document.getElementById("close-alert-setup").onclick = () => document.getElementById("alert-setup").style.display = "none";
+
+document.getElementById("set-local-alert").onclick = () => {
+    const alertPrice = Number(document.getElementById("alert-price-input").value);
+    const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice;
+
+    if (isNaN(alertPrice) || alertPrice <= 0) {
+        alert("Prezzo non valido");
+        return;
+    }
+
+    const token = document.getElementById("personal-tg-token")?.value.trim() || personalTGToken;
+    const chatId = document.getElementById("personal-tg-chatid")?.value.trim() || personalTGChatID;
+
+    if (!token || !chatId) {
+        alert("⚠️ Errore: Configura Token e ChatID nelle impostazioni prima di mettere un alert!");
+        return;
+    }
+
+    fetch(`${SERVER_URL}/set_alert`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            device_id: deviceId,
+            exchange: currentExchange,
+            symbol: currentSymbol,
+            alert_price: alertPrice,
+            sync_price: syncPrice,
+            token: token,
+            chatId: chatId
+        })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Server error');
+        return response.json();
+    })
+    .then(data => {
+        console.log("✅ Server sincronizzato:", data);
+        completeAlertSetup(alertPrice, syncPrice);
+    })
+    .catch(e => {
+        console.error("❌ Errore sincronizzazione server:", e);
+        alert("Il server non risponde, ma l'alert locale è attivo.");
+        completeAlertSetup(alertPrice, syncPrice);
+    });
+};
+
+function completeAlertSetup(alertPrice, syncPrice) {
+    alertPrices[currentSymbol] = alertPrice;
+    syncPrices[currentSymbol] = syncPrice;
+    savedHorizPrices[currentSymbol] = syncPrice;
+    localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
+    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
+    localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
+    syncHorizLines();
+
+    if (!favorites.includes(currentSymbol)) {
+        favorites.push(currentSymbol);
+        localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
+        populateList(currentSort);
+    }
+
+    document.getElementById("alert-setup").style.display = "none";
+}
+
+document.getElementById("open-in-exchange").onclick = () => {
+    const price = Number(document.getElementById("alert-price-input").value);
+    if (isNaN(price) || price <= 0) return alert("Invalid price");
+
+    const tradeLink = currentExchange === "bybit" 
+        ? `https://www.bybit.com/trade/usdt/${currentSymbol}`
+        : `https://www.binance.com/en/futures/${currentSymbol}`;
+
+    window.open(tradeLink, '_blank');
+    document.getElementById("alert-setup").style.display = "none";
+};
+
 // ====================== LOCK LANDSCAPE ======================
 async function lockLandscape() {
     if (!screen.orientation || !screen.orientation.lock) return;
@@ -762,96 +836,10 @@ window.addEventListener('orientationchange', () => {
     }, 300);
 });
 
-// ====================== EVENT LISTENERS ======================
-document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
-document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
-
-document.getElementById("toggle-ema").onclick = () => {
-    emaEnabled = !emaEnabled;
-    const btn = document.getElementById("toggle-ema");
-    btn.textContent = emaEnabled ? "EMA: On" : "EMA: Off";
-    btn.classList.toggle("active", emaEnabled);
-    document.getElementById("ema-periods-section").style.display = emaEnabled ? "block" : "none";
-};
-
-document.getElementById("toggle-bb").onclick = () => {
-    bbEnabled = !bbEnabled;
-    const btn = document.getElementById("toggle-bb");
-    btn.textContent = bbEnabled ? "Bollinger Bands: On" : "Bollinger Bands: Off";
-    btn.classList.toggle("active", bbEnabled);
-    document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
-};
-
-document.getElementById("apply-settings").onclick = async () => {
-    emaPeriods = [
-        Math.max(1, Number(document.getElementById("ema1").value || 5)),
-        Math.max(1, Number(document.getElementById("ema2").value || 10)),
-        Math.max(1, Number(document.getElementById("ema3").value || 60)),
-        Math.max(1, Number(document.getElementById("ema4").value || 223))
-    ];
-
-    bbPeriod = Math.max(1, Number(document.getElementById("bb-period").value || 20));
-    bbDev = Number(document.getElementById("bb-dev").value || 2);
-
-    customIntervals["chart-5m"] = document.getElementById("tf-chart-5m").value;
-    customIntervals["chart-30m"] = document.getElementById("tf-chart-30m").value;
-    customIntervals["chart-4h"] = document.getElementById("tf-chart-4h").value;
-    customIntervals["chart-1d"] = document.getElementById("tf-chart-1d").value;
-
-    localStorage.setItem('customIntervals', JSON.stringify(customIntervals));
-
-    personalTGToken = document.getElementById("personal-tg-token").value.trim();
-    personalTGChatID = document.getElementById("personal-tg-chatid").value.trim();
-
-    localStorage.setItem('personalTGToken', personalTGToken);
-    localStorage.setItem('personalTGChatID', personalTGChatID);
-
-    await loadAllCharts(currentSymbol);
-    document.getElementById("settings-modal").style.display = "none";
-};
-
-document.getElementById("sort-select").onchange = e => {
-    currentSort = e.target.value;
-    populateList(currentSort);
-};
-
-document.getElementById("exchange-select").onchange = async (e) => {
-    const oldSymbol = currentSymbol;
-    currentExchange = e.target.value;
-    localStorage.setItem('currentExchange', currentExchange);
-
-    allPairsData = [];
-    document.getElementById("pairs-list").innerHTML = "<div class='loading'>Loading pairs...</div>";
-
-    await fetchPairs();
-
-    if (!allPairsData.some(p => p.s === oldSymbol)) {
-        currentSymbol = "BTCUSDT";
-    }
-
-    await loadAllCharts(currentSymbol);
-};
-
-document.getElementById("info-btn").onclick = () => document.getElementById("info-modal").style.display = "flex";
-document.querySelector("#info-modal .close").onclick = () => document.getElementById("info-modal").style.display = "none";
-
-window.onclick = (event) => {
-    const infoModal = document.getElementById("info-modal");
-    const settingsModal = document.getElementById("settings-modal");
-    if (event.target === infoModal) infoModal.style.display = "none";
-    if (event.target === settingsModal) settingsModal.style.display = "none";
-};
-
-document.getElementById('open-botfather-btn').onclick = () => window.open('https://t.me/BotFather', '_blank');
-
-document.getElementById("close-alert-setup").onclick = () => document.getElementById("alert-setup").style.display = "none";
-
-document.getElementById("close-fullscreen").onclick = closeFullscreen;
-
 // ====================== ONLOAD ======================
 window.onload = async () => {
     setRealViewportHeight();
-    await lockLandscape();   // Blocca automaticamente in orizzontale
+    await lockLandscape();
 
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
