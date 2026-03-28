@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO - MARZO 2026 ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO - CON LOCK LANDSCAPE ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -104,7 +104,7 @@ function applyVisibleRange(chart, id) {
     chart.timeScale().setVisibleLogicalRange({ from: from, to: len + spaceBarsCount });
 }
 
-// ====================== POPULATE LIST - CON SIMBOLO CORTO SU MOBILE ======================
+// ====================== POPULATE LIST CON SIMBOLO CORTO SU MOBILE ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -157,7 +157,7 @@ function populateList(sort = "volume") {
     });
 }
 
-// ====================== FUNZIONI ORIZZONTALI E RULER ======================
+// ====================== FUNZIONI ORIZZONTALI ======================
 function syncHorizLines() {
     Object.keys(candleSeries).forEach(k => {
         updatePriceLineOnSeries(candleSeries[k], k);
@@ -809,6 +809,20 @@ async function updateLive() {
     }
 }
 
+// ====================== LOCK LANDSCAPE (OBBLIGATORIO SU CELLULARE) ======================
+async function lockLandscape() {
+    if (!screen.orientation || !screen.orientation.lock) {
+        console.log("Screen orientation lock non supportato");
+        return;
+    }
+    try {
+        await screen.orientation.lock('landscape-primary');
+        console.log("✅ Schermo bloccato in landscape");
+    } catch (e) {
+        console.log("⚠️ Impossibile bloccare landscape:", e);
+    }
+}
+
 // ====================== EVENT LISTENERS ======================
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
 document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
@@ -899,13 +913,22 @@ document.getElementById("close-alert-setup").onclick = () => {
 
 document.getElementById("close-fullscreen").onclick = closeFullscreen;
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('SW registered:', reg))
-            .catch(err => console.log('SW registration failed:', err));
-    });
+// ====================== LOCK LANDSCAPE AUTOMATICO ======================
+async function lockLandscape() {
+    if (!screen.orientation || !screen.orientation.lock) return;
+    try {
+        await screen.orientation.lock('landscape-primary');
+    } catch (e) {
+        console.log("Impossibile bloccare landscape:", e);
+    }
 }
+
+window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+        lockLandscape();
+        window.dispatchEvent(new Event("resize"));
+    }, 300);
+});
 
 // ====================== RESIZE ======================
 window.addEventListener("resize", () => {
@@ -923,13 +946,10 @@ window.addEventListener("resize", () => {
         if (fullscreenActive && fullscreenChart) {
             fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
         }
-        populateList(document.getElementById("sort-select").value);
     }, 100);
 });
 
-setInterval(updateLive, 2000);
-setInterval(fetchPairs, 2000);
-
+// ====================== ONLOAD ======================
 window.onload = async () => {
     setRealViewportHeight();
 
@@ -964,6 +984,21 @@ window.onload = async () => {
 
     document.querySelectorAll('.title-ruler').forEach(el => el.classList.remove('active'));
 
+    // BLOCCO ORIZZONTALE AUTOMATICO
+    await lockLandscape();
+
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 };
+
+// ====================== LIVE UPDATE ======================
+setInterval(updateLive, 2000);
+setInterval(fetchPairs, 2000);
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('SW registered:', reg))
+            .catch(err => console.log('SW registration failed:', err));
+    });
+}
