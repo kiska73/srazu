@@ -1,4 +1,4 @@
-const CACHE_NAME = 'srazu-v6';
+const CACHE_NAME = 'srazu-v7';
 self.addEventListener('fetch', event => {
   if (event.request.url.includes('app.js')) {
     event.respondWith(
