@@ -70,7 +70,7 @@ const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-// ====================== ALTEZZA REALE SCHERMO (ZERO SCROLL) ======================
+// ====================== ALTEZZA REALE SCHERMO ======================
 function setRealViewportHeight() {
   document.documentElement.style.setProperty('--real-vh', `${window.innerHeight}px`);
 }
@@ -233,11 +233,8 @@ function updateAlertLineOnSeries(series, key) {
 function toggleRulerMode() {
     rulerMode = !rulerMode;
     document.querySelectorAll('.title-ruler').forEach(el => {
-        if (rulerMode) {
-            el.classList.add('active');
-        } else {
-            el.classList.remove('active');
-        }
+        if (rulerMode) el.classList.add('active');
+        else el.classList.remove('active');
     });
     if (!rulerMode) {
         rulerPrice = null;
@@ -421,16 +418,16 @@ async function fetchPairs() {
         }));
 
         populateList(currentSort);
-
         setTimeout(() => window.dispatchEvent(new Event("resize")), 80);
     } catch (e) {
         console.error("Fetch pairs error:", e);
     }
 }
 
-// ====================== POPULATELIST AGGIORNATA (MOBILE FRIENDLY) ======================
+// ====================== POPULATELIST - VERSIONE CORRETTA MOBILE ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
+
     if (allPairsData.length === 0) {
         list.innerHTML = "<div class='loading'>No pairs loaded</div>";
         return;
@@ -448,27 +445,30 @@ function populateList(sort = "volume") {
 
     list.innerHTML = "";
 
-    // 🔥 DECISIONE DESKTOP vs MOBILE/TABLET
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    // Rilevamento mobile/tablet
+    const isMobile = window.matchMedia("(max-width: 920px)").matches;
 
     display.forEach(p => {
         const isFav = favorites.includes(p.s);
-        const displaySymbol = isMobile ? p.s.replace(/USDT$/, '') : p.s;   // BTC o BTCUSDT
+        const displaySymbol = isMobile ? p.s.replace(/USDT$/, "") : p.s;
 
         const div = document.createElement("div");
         div.className = "pair" + (p.s === currentSymbol ? " active" : "");
-        div.innerHTML = 
-            `<span class="pair-symbol">
+
+        div.innerHTML = `
+            <span class="pair-symbol">
                 <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span>
                 <span class="symbol-text">${displaySymbol}</span>
             </span>
             <span class="pair-price">${formatPrice(p.price)}</span>
-            <span class="pair-change ${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>`;
+            <span class="pair-change ${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>
+        `;
 
         div.onclick = (e) => {
             if (e.target.classList.contains('star')) return;
             loadAllCharts(p.s);
         };
+
         list.appendChild(div);
     });
 
@@ -480,6 +480,7 @@ function populateList(sort = "volume") {
     });
 }
 
+// ====================== IL RESTO DEL CODICE (invariato) ======================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -762,7 +763,6 @@ document.getElementById("open-in-exchange").onclick = () => {
         : `https://www.binance.com/en/futures/${currentSymbol}`;
 
     window.open(tradeLink, '_blank');
-
     document.getElementById("alert-setup").style.display = "none";
 };
 
@@ -961,14 +961,12 @@ window.onload = async () => {
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 
-    // Aggiunta listener per change del media query
     const mql = window.matchMedia("(max-width: 920px)");
     mql.addEventListener("change", () => populateList(currentSort));
 
     lockLandscape();
 };
 
-// ====================== RESIZE CON ALTEZZA REALE ======================
 window.addEventListener("resize", () => {
   setRealViewportHeight();
 
