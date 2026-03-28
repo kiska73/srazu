@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO - CON LOCK LANDSCAPE ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO - CON FIX GRAFICO + LANDSCAPE ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -104,7 +104,7 @@ function applyVisibleRange(chart, id) {
     chart.timeScale().setVisibleLogicalRange({ from: from, to: len + spaceBarsCount });
 }
 
-// ====================== POPULATE LIST CON SIMBOLO CORTO SU MOBILE ======================
+// ====================== POPULATE LIST - SIMBOLO CORTO SU MOBILE ======================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (allPairsData.length === 0) {
@@ -119,7 +119,6 @@ function populateList(sort = "volume") {
 
     const favoritesInList = sorted.filter(p => favorites.includes(p.s));
     const others = sorted.filter(p => !favorites.includes(p.s));
-
     const display = favoritesInList.concat(others.slice(0, 80));
 
     list.innerHTML = "";
@@ -155,6 +154,67 @@ function populateList(sort = "volume") {
             toggleFavorite(starEl.dataset.symbol);
         };
     });
+}
+
+// ====================== UPDATE LIVE - FIX DEFINITIVO (NO SPOSTAMENTO) ======================
+async function updateLive() {
+    for (const id in customIntervals) {
+        const interval = customIntervals[id];
+        const latest = await fetchLatestCandle(currentSymbol, interval);
+        if (!latest || !candleSeries[id]) continue;
+
+        candleSeries[id].update(latest);
+
+        if (!seriesData[id]) seriesData[id] = [];
+
+        const lastIndex = seriesData[id].length - 1;
+        if (lastIndex >= 0 && seriesData[id][lastIndex].time === latest.time) {
+            seriesData[id][lastIndex] = { ...latest };
+        } else {
+            seriesData[id].push({ ...latest });
+        }
+
+        if (latest.time > (lastCandleTime[id] || 0)) {
+            lastCandleTime[id] = latest.time;
+
+            if (emaEnabled) {
+                emaSeries[id]?.forEach(e => {
+                    e.last = nextEMA(e.last, latest.close, e.period);
+                    e.series.update({ time: latest.time, value: e.last });
+                });
+            }
+
+            if (bbEnabled && bbSeries[id]) {
+                const bb = bbSeries[id];
+                bb.middle.last = (bb.middle.last * (bbPeriod - 1) + latest.close) / bbPeriod;
+                bb.middle.series.update({ time: latest.time, value: bb.middle.last });
+            }
+
+            applyVisibleRange(charts[id], id);
+        }
+    }
+
+    // Fullscreen
+    if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
+        const interval = customIntervals[fullscreenContainerId];
+        const latest = await fetchLatestCandle(currentSymbol, interval);
+        if (latest) {
+            fullscreenChart.series.update(latest);
+            if (latest.time > (lastCandleTime[fullscreenContainerId] || 0)) {
+                lastCandleTime[fullscreenContainerId] = latest.time;
+                applyVisibleRange(fullscreenChart.chart, fullscreenContainerId);
+            }
+        }
+    }
+
+    // Colore titolo basato su BTC
+    const btcLatest = await fetchLatestCandle("BTCUSDT", "30");
+    if (btcLatest) {
+        let colorClass = "neutral";
+        if (btcLatest.close > btcLatest.open) colorClass = "green";
+        else if (btcLatest.close < btcLatest.open) colorClass = "red";
+        document.querySelectorAll('.chart-title').forEach(t => t.className = "chart-title " + colorClass);
+    }
 }
 
 // ====================== FUNZIONI ORIZZONTALI ======================
@@ -533,7 +593,10 @@ async function createChart(containerId) {
     if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(series, containerId);
 
     const totalSlots = visibleBarsCount + spaceBarsCount;
-    chart.timeScale().applyOptions({ barSpacing: container.clientWidth / totalSlots });
+    chart.timeScale().applyOptions({ 
+        barSpacing: container.clientWidth / totalSlots,
+        shiftVisibleRangeOnNewBar: true   // Fix importante per realtime
+    });
     applyVisibleRange(chart, containerId);
 
     chart.subscribeClick(p => {
@@ -634,8 +697,10 @@ function openFullscreen(containerId, tfLabel) {
     if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(newSeries, "fullscreen");
 
     const totalSlots = visibleBarsCount + spaceBarsCount;
-    const barSpacing = window.innerWidth / totalSlots;
-    newChart.timeScale().applyOptions({ barSpacing: barSpacing });
+    newChart.timeScale().applyOptions({ 
+        barSpacing: window.innerWidth / totalSlots,
+        shiftVisibleRangeOnNewBar: true
+    });
     applyVisibleRange(newChart, containerId);
 
     newChart.subscribeClick(p => {
@@ -680,148 +745,22 @@ function openAlertSetup() {
     document.getElementById("alert-setup").style.display = "block";
 }
 
-document.getElementById("close-alert-setup").onclick = () => {
-    document.getElementById("alert-setup").style.display = "none";
-};
-
-document.getElementById("set-local-alert").onclick = () => {
-    const alertPrice = Number(document.getElementById("alert-price-input").value);
-    const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice;
-
-    if (isNaN(alertPrice) || alertPrice <= 0) {
-        alert("Prezzo non valido");
-        return;
-    }
-
-    const token = document.getElementById("personal-tg-token")?.value.trim() || personalTGToken;
-    const chatId = document.getElementById("personal-tg-chatid")?.value.trim() || personalTGChatID;
-
-    if (!token || !chatId) {
-        alert("⚠️ Errore: Configura Token e ChatID nelle impostazioni prima di mettere un alert!");
-        return;
-    }
-
-    fetch(`${SERVER_URL}/set_alert`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            device_id: deviceId,
-            exchange: currentExchange,
-            symbol: currentSymbol,
-            alert_price: alertPrice,
-            sync_price: syncPrice,
-            token: token,
-            chatId: chatId
-        })
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Server error');
-        return response.json();
-    })
-    .then(data => {
-        console.log("✅ Server sincronizzato:", data);
-        completeAlertSetup(alertPrice, syncPrice);
-    })
-    .catch(e => {
-        console.error("❌ Errore sincronizzazione server:", e);
-        alert("Il server non risponde, ma l'alert locale è attivo.");
-        completeAlertSetup(alertPrice, syncPrice);
-    });
-};
-
-function completeAlertSetup(alertPrice, syncPrice) {
-    alertPrices[currentSymbol] = alertPrice;
-    syncPrices[currentSymbol] = syncPrice;
-    savedHorizPrices[currentSymbol] = syncPrice;
-    localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
-    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
-    localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
-    syncHorizLines();
-
-    if (!favorites.includes(currentSymbol)) {
-        favorites.push(currentSymbol);
-        localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
-        populateList(currentSort);
-    }
-
-    document.getElementById("alert-setup").style.display = "none";
-}
-
-document.getElementById("open-in-exchange").onclick = () => {
-    const price = Number(document.getElementById("alert-price-input").value);
-    if (isNaN(price) || price <= 0) return alert("Invalid price");
-
-    const tradeLink = currentExchange === "bybit" 
-        ? `https://www.bybit.com/trade/usdt/${currentSymbol}`
-        : `https://www.binance.com/en/futures/${currentSymbol}`;
-
-    window.open(tradeLink, '_blank');
-    document.getElementById("alert-setup").style.display = "none";
-};
-
-async function updateLive() {
-    for (const id in customIntervals) {
-        const interval = customIntervals[id];
-        const latest = await fetchLatestCandle(currentSymbol, interval);
-        if (!latest || !candleSeries[id]) continue;
-
-        candleSeries[id].update(latest);
-        seriesData[id].push(latest);
-
-        if (latest.time > (lastCandleTime[id] || 0)) {
-            lastCandleTime[id] = latest.time;
-
-            if (emaEnabled) {
-                emaSeries[id]?.forEach(e => {
-                    e.last = nextEMA(e.last, latest.close, e.period);
-                    e.series.update({ time: latest.time, value: e.last });
-                });
-            }
-
-            if (bbEnabled && bbSeries[id]) {
-                const bb = bbSeries[id];
-                bb.middle.last = (bb.middle.last * (bbPeriod - 1) + latest.close) / bbPeriod;
-                bb.middle.series.update({ time: latest.time, value: bb.middle.last });
-            }
-
-            applyVisibleRange(charts[id], id);
-        }
-    }
-
-    if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
-        const interval = customIntervals[fullscreenContainerId];
-        const latest = await fetchLatestCandle(currentSymbol, interval);
-        if (latest) {
-            fullscreenChart.series.update(latest);
-            if (latest.time > (lastCandleTime[fullscreenContainerId] || 0)) {
-                lastCandleTime[fullscreenContainerId] = latest.time;
-                applyVisibleRange(fullscreenChart.chart, fullscreenContainerId);
-            }
-        }
-    }
-
-    const btcLatest = await fetchLatestCandle("BTCUSDT", "30");
-    if (btcLatest) {
-        let colorClass = "neutral";
-        if (btcLatest.close > btcLatest.open) colorClass = "green";
-        else if (btcLatest.close < btcLatest.open) colorClass = "red";
-        document.querySelectorAll('.chart-title').forEach(t => t.className = "chart-title " + colorClass);
-    }
-}
-
-// ====================== LOCK LANDSCAPE (OBBLIGATORIO SU CELLULARE) ======================
+// ====================== LOCK LANDSCAPE ======================
 async function lockLandscape() {
-    if (!screen.orientation || !screen.orientation.lock) {
-        console.log("Screen orientation lock non supportato");
-        return;
-    }
+    if (!screen.orientation || !screen.orientation.lock) return;
     try {
         await screen.orientation.lock('landscape-primary');
-        console.log("✅ Schermo bloccato in landscape");
     } catch (e) {
-        console.log("⚠️ Impossibile bloccare landscape:", e);
+        console.log("Landscape lock non supportato:", e);
     }
 }
+
+window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+        lockLandscape();
+        window.dispatchEvent(new Event("resize"));
+    }, 300);
+});
 
 // ====================== EVENT LISTENERS ======================
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
@@ -903,55 +842,16 @@ window.onclick = (event) => {
     if (event.target === settingsModal) settingsModal.style.display = "none";
 };
 
-document.getElementById('open-botfather-btn').onclick = () => {
-    window.open('https://t.me/BotFather', '_blank');
-};
+document.getElementById('open-botfather-btn').onclick = () => window.open('https://t.me/BotFather', '_blank');
 
-document.getElementById("close-alert-setup").onclick = () => {
-    document.getElementById("alert-setup").style.display = "none";
-};
+document.getElementById("close-alert-setup").onclick = () => document.getElementById("alert-setup").style.display = "none";
 
 document.getElementById("close-fullscreen").onclick = closeFullscreen;
-
-// ====================== LOCK LANDSCAPE AUTOMATICO ======================
-async function lockLandscape() {
-    if (!screen.orientation || !screen.orientation.lock) return;
-    try {
-        await screen.orientation.lock('landscape-primary');
-    } catch (e) {
-        console.log("Impossibile bloccare landscape:", e);
-    }
-}
-
-window.addEventListener('orientationchange', () => {
-    setTimeout(() => {
-        lockLandscape();
-        window.dispatchEvent(new Event("resize"));
-    }, 300);
-});
-
-// ====================== RESIZE ======================
-window.addEventListener("resize", () => {
-    setRealViewportHeight();
-    const totalSlots = visibleBarsCount + spaceBarsCount;
-    setTimeout(() => {
-        for (const id in charts) {
-            const el = document.getElementById(id);
-            if (charts[id] && el) {
-                charts[id].resize(el.clientWidth, el.clientHeight);
-                charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
-                applyVisibleRange(charts[id], id);
-            }
-        }
-        if (fullscreenActive && fullscreenChart) {
-            fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
-        }
-    }, 100);
-});
 
 // ====================== ONLOAD ======================
 window.onload = async () => {
     setRealViewportHeight();
+    await lockLandscape();   // Blocca automaticamente in orizzontale
 
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
@@ -983,9 +883,6 @@ window.onload = async () => {
     document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
 
     document.querySelectorAll('.title-ruler').forEach(el => el.classList.remove('active'));
-
-    // BLOCCO ORIZZONTALE AUTOMATICO
-    await lockLandscape();
 
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
