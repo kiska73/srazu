@@ -1,62 +1,21 @@
-const CACHE_NAME = "srazu-static-v1";
+const CACHE_NAME = 'srazu-cache-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/style.css',
+  '/app.js'
+];
 
-/* install */
-self.addEventListener("install", event => {
-  self.skipWaiting();
-});
-
-/* activate - cancella cache vecchie */
-self.addEventListener("activate", event => {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      )
-    )
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
   );
-  self.clients.claim();
 });
 
-/* fetch */
-self.addEventListener("fetch", event => {
-
-  const req = event.request;
-  const url = new URL(req.url);
-
-  /* HTML sempre aggiornato */
-  if (req.mode === "navigate") {
-    event.respondWith(fetch(req));
-    return;
-  }
-
-  /* JS e CSS sempre aggiornati */
-  if (
-    url.pathname.endsWith(".js") ||
-    url.pathname.endsWith(".css")
-  ) {
-    event.respondWith(fetch(req));
-    return;
-  }
-
-  /* immagini e asset → cache */
-  if (
-    url.pathname.endsWith(".png") ||
-    url.pathname.endsWith(".jpg") ||
-    url.pathname.endsWith(".svg") ||
-    url.pathname.endsWith(".woff2")
-  ) {
-    event.respondWith(
-      caches.match(req).then(res => {
-        return res || fetch(req).then(fetchRes => {
-          const copy = fetchRes.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
-          return fetchRes;
-        });
-      })
-    );
-    return;
-  }
-
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
+  );
 });
