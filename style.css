@@ -320,3 +320,36 @@ html, body {
         font-size: 16px !important;
     }
 }
+/* BLOCCO TELEFONO VERTICALE */
+
+#rotate-device{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+background:#0f1117;
+color:white;
+font-size:24px;
+font-weight:bold;
+justify-content:center;
+align-items:center;
+text-align:center;
+z-index:20000;
+padding:40px;
+}
+
+/* TELEFONO VERTICALE */
+
+@media (orientation:portrait) and (max-width:920px){
+
+#app{
+display:none;
+}
+
+#rotate-device{
+display:flex;
+}
+
+}
