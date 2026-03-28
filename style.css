@@ -405,3 +405,38 @@ html, body {
   }
 
 }
+/* ===== MOBILE LIST FIX DEFINITIVO ===== */
+
+@media (max-width: 920px){
+
+#pairs-list .pair{
+display:grid !important;
+grid-template-columns: 1fr 82px 60px !important;
+align-items:center;
+gap:8px;
+padding:9px 10px;
+}
+
+#pairs-list .pair-symbol{
+min-width:0;
+gap:6px;
+}
+
+#pairs-list .symbol-text{
+font-size:14px;
+font-weight:700;
+}
+
+#pairs-list .pair-price{
+text-align:right;
+font-size:13px;
+min-width:0;
+}
+
+#pairs-list .pair-change{
+text-align:right;
+font-size:13px;
+min-width:0;
+}
+
+}
