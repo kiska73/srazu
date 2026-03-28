@@ -84,11 +84,111 @@
         </div>
     </div>
 
-    <!-- Modals (identici ai tuoi) -->
-    <div id="settings-modal" class="modal"> ... (tutto il tuo codice dei modali che avevi prima) ... </div>
-    <div id="info-modal" class="modal"> ... </div>
-    <div id="alert-setup" style="display:none; ..."> ... </div>
-    <div id="fullscreen-overlay" style="display:none; ..."> ... </div>
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <h3>Settings</h3>
+            <div style="display:flex; gap:10px; margin:15px 0; flex-wrap:wrap;">
+                <button id="toggle-ema">EMA: On</button>
+                <button id="toggle-bb">Bollinger Bands: Off</button>
+            </div>
+            <div id="ema-periods-section">
+                <label>EMA 1: <input type="number" min="1" id="ema1" value="5"></label>
+                <label>EMA 2: <input type="number" min="1" id="ema2" value="10"></label>
+                <label>EMA 3: <input type="number" min="1" id="ema3" value="60"></label>
+                <label>EMA 4: <input type="number" min="1" id="ema4" value="223"></label>
+            </div>
+            <div id="bb-periods-section" style="display:none;">
+                <label>Bollinger Period: <input type="number" min="1" id="bb-period" value="20"></label>
+                <label>Bollinger Std Dev: <input type="number" min="0.1" step="0.1" id="bb-dev" value="2"></label>
+            </div>
+            <hr style="border-color:#333; margin:20px 0;">
+            <label>Top Left Chart TF: <select id="tf-chart-5m">
+                <option value="1">1m</option><option value="3">3m</option><option value="5" selected>5m</option>
+                <option value="15">15m</option><option value="30">30m</option><option value="60">1h</option>
+                <option value="240">4h</option><option value="D">1d</option>
+            </select></label>
+            <label>Top Right Chart TF: <select id="tf-chart-30m">
+                <option value="1">1m</option><option value="3">3m</option><option value="5">5m</option>
+                <option value="15">15m</option><option value="30" selected>30m</option><option value="60">1h</option>
+                <option value="240">4h</option><option value="D">1d</option>
+            </select></label>
+            <label>Bottom Left Chart TF: <select id="tf-chart-4h">
+                <option value="1">1m</option><option value="3">3m</option><option value="5">5m</option>
+                <option value="15">15m</option><option value="30">30m</option><option value="60">1h</option>
+                <option value="240" selected>4h</option><option value="D">1d</option>
+            </select></label>
+            <label>Bottom Right Chart TF: <select id="tf-chart-1d">
+                <option value="1">1m</option><option value="3">3m</option><option value="5">5m</option>
+                <option value="15">15m</option><option value="30">30m</option><option value="60">1h</option>
+                <option value="240">4h</option><option value="D" selected>1d</option>
+            </select></label>
+            <hr style="border-color:#333; margin:20px 0;">
+            <h4>Telegram Alerts (Required)</h4>
+            <p style="font-size:14px; color:#ccc;">Private alerts managed by server. Configure your personal bot.</p>
+            <div style="margin-left:20px; margin-top:10px;">
+                <button id="open-botfather-btn">Open @BotFather to create your bot (30 seconds)</button>
+                <label>Bot Token:<br><input type="password" id="personal-tg-token" placeholder="123456:ABC-..."></label>
+                <label>Chat ID:<br><input type="text" id="personal-tg-chatid" placeholder="123456789"></label>
+                <p style="font-size:12px; color:#aaa; margin-top:15px;">
+                    <strong>Quick guide:</strong><br>
+                    1. Click button → open @BotFather.<br>
+                    2. /newbot → name → copy token.<br>
+                    3. Start bot → /start → copy Chat ID.<br>
+                    4. Apply → private alerts!
+                </p>
+            </div>
+            <button id="apply-settings">Apply</button>
+        </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="info-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <h3>APP INFORMATION</h3>
+            <p><strong>- Trade smarter, faster, and clearer – all for free!</strong></p>
+            <p><strong>- Real-time market analysis at a glance.</strong></p>
+            <p><strong>- Completely free • No login • Privacy safe.</strong></p>
+            <h4>MAIN FEATURES</h4>
+            <ul>
+                <li>Real-time charts</li>
+                <li>Synchronized horizontal line</li>
+                <li>Full-screen mode</li>
+                <li>Telegram alerts</li>
+                <li>Price Ruler tool</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Alert Setup -->
+    <div id="alert-setup" style="display:none; position:fixed; top:20px; left:20px; background:#161a25; padding:20px; border-radius:8px; border:1px solid #222; z-index:10000; box-shadow:0 4px 20px rgba(0,0,0,0.5); width:320px; color:white;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h4 style="margin:0;">Alert for <span id="alert-symbol"></span></h4>
+            <span id="close-alert-setup" style="cursor:pointer; font-size:28px; color:#aaa;">×</span>
+        </div>
+        <label style="display:block; margin:10px 0;">Alert price:<br>
+            <input type="number" step="any" id="alert-price-input" style="width:100%; padding:8px; background:#1f2433; border:none; color:white; border-radius:4px;">
+        </label>
+        <div style="display:flex; gap:8px; margin-top:20px;">
+            <button id="set-local-alert">Alert</button>
+            <button id="open-in-exchange">Open in Exchange</button>
+        </div>
+    </div>
+
+    <!-- Fullscreen overlay -->
+    <div id="fullscreen-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0f1117; z-index:9999;">
+        <button id="close-fullscreen" style="position:absolute; top:10px; right:10px; z-index:10000; background:#222; color:white; border:none; padding:6px 10px; cursor:pointer; font-size:16px;">✖</button>
+        <div class="fullscreen-title" id="fullscreen-title">
+            <span class="title-bell" style="display:inline-block; margin-right:8px; position:relative; z-index:10; font-size:26px;">🔔</span>
+            <span class="title-ruler" style="display:inline-block; margin-left:30px; cursor:pointer; opacity:0.5; position:relative; z-index:10; font-size:26px;">📏</span>
+            <span class="title-pct" style="display:inline-block; margin-left:10px; font-size:18px; font-weight:bold; color:#00ff85; position:relative; z-index:10;"></span>
+            <span class="title-text" style="font-size:22px; font-weight:bold;">BTCUSDT - 30m</span>
+            <span class="title-fullscreen" style="float:right; position:relative; z-index:10; font-size:30px; line-height:1;">⛶</span>
+        </div>
+        <div id="fullscreen-chart" style="width:100%;height:calc(100% - 60px);position:relative;"></div>
+    </div>
 
     <script src="app.js"></script>
 </body>
