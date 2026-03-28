@@ -81,7 +81,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ====================== HEADER LISTA - FIX COLORI BIANCHI SU NERO ====================== */
+/* ====================== HEADER LISTA ====================== */
 .pairs-header {
   display: flex;
   justify-content: space-between;
@@ -96,15 +96,7 @@ html, body {
   color: #ffffff !important;
 }
 
-.pairs-header span,
-.pairs-header select,
-.pairs-header button,
-.pairs-header div {
-  color: #ffffff !important;
-}
-
-#exchange-select,
-#sort-select {
+#exchange-select, #sort-select {
   background: #1f2433;
   color: #ffffff !important;
   border: none;
@@ -134,8 +126,8 @@ html, body {
   cursor: pointer;
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
   align-items: center;
+  font-size: 13px;
 }
 
 .pair:hover { background: #1f2433; }
@@ -145,6 +137,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 85px;
 }
 
 .star {
@@ -156,6 +149,18 @@ html, body {
 
 .green { color: #00ff85; }
 .red { color: #ff5252; }
+
+.pair-price {
+  font-variant-numeric: tabular-nums;
+  min-width: 85px;
+  text-align: right;
+}
+
+.pair-change {
+  min-width: 65px;
+  text-align: right;
+  font-weight: 600;
+}
 
 .loading {
   padding: 40px;
@@ -196,9 +201,7 @@ html, body {
 
 .modal label { display: block; margin: 12px 0 6px; }
 
-.modal input[type=number],
-.modal input[type=text],
-.modal input[type=password] {
+.modal input[type=number], .modal input[type=text], .modal input[type=password] {
   width: 100%;
   padding: 6px;
   background: #1f2433;
@@ -298,54 +301,47 @@ html, body {
   #app { grid-template-columns: 1fr minmax(155px, 19vw); }
   .chart-title { height: 20px; font-size: 10px; }
 }
-/* ==================== CRYPTO LIST - DESKTOP VS MOBILE ==================== */
+
+/* ====================== CRYPTO LIST - OTTIMIZZATA ====================== */
 .pair-symbol {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.symbol-main {
-    font-weight: 700;
-}
-
-.symbol-quote {
-    font-size: 0.74em;
-    opacity: 0.6;
-    color: #aaa;
+.symbol-text {
+  font-weight: 700;
 }
 
 .pair-price {
-    font-variant-numeric: tabular-nums;
-    min-width: 85px;
-    text-align: right;
+  font-variant-numeric: tabular-nums;
+  min-width: 85px;
+  text-align: right;
 }
 
 .pair-change {
-    min-width: 65px;
-    text-align: right;
-    font-weight: 600;
+  min-width: 65px;
+  text-align: right;
+  font-weight: 600;
 }
 
-/* SOLO CELLULARE E TABLET */
+/* SOLO SU CELLULARE E TABLET */
 @media (max-width: 920px) {
-    .symbol-quote {
-        display: none;
-    }
-    
     .pair {
         padding: 11px 14px;
         font-size: 14.5px;
-        flex-wrap: nowrap;
-        white-space: nowrap;
+    }
+    
+    .pair-symbol {
+        min-width: 68px;
     }
     
     .pair-price {
-        min-width: 92px;
+        min-width: 90px;
         font-size: 15px;
     }
 
     .pair-change {
-        min-width: 55px;
+        min-width: 58px;
     }
 }
