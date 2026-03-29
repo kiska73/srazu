@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - ZERO SCROLL + TUTTI I 8 BUG FIXATI ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - ZERO SCROLL + TUTTI I BUG FIXATI ======================
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
 let charts = {};
@@ -51,6 +51,14 @@ const spaceBarsCount = 1;
 const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// ==================== SHORT SYMBOL PER CELLULARE ====================
+function getDisplaySymbol(symbol) {
+    if (window.innerWidth <= 768) {
+        return symbol.replace(/USDT$|USDC$|USD$/, '') || symbol;
+    }
+    return symbol;
+}
 
 // ==================== CACHE FETCH ====================
 let lastFetchTimes = {};
@@ -387,7 +395,7 @@ function populateList(sort = "volume") {
         const isFav = favorites.includes(p.s);
         const div = document.createElement("div");
         div.className = "pair" + (p.s === currentSymbol ? " active" : "");
-        div.innerHTML = `<span class="pair-symbol"> <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span> <span>${p.s}</span> </span> <span>${formatPrice(p.price)}</span> <span class="${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>`;
+        div.innerHTML = `<span class="pair-symbol"> <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span> <span>${getDisplaySymbol(p.s)}</span> </span> <span>${formatPrice(p.price)}</span> <span class="${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>`;
         div.onclick = (e) => {
             if (e.target.classList.contains('star')) return;
             loadAllCharts(p.s);
