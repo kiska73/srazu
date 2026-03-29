@@ -8,20 +8,18 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>SRAZU - Crypto Price Action</title>
+    
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
-
-    <link rel="stylesheet" href="style.css">
+    
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <!-- CSS separato -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <!-- Messaggio rotazione (visibile solo in verticale) -->
-    <div id="rotate-device">
-        📱 Ruota il telefono in orizzontale<br>per usare l'app
-    </div>
 
     <div id="app">
         <div id="charts">
@@ -155,20 +153,36 @@
             <span class="close">×</span>
             <h3>APP INFORMATION</h3>
             <p><strong>- Trade smarter, faster, and clearer – all for free!</strong></p>
-            <p><strong>- Real-time market analysis at a glance.</strong></p>
-            <p><strong>- Completely free • No login • Privacy safe.</strong></p>
+            <p><strong>- Real-time market analysis at a glance, perfect for quick trades.</strong></p>
+            <p><strong>- Completely free, supported only by a small amount of non-intrusive ads.</strong></p>
+            <p><strong>- No login, no data collection – your privacy is safe.</strong></p>
+            <p><strong>- Independent and unbiased: we are not affiliated with any exchange.</strong></p>
+            <p><strong>- Telegram alert with personal bot.</strong></p>
             <h4>MAIN FEATURES</h4>
             <ul>
-                <li>Real-time charts</li>
-                <li>Synchronized horizontal line</li>
-                <li>Full-screen mode</li>
-                <li>Telegram alerts</li>
-                <li>Price Ruler tool</li>
+                <li>Real-time charts that update instantly.</li>
+                <li>Switch exchanges or lists anytime.</li>
+                <li>Synchronized analysis line: add with one click, move without duplicates. Double-click on any chart to remove it.</li>
+                <li>Full-screen charts for precise analysis.</li>
+                <li>Quick alerts: target exact levels or nearby zones with direct trade access.</li>
+                <li><strong>Advanced Tools</strong></li>
+                <li>Private Telegram alerts (server-managed).</li>
+                <li>Change all chart timeframes at once.</li>
+                <li>Customize moving average settings.</li>
+                <li>Dynamic color bands based on BTC movement.</li>
+            </ul>
+            <h4>Price Ruler Tool 📏</h4>
+            <ul>
+                <li>Click the ruler icon (right of the bell) to toggle measurement mode on/off.</li>
+                <li>When active, click on any chart to measure the percentage difference from the synchronized horizontal line to the clicked price.</li>
+                <li>A dashed green line will appear showing the percentage (e.g. +2.45%).</li>
+                <li>Click again on the chart to update the measurement to a new price level.</li>
+                <li>Click the ruler icon again to turn off and remove the measurement line.</li>
             </ul>
         </div>
     </div>
 
-    <!-- Alert Setup -->
+    <!-- Alert Setup Panel -->
     <div id="alert-setup" style="display:none; position:fixed; top:20px; left:20px; background:#161a25; padding:20px; border-radius:8px; border:1px solid #222; z-index:10000; box-shadow:0 4px 20px rgba(0,0,0,0.5); width:320px; color:white;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h4 style="margin:0;">Alert for <span id="alert-symbol"></span></h4>
@@ -196,6 +210,7 @@
         <div id="fullscreen-chart" style="width:100%;height:calc(100% - 60px);position:relative;"></div>
     </div>
 
+    <!-- JAVASCRIPT SEPARATO -->
     <script src="app.js"></script>
 </body>
 </html>
