@@ -320,8 +320,8 @@ html, body {
         font-size: 16px !important;
     }
 }
-/* BLOCCO TELEFONO VERTICALE */
 
+/* BLOCCO TELEFONO VERTICALE */
 #rotate-device{
 display:none;
 position:fixed;
@@ -340,38 +340,68 @@ z-index:20000;
 padding:40px;
 }
 
-/* TELEFONO VERTICALE */
-
 @media (orientation:portrait) and (max-width:920px){
-
-#app{
-display:none;
+#app{display:none;}
+#rotate-device{display:flex;}
 }
 
-#rotate-device{
-display:flex;
-}
+/* ====================== MOBILE LANDSCAPE FIX (versione finale) ====================== */
+@media (max-width: 920px) and (orientation: landscape) {
+    #app {
+        display: grid !important;
+        grid-template-columns: 73vw 27vw !important;
+        grid-template-rows: 100vh !important;
+        height: 100vh !important;
+        overflow: hidden;
+    }
 
-}
-/* ====================== MOBILE LANDSCAPE LAYOUT ====================== */
+    #charts {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        grid-template-rows: 1fr 1fr !important;
+        height: 100% !important;
+        gap: 2px !important;
+        background: #222;
+    }
 
-@media (max-width:920px) and (orientation:landscape){
+    #pairs {
+        width: 100% !important;
+        height: 100% !important;
+        border-left: 1px solid #222 !important;
+        border-top: none !important;
+        overflow: hidden;
+    }
 
-#app{
-grid-template-columns:1fr;
-grid-template-rows:60vh 40vh;
-height:100vh;
-}
+    .chart-title, .fullscreen-title {
+        height: 20px !important;
+        padding: 2px 8px !important;
+        font-size: 11px !important;
+    }
 
-#charts{
-height:100%;
-}
+    .title-bell, .title-ruler, .title-fullscreen {
+        font-size: 17px !important;
+    }
 
-#pairs{
-width:100%;
-border-left:none;
-border-top:1px solid #222;
-height:100%;
-}
+    .title-text {
+        font-size: 12.5px !important;
+    }
 
+    .title-pct {
+        font-size: 13px !important;
+    }
+
+    .pair {
+        padding: 6px 8px !important;
+        font-size: 11.5px !important;
+        grid-template-columns: 1fr 58px 48px !important;
+        gap: 5px !important;
+    }
+
+    .pair-symbol, .pair-price, .pair-change {
+        font-size: 11.5px !important;
+    }
+
+    #pairs-list {
+        font-size: 11.5px !important;
+    }
 }
