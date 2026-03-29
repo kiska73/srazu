@@ -11,7 +11,7 @@ html, body {
 }
 #app {
     display: grid;
-    grid-template-columns: 1fr minmax(165px, 21vw);
+    grid-template-columns: 1fr minmax(160px, 18vw);   /* ← ridotto come richiesto */
     height: var(--real-vh);
     overflow: hidden;
 }
@@ -111,16 +111,26 @@ html, body {
 .pair {
     padding: 8px 10px;
     cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
+    display: grid;
+    grid-template-columns: 45% 30% 25%;   /* ← colonne fisse per evitare sovrapposizioni */
     align-items: center;
+    font-size: 13px;
+    border-bottom: 1px solid #161a25;
 }
 .pair:hover { background: #1f2433; }
 .pair.active { background: #2a3150; font-weight: bold; }
 .pair-symbol { display: flex; align-items: center; gap: 8px; }
 .star { cursor: pointer; font-size: 18px; }
 .star.favorite { color: #FFD700; }
+.pair-price {
+    text-align: right;
+    color: #ccc;
+    padding-right: 5px;
+}
+.pair-pct {
+    text-align: right;
+    font-weight: bold;
+}
 .green { color: #00ff85; }
 .red { color: #ff5252; }
 .loading { padding: 40px; text-align: center; color: #aaa; }
@@ -213,43 +223,42 @@ html, body {
         height: 22px; 
         font-size: 11px; 
     }
+}
+
+@media (max-width: 920px) and (orientation: landscape) {
+    #app {
+        grid-template-columns: 1fr 220px !important;
+    }
     .pair {
-        padding: 7px 9px;
-        font-size: 12.5px;
+        font-size: 11px !important;
+        grid-template-columns: 42% 30% 28% !important;
     }
 }
 
-/* MOBILE - Portrait e Landscape ottimizzati */
 @media (max-width: 768px) {
     #app { 
         grid-template-columns: 1fr minmax(148px, 18.5vw); 
     }
-    
     .pairs-header {
         padding: 6px 8px;
         flex-wrap: nowrap;
         gap: 6px;
     }
-    
     #exchange-select, #sort-select {
         padding: 5px 8px;
         font-size: 13px;
     }
-    
     .pair {
         padding: 6px 8px;
         font-size: 12px;
         min-height: 42px;
     }
-    
     .pair-symbol {
         gap: 6px;
     }
-    
     .star {
         font-size: 17px;
     }
-    
     .chart-title {
         height: 21px;
         font-size: 10.5px;
@@ -257,14 +266,12 @@ html, body {
     }
 }
 
-/* Desktop leggermente più stretto (come richiesto) */
 @media (min-width: 1025px) {
     #app { 
         grid-template-columns: 1fr minmax(155px, 19.8vw); 
     }
 }
 
-/* Extra per iPhone e schermi molto stretti */
 @media (max-width: 480px) and (orientation: portrait) {
     #pairs {
         min-width: 142px;
