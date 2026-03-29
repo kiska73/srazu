@@ -345,7 +345,7 @@ padding:40px;
 #rotate-device{display:flex;}
 }
 
-/* ====================== MOBILE LANDSCAPE FIX (versione finale) ====================== */
+/* ====================== MOBILE LANDSCAPE + LISTA CARATTERI PIÙ PICCOLI ====================== */
 @media (max-width: 920px) and (orientation: landscape) {
     #app {
         display: grid !important;
@@ -390,18 +390,19 @@ padding:40px;
         font-size: 13px !important;
     }
 
+    /* LISTA CON CARATTERI PIÙ PICCOLI SUL CELLULARE */
     .pair {
         padding: 6px 8px !important;
-        font-size: 11.5px !important;
-        grid-template-columns: 1fr 58px 48px !important;
-        gap: 5px !important;
+        font-size: 10px !important;
+        grid-template-columns: 1fr 55px 45px !important;
+        gap: 4px !important;
     }
 
     .pair-symbol, .pair-price, .pair-change {
-        font-size: 11.5px !important;
+        font-size: 10px !important;
     }
 
     #pairs-list {
-        font-size: 11.5px !important;
+        font-size: 10px !important;
     }
 }
