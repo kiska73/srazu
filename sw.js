@@ -1,5 +1,5 @@
-// ====================== SRAZU SERVICE WORKER (MARZO 2026) ======================
-const CACHE_NAME = 'srazu-v1';
+// ====================== SRAZU SERVICE WORKER v2 (MARZO 2026) ======================
+const CACHE_NAME = 'srazu-v2';   // ← cambiato da v1 a v2 per forzare aggiornamento
 
 const CORE_ASSETS = [
   '/',
@@ -18,7 +18,7 @@ const CORE_ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('✅ SRAZU: Cache creata con successo');
+      console.log('✅ SRAZU v2: Cache creata');
       return cache.addAll(CORE_ASSETS);
     })
   );
@@ -37,21 +37,17 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Network First per tutto (più affidabile per aggiornamenti live)
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      // Network First + Cache fallback
-      return fetch(event.request).then(networkResponse => {
-        // Salva in cache la risposta fresca
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return networkResponse;
-      }).catch(() => {
-        // Offline → usa la cache
-        return cachedResponse || caches.match('/index.html');
+    fetch(event.request).then(networkResponse => {
+      if (networkResponse && networkResponse.status === 200) {
+        const responseClone = networkResponse.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+      }
+      return networkResponse;
+    }).catch(() => {
+      return caches.match(event.request).then(cached => {
+        return cached || caches.match('/index.html');
       });
     })
   );
