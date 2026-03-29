@@ -156,7 +156,7 @@ function populateList(sort = "volume") {
     });
 }
 
-// ====================== UPDATE LIVE - FIX GRAFICO ======================
+// ====================== UPDATE LIVE - FIX DEFINITIVO (candele non scappano più) ======================
 async function updateLive() {
     for (const id in customIntervals) {
         const interval = customIntervals[id];
@@ -189,8 +189,7 @@ async function updateLive() {
                 bb.middle.last = (bb.middle.last * (bbPeriod - 1) + latest.close) / bbPeriod;
                 bb.middle.series.update({ time: latest.time, value: bb.middle.last });
             }
-
-            applyVisibleRange(charts[id], id);
+            // Nessun applyVisibleRange qui → candele ferme
         }
     }
 
@@ -201,7 +200,6 @@ async function updateLive() {
             fullscreenChart.series.update(latest);
             if (latest.time > (lastCandleTime[fullscreenContainerId] || 0)) {
                 lastCandleTime[fullscreenContainerId] = latest.time;
-                applyVisibleRange(fullscreenChart.chart, fullscreenContainerId);
             }
         }
     }
@@ -563,7 +561,13 @@ async function createChart(containerId) {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(interval) },
+        timeScale: { 
+            timeVisible: true, 
+            tickMarkFormatter: getTimeFormatter(interval),
+            fixLeftEdge: true,
+            rightOffset: 8,
+            shiftVisibleRangeOnNewBar: true
+        },
         rightPriceScale: { borderColor: '#222' },
         width: container.clientWidth,
         height: container.clientHeight
@@ -661,7 +665,13 @@ function openFullscreen(containerId, tfLabel) {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(customIntervals[containerId]) },
+        timeScale: { 
+            timeVisible: true, 
+            tickMarkFormatter: getTimeFormatter(customIntervals[containerId]),
+            fixLeftEdge: true,
+            rightOffset: 8,
+            shiftVisibleRangeOnNewBar: true
+        },
         rightPriceScale: { borderColor: '#222' },
         width: window.innerWidth,
         height: window.innerHeight - 60
@@ -882,8 +892,6 @@ setInterval(fetchPairs, 2000);
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('SW registered:', reg))
-            .catch(err => console.log('SW registration failed:', err));
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('Service Worker registration failed:', err));
     });
 }
