@@ -353,3 +353,25 @@ display:flex;
 }
 
 }
+/* ====================== MOBILE LANDSCAPE LAYOUT ====================== */
+
+@media (max-width:920px) and (orientation:landscape){
+
+#app{
+grid-template-columns:1fr;
+grid-template-rows:60vh 40vh;
+height:100vh;
+}
+
+#charts{
+height:100%;
+}
+
+#pairs{
+width:100%;
+border-left:none;
+border-top:1px solid #222;
+height:100%;
+}
+
+}
