@@ -387,21 +387,35 @@ function populateList(sort = "volume") {
     if (sort === "gainers") sorted.sort((a, b) => b.p - a.p);
     else if (sort === "losers") sorted.sort((a, b) => a.p - a.p);
     else sorted.sort((a, b) => b.v - a.v);
+
     const favoritesInList = sorted.filter(p => favorites.includes(p.s));
     const others = sorted.filter(p => !favorites.includes(p.s));
     const display = favoritesInList.concat(others.slice(0, 80));
+
     list.innerHTML = "";
+
     display.forEach(p => {
         const isFav = favorites.includes(p.s);
         const div = document.createElement("div");
         div.className = "pair" + (p.s === currentSymbol ? " active" : "");
-        div.innerHTML = `<span class="pair-symbol"> <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span> <span>${getDisplaySymbol(p.s)}</span> </span> <span>${formatPrice(p.price)}</span> <span class="${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>`;
+
+        // VERSIONE CORRETTA con grid (usa le classi pair-price e pair-pct)
+        div.innerHTML = `
+            <span class="pair-symbol">
+                <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span>
+                <span>${getDisplaySymbol(p.s)}</span>
+            </span>
+            <span class="pair-price">${formatPrice(p.price)}</span>
+            <span class="pair-pct ${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>
+        `;
+
         div.onclick = (e) => {
             if (e.target.classList.contains('star')) return;
             loadAllCharts(p.s);
         };
         list.appendChild(div);
     });
+
     document.querySelectorAll('.star').forEach(starEl => {
         starEl.onclick = (e) => {
             e.stopPropagation();
