@@ -1,408 +1,230 @@
-/* ====================== SRAZU STYLE.CSS - VERSIONE FINALE ====================== */
-
+/* ====================== SRAZU STYLE.CSS COMPLETO - ZERO SCROLL + COLORI FIX (MARZO 2026) ====================== */
 html, body {
-  margin: 0;
-  padding: 0;
-  background: #0f1117;
-  color: #ffffff;
-  font-family: Arial, sans-serif;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
+    margin: 0;
+    padding: 0;
+    background: #0f1117;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
 }
-
 #app {
-  display: grid;
-  grid-template-columns: 1fr minmax(165px, 21vw);
-  height: var(--real-vh);
-  overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr minmax(165px, 21vw);
+    height: var(--real-vh);
+    overflow: hidden;
 }
-
 #charts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  height: 100%;
-  min-height: 0;
-  gap: 2px;
-  background: #222;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    height: 100%;
+    min-height: 0;
+    gap: 2px;
+    background: #222;
 }
-
 .chart-wrapper {
-  display: flex;
-  flex-direction: column;
-  background: #0f1117;
-  min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #0f1117;
+    min-height: 0;
 }
-
 .chart-title, .fullscreen-title {
-  position: relative;
-  padding: 4px 40px 4px 8px;
-  background: #161a25;
-  font-weight: bold;
-  text-align: center;
-  border-bottom: 1px solid #222;
-  flex-shrink: 0;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
+    position: relative;
+    padding: 4px 40px 4px 8px;
+    background: #161a25;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #222;
+    flex-shrink: 0;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
 }
-
 .title-text {
-  flex: 1;
-  text-align: center;
-  font-size: 13px;
-  font-weight: bold;
-  margin: 0 8px;
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    margin: 0 8px;
 }
-
 .fullscreen-title {
-  height: 40px;
-  padding: 8px 50px 8px 8px;
-  font-size: 16px;
+    height: 40px;
+    padding: 8px 50px 8px 8px;
+    font-size: 16px;
 }
-
 .chart-container {
-  flex: 1;
-  position: relative;
-  min-height: 0;
+    flex: 1;
+    position: relative;
+    min-height: 0;
 }
-
 #pairs {
-  border-left: 1px solid #222;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-width: 165px;
-  overflow: hidden;
+    border-left: 1px solid #222;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 165px;
+    overflow: hidden;
 }
-
 .pairs-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px;
-  background: #161a25;
-  font-weight: bold;
-  border-bottom: 1px solid #222;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  gap: 8px;
-  color: #ffffff !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: #161a25;
+    font-weight: bold;
+    border-bottom: 1px solid #222;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: #ffffff !important;
 }
-
+.pairs-header span, .pairs-header select, .pairs-header button, .pairs-header div {
+    color: #ffffff !important;
+}
 #exchange-select, #sort-select {
-  background: #1f2433;
-  color: #ffffff !important;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-weight: bold;
+    background: #1f2433;
+    color: #ffffff !important;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: bold;
 }
-
 #settings-btn {
-  background: #2a3150;
-  color: #ffffff !important;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
+    background: #2a3150;
+    color: #ffffff !important;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
 }
-
 #pairs-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 2px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 2px;
 }
-
-/* Lista Desktop */
 .pair {
-  padding: 8px 10px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
+    padding: 8px 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    align-items: center;
 }
-
 .pair:hover { background: #1f2433; }
 .pair.active { background: #2a3150; font-weight: bold; }
-
-.pair-symbol {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 85px;
-}
-
-.star {
-  cursor: pointer;
-  font-size: 18px;
-}
-
+.pair-symbol { display: flex; align-items: center; gap: 8px; }
+.star { cursor: pointer; font-size: 18px; }
 .star.favorite { color: #FFD700; }
-
 .green { color: #00ff85; }
 .red { color: #ff5252; }
-
-.pair-price {
-  font-variant-numeric: tabular-nums;
-  min-width: 85px;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.pair-change {
-  min-width: 65px;
-  text-align: right;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.loading {
-  padding: 40px;
-  text-align: center;
-  color: #aaa;
-}
-
-/* Modali */
+.loading { padding: 40px; text-align: center; color: #aaa; }
 .modal {
-  display: none;
-  position: fixed;
-  z-index: 100;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.85);
-  align-items: center;
-  justify-content: center;
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    align-items: center;
+    justify-content: center;
 }
-
 .modal-content {
-  background: #161a25;
-  padding: 20px;
-  width: 340px;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow-y: auto;
-  border-radius: 8px;
-  border: 1px solid #222;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    background: #161a25;
+    padding: 20px;
+    width: 340px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid #222;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
-
-.close {
-  float: right;
-  font-size: 28px;
-  cursor: pointer;
-  color: #aaa;
-}
-
+.close { float: right; font-size: 28px; cursor: pointer; color: #aaa; }
 .modal label { display: block; margin: 12px 0 6px; }
-
 .modal input[type=number], .modal input[type=text], .modal input[type=password] {
-  width: 100%;
-  padding: 6px;
-  background: #1f2433;
-  border: none;
-  color: white;
+    width: 100%;
+    padding: 6px;
+    background: #1f2433;
+    border: none;
+    color: white;
 }
-
 .modal button {
-  margin-top: 20px;
-  padding: 10px 16px;
-  background: #2a3150;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+    margin-top: 20px;
+    padding: 10px 16px;
+    background: #2a3150;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
 }
-
 #apply-settings {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  margin-top: 20px;
-  padding: 12px;
-  background: #2a3150;
-  font-size: 16px;
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    background: #2a3150;
+    font-size: 16px;
 }
-
 .chart-title.green { background: #004d26 !important; }
 .chart-title.red { background: #4d0000 !important; }
 .chart-title.neutral { background: #161a25 !important; }
-
-#toggle-ema.active, #toggle-bb.active {
-  background: #00ff85 !important;
-  color: black !important;
-}
-
+#toggle-ema.active, #toggle-bb.active { background: #00ff85 !important; color: black !important; }
 #alert-setup {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  background: #161a25;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #222;
-  z-index: 10000;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  width: 320px;
-  color: white;
-  display: none;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #161a25;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #222;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    width: 320px;
+    color: white;
+    display: none;
 }
-
 #set-local-alert { background: #FFD700 !important; color: #000 !important; }
 #open-in-exchange { background: #00ff85 !important; color: #000 !important; }
-
 #fullscreen-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  background: #0f1117;
-  z-index: 9999;
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: #0f1117;
+    z-index: 9999;
 }
-
-.title-ruler {
-  color: #888888;
-  opacity: 0.5;
-  transition: all 0.3s;
+.title-ruler { color: #888888; opacity: 0.5; transition: all 0.3s; }
+.title-ruler.active { color: #ffffff; opacity: 1; filter: brightness(1.5); }
+@media (max-width: 1024px) {
+    #app { grid-template-columns: 1fr minmax(165px, 21vw); }
+    .chart-title { height: 22px; font-size: 11px; }
 }
-
-.title-ruler.active {
-  color: #ffffff;
-  opacity: 1;
-  filter: brightness(1.5);
-}
-
-/* ====================== MOBILE LIST FIX ====================== */
-@media (max-width: 920px) {
-    .pair {
-        display: grid !important;
-        grid-template-columns: 1fr 82px 62px !important;
-        align-items: center !important;
-        padding: 10px 12px !important;
-        font-size: 14.5px !important;
-        gap: 8px !important;
-    }
-
-    .pair-symbol {
-        min-width: 0 !important;
-        gap: 6px !important;
-    }
-
-    .symbol-text {
-        font-weight: 700 !important;
-        font-size: 15px !important;
-        white-space: nowrap !important;
-    }
-
-    .pair-price {
-        text-align: right !important;
-        font-size: 14.5px !important;
-        min-width: 0 !important;
-        white-space: nowrap !important;
-    }
-
-    .pair-change {
-        text-align: right !important;
-        font-weight: 600 !important;
-        min-width: 0 !important;
-        font-size: 13.8px !important;
-        white-space: nowrap !important;
-    }
-
-    .star {
-        font-size: 16px !important;
+@media (max-width: 768px) and (orientation: portrait) {
+    #app, #charts, #pairs, #fullscreen-overlay { display: none !important; }
+    body::before {
+        content: "Ruota in orizzontale!";
+        position: fixed;
+        top:0; left:0;
+        width:100vw; height:100vh;
+        background:#0f1117;
+        color:#00ff85;
+        font-size:24px;
+        font-weight:bold;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:99999;
     }
 }
-
-/* BLOCCO TELEFONO VERTICALE */
-#rotate-device{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100vw;
-height:100vh;
-background:#0f1117;
-color:white;
-font-size:24px;
-font-weight:bold;
-justify-content:center;
-align-items:center;
-text-align:center;
-z-index:20000;
-padding:40px;
-}
-
-@media (orientation:portrait) and (max-width:920px){
-#app{display:none;}
-#rotate-device{display:flex;}
-}
-
-/* ====================== MOBILE LANDSCAPE + LISTA CARATTERI PIÙ PICCOLI ====================== */
-@media (max-width: 920px) and (orientation: landscape) {
-    #app {
-        display: grid !important;
-        grid-template-columns: 73vw 27vw !important;
-        grid-template-rows: 100vh !important;
-        height: 100vh !important;
-        overflow: hidden;
-    }
-
-    #charts {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        grid-template-rows: 1fr 1fr !important;
-        height: 100% !important;
-        gap: 2px !important;
-        background: #222;
-    }
-
-    #pairs {
-        width: 100% !important;
-        height: 100% !important;
-        border-left: 1px solid #222 !important;
-        border-top: none !important;
-        overflow: hidden;
-    }
-
-    .chart-title, .fullscreen-title {
-        height: 20px !important;
-        padding: 2px 8px !important;
-        font-size: 11px !important;
-    }
-
-    .title-bell, .title-ruler, .title-fullscreen {
-        font-size: 17px !important;
-    }
-
-    .title-text {
-        font-size: 12.5px !important;
-    }
-
-    .title-pct {
-        font-size: 13px !important;
-    }
-
-    /* LISTA CON CARATTERI PIÙ PICCOLI SUL CELLULARE */
-    .pair {
-        padding: 6px 8px !important;
-        font-size: 10px !important;
-        grid-template-columns: 1fr 55px 45px !important;
-        gap: 4px !important;
-    }
-
-    .pair-symbol, .pair-price, .pair-change {
-        font-size: 10px !important;
-    }
-
-    #pairs-list {
-        font-size: 10px !important;
-    }
+@media (max-width: 768px) and (orientation: landscape) {
+    #app { grid-template-columns: 1fr minmax(155px, 19vw); }
+    .chart-title { height: 20px; font-size: 10px; }
 }
