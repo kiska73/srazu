@@ -203,28 +203,74 @@ html, body {
 }
 .title-ruler { color: #888888; opacity: 0.5; transition: all 0.3s; }
 .title-ruler.active { color: #ffffff; opacity: 1; filter: brightness(1.5); }
+
+/* ====================== MEDIA QUERIES OTTIMIZZATE ====================== */
 @media (max-width: 1024px) {
-    #app { grid-template-columns: 1fr minmax(165px, 21vw); }
-    .chart-title { height: 22px; font-size: 11px; }
-}
-@media (max-width: 768px) and (orientation: portrait) {
-    #app, #charts, #pairs, #fullscreen-overlay { display: none !important; }
-    body::before {
-        content: "Ruota in orizzontale!";
-        position: fixed;
-        top:0; left:0;
-        width:100vw; height:100vh;
-        background:#0f1117;
-        color:#00ff85;
-        font-size:24px;
-        font-weight:bold;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        z-index:99999;
+    #app { 
+        grid-template-columns: 1fr minmax(158px, 19.5vw); 
+    }
+    .chart-title { 
+        height: 22px; 
+        font-size: 11px; 
+    }
+    .pair {
+        padding: 7px 9px;
+        font-size: 12.5px;
     }
 }
-@media (max-width: 768px) and (orientation: landscape) {
-    #app { grid-template-columns: 1fr minmax(155px, 19vw); }
-    .chart-title { height: 20px; font-size: 10px; }
+
+/* MOBILE - Portrait e Landscape ottimizzati */
+@media (max-width: 768px) {
+    #app { 
+        grid-template-columns: 1fr minmax(148px, 18.5vw); 
+    }
+    
+    .pairs-header {
+        padding: 6px 8px;
+        flex-wrap: nowrap;
+        gap: 6px;
+    }
+    
+    #exchange-select, #sort-select {
+        padding: 5px 8px;
+        font-size: 13px;
+    }
+    
+    .pair {
+        padding: 6px 8px;
+        font-size: 12px;
+        min-height: 42px;
+    }
+    
+    .pair-symbol {
+        gap: 6px;
+    }
+    
+    .star {
+        font-size: 17px;
+    }
+    
+    .chart-title {
+        height: 21px;
+        font-size: 10.5px;
+        padding: 3px 35px 3px 8px;
+    }
+}
+
+/* Desktop leggermente più stretto (come richiesto) */
+@media (min-width: 1025px) {
+    #app { 
+        grid-template-columns: 1fr minmax(155px, 19.8vw); 
+    }
+}
+
+/* Extra per iPhone e schermi molto stretti */
+@media (max-width: 480px) and (orientation: portrait) {
+    #pairs {
+        min-width: 142px;
+    }
+    .pair {
+        font-size: 11.5px;
+        padding: 5px 7px;
+    }
 }
