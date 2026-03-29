@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO (candele ferme su desktop) ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -156,7 +156,7 @@ function populateList(sort = "volume") {
     });
 }
 
-// ====================== UPDATE LIVE - FIX DEFINITIVO (candele non scappano più) ======================
+// ====================== UPDATE LIVE - CAND ELE FERME SU DESKTOP ======================
 async function updateLive() {
     for (const id in customIntervals) {
         const interval = customIntervals[id];
@@ -189,7 +189,6 @@ async function updateLive() {
                 bb.middle.last = (bb.middle.last * (bbPeriod - 1) + latest.close) / bbPeriod;
                 bb.middle.series.update({ time: latest.time, value: bb.middle.last });
             }
-            // Nessun applyVisibleRange qui → candele ferme
         }
     }
 
@@ -213,7 +212,7 @@ async function updateLive() {
     }
 }
 
-// ====================== FUNZIONI ORIZZONTALI ======================
+// ====================== FUNZIONI ORIZZONTALI (invariate) ======================
 function syncHorizLines() {
     Object.keys(candleSeries).forEach(k => {
         updatePriceLineOnSeries(candleSeries[k], k);
@@ -565,8 +564,9 @@ async function createChart(containerId) {
             timeVisible: true, 
             tickMarkFormatter: getTimeFormatter(interval),
             fixLeftEdge: true,
-            rightOffset: 8,
-            shiftVisibleRangeOnNewBar: true
+            rightOffset: 12,                    // più spazio a destra
+            shiftVisibleRangeOnNewBar: true,
+            lockVisibleTimeRangeOnResize: true  // BLOCCA spostamenti indesiderati
         },
         rightPriceScale: { borderColor: '#222' },
         width: container.clientWidth,
@@ -598,7 +598,7 @@ async function createChart(containerId) {
         barSpacing: container.clientWidth / totalSlots,
         shiftVisibleRangeOnNewBar: true
     });
-    applyVisibleRange(chart, containerId);
+    applyVisibleRange(chart, containerId);   // solo all'inizializzazione
 
     chart.subscribeClick(p => {
         if (p?.point) {
@@ -640,7 +640,6 @@ async function loadAllCharts(symbol) {
         if (charts[id] && el) {
             charts[id].resize(el.clientWidth, el.clientHeight);
             charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
-            applyVisibleRange(charts[id], id);
         }
     });
 }
@@ -669,8 +668,9 @@ function openFullscreen(containerId, tfLabel) {
             timeVisible: true, 
             tickMarkFormatter: getTimeFormatter(customIntervals[containerId]),
             fixLeftEdge: true,
-            rightOffset: 8,
-            shiftVisibleRangeOnNewBar: true
+            rightOffset: 12,
+            shiftVisibleRangeOnNewBar: true,
+            lockVisibleTimeRangeOnResize: true
         },
         rightPriceScale: { borderColor: '#222' },
         width: window.innerWidth,
@@ -829,7 +829,7 @@ document.getElementById("open-in-exchange").onclick = () => {
     document.getElementById("alert-setup").style.display = "none";
 };
 
-// ====================== LOCK LANDSCAPE ======================
+// ====================== LOCK LANDSCAPE + RESIZE ======================
 async function lockLandscape() {
     if (!screen.orientation || !screen.orientation.lock) return;
     try {
@@ -838,6 +838,17 @@ async function lockLandscape() {
         console.log("Landscape lock non supportato:", e);
     }
 }
+
+window.addEventListener('resize', () => {
+    const totalSlots = visibleBarsCount + spaceBarsCount;
+    Object.keys(charts).forEach(id => {
+        const el = document.getElementById(id);
+        if (charts[id] && el) {
+            charts[id].resize(el.clientWidth, el.clientHeight);
+            charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
+        }
+    });
+});
 
 window.addEventListener('orientationchange', () => {
     setTimeout(() => {
