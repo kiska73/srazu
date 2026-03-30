@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO (30 MARZO 2026) - ZOOM FISSO ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO (30 MARZO 2026) - ZOOM FISSO DEFINITIVO ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -92,15 +92,13 @@ function nextEMA(prev, price, period) {
     return price * k + prev * (1 - k);
 }
 
-// ==================== APPLY VISIBLE RANGE - SICURA ====================
+// ==================== APPLY VISIBLE RANGE - SOLO PRIMO CARICAMENTO ====================
 function applyVisibleRange(chart, series) {
     if (!chart || !series) return;
 
-    // Se l'utente ha già zoomato o spostato → NON toccare
-    const currentRange = chart.timeScale().getVisibleLogicalRange();
-    if (currentRange) return;
+    // Se l'utente ha già zoomato → NON toccare più
+    if (chart.timeScale().getVisibleLogicalRange()) return;
 
-    // Solo al primo caricamento
     const data = series.data ? series.data() : [];
     if (!data || data.length === 0) return;
 
@@ -444,7 +442,7 @@ function populateList(sort = "volume") {
     }, 10);
 }
 
-// ==================== CREATE CHART ====================
+// ==================== CREATE CHART - SENZA BARSPACING ====================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -503,9 +501,7 @@ async function createChart(containerId) {
     updateAlertLineOnSeries(series, containerId);
     if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(series, containerId);
 
-    const totalSlots = visibleBarsCount + spaceBarsCount;
-    chart.timeScale().applyOptions({ barSpacing: container.clientWidth / totalSlots });
-    applyVisibleRange(chart, series);
+    applyVisibleRange(chart, series);   // solo primo caricamento
 
     chart.subscribeClick(p => {
         if (p?.point) {
@@ -539,12 +535,10 @@ async function loadAllCharts(symbol) {
     await Promise.all(promises);
     syncHorizLines();
 
-    const totalSlots = visibleBarsCount + spaceBarsCount;
     Object.keys(charts).forEach(id => {
         const el = document.getElementById(id);
         if (charts[id] && el) {
             charts[id].resize(el.clientWidth, el.clientHeight);
-            charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
         }
     });
 }
@@ -594,8 +588,6 @@ function openFullscreen(containerId, tfLabel) {
     updateAlertLineOnSeries(newSeries, "fullscreen");
     if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(newSeries, "fullscreen");
 
-    const totalSlots = visibleBarsCount + spaceBarsCount;
-    newChart.timeScale().applyOptions({ barSpacing: window.innerWidth / totalSlots });
     applyVisibleRange(newChart, newSeries);
 
     newChart.subscribeClick(p => {
@@ -644,7 +636,7 @@ function openAlertSetup() {
     document.getElementById("alert-setup").style.display = "block";
 }
 
-// ==================== UPDATELIVE - FINALE ====================
+// ==================== UPDATELIVE - SOLO SCROLL TO REALTIME ====================
 async function updateLive() {
     for (const id in customIntervals) {
         const chart = charts[id];
@@ -722,7 +714,6 @@ async function updateLive() {
         }
     }
 
-    // Titolo BTC
     const btcLatest = await fetchLatestCandle("BTCUSDT", "30");
     if (btcLatest) {
         let colorClass = "neutral";
@@ -735,18 +726,16 @@ async function updateLive() {
 setInterval(updateLive, 2000);
 setInterval(fetchPairs, 5000);
 
-// ==================== RESIZE ====================
+// ==================== RESIZE - SOLO RESIZE ====================
 let resizeTimer;
 window.addEventListener("resize", () => {
     setRealViewportHeight();
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-        const totalSlots = visibleBarsCount + spaceBarsCount;
         Object.keys(charts).forEach(id => {
             const el = document.getElementById(id);
             if (charts[id] && el) {
                 charts[id].resize(el.clientWidth, el.clientHeight);
-                charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
             }
         });
         if (fullscreenActive && fullscreenChart) {
