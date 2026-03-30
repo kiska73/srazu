@@ -1,5 +1,5 @@
 // ====================== SRAZU SERVICE WORKER v2 (MARZO 2026) ======================
-const CACHE_NAME = 'srazu-v13';   // ← cambiato da v1 a v2 per forzare aggiornamento
+const CACHE_NAME = 'srazu-v14';   // ← cambiato da v1 a v2 per forzare aggiornamento
 
 const CORE_ASSETS = [
   '/',
