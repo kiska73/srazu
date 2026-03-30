@@ -1,4 +1,6 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - ZERO SCROLL + TUTTI I BUG FIXATI ======================
+<!-- ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - CON FIX ZOOM + SCROLL LISTA ====================== -->
+<!-- COPIA E INCOLLA TUTTO QUESTO FILE IN app.js -->
+
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
 let charts = {};
@@ -52,6 +54,11 @@ const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
+// ==================== NUOVE VARIABILI PER FIX ZOOM E SCROLL ====================
+let listScrollPosition = 0;           // per mantenere lo scroll della lista delle coppie
+let savedVisibleRanges = {};          // per i 4 grafici (non più necessario ma lasciato per compatibilità futura)
+let savedFullscreenRange = null;
+
 // ==================== SHORT SYMBOL PER CELLULARE ====================
 function getDisplaySymbol(symbol) {
     if (window.innerWidth <= 768) {
@@ -63,7 +70,7 @@ function getDisplaySymbol(symbol) {
 // ==================== CACHE FETCH ====================
 let lastFetchTimes = {};
 
-// ==================== FUNZIONI BASE ====================
+// ==================== FUNZIONI BASE (invariate) ====================
 function setRealViewportHeight() {
     document.documentElement.style.setProperty('--real-vh', `${window.innerHeight}px`);
 }
@@ -377,8 +384,14 @@ async function fetchPairs() {
     }
 }
 
+// ==================== POPULATELIST CON FIX SCROLL ====================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
+    if (!list) return;
+
+    // SALVA la posizione di scroll PRIMA di ricreare la lista
+    listScrollPosition = list.scrollTop;
+
     if (allPairsData.length === 0) {
         list.innerHTML = "<div class='loading'>No pairs loaded</div>";
         return;
@@ -399,7 +412,6 @@ function populateList(sort = "volume") {
         const div = document.createElement("div");
         div.className = "pair" + (p.s === currentSymbol ? " active" : "");
 
-        // VERSIONE CORRETTA con grid (usa le classi pair-price e pair-pct)
         div.innerHTML = `
             <span class="pair-symbol">
                 <span class="star${isFav ? ' favorite' : ''}" data-symbol="${p.s}">${isFav ? '★' : '☆'}</span>
@@ -422,8 +434,14 @@ function populateList(sort = "volume") {
             toggleFavorite(starEl.dataset.symbol);
         };
     });
+
+    // RIPRISTINA lo scroll DOPO aver ricreato la lista
+    setTimeout(() => {
+        if (list) list.scrollTop = listScrollPosition;
+    }, 0);
 }
 
+// ==================== CREATECHART (invariata) ====================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -599,24 +617,40 @@ function openAlertSetup() {
     document.getElementById("alert-setup").style.display = "block";
 }
 
+// ==================== UPDATELIVE CON FIX DEFINITIVO ZOOM ====================
 async function updateLive() {
     for (const id in customIntervals) {
         const interval = customIntervals[id];
+        const chart = charts[id];
+        const series = candleSeries[id];
+        if (!chart || !series) continue;
+
+        // 1. SALVA il range visibile attuale (zoom/pan dell'utente)
+        const currentRange = chart.timeScale().getVisibleLogicalRange();
+
         const latest = await fetchLatestCandle(currentSymbol, interval);
         if (!latest || !candleSeries[id]) continue;
+
+        // Aggiorna candela
         candleSeries[id].update(latest);
+
         if (!seriesData[id]) seriesData[id] = [];
         const existingIndex = seriesData[id].findIndex(c => c.time === latest.time);
         if (existingIndex >= 0) seriesData[id][existingIndex] = {...latest};
         else seriesData[id].push(latest);
+
         if (latest.time > (lastCandleTime[id] || 0)) {
             lastCandleTime[id] = latest.time;
+
+            // EMA
             if (emaEnabled) {
                 emaSeries[id]?.forEach(e => {
                     e.last = nextEMA(e.last, latest.close, e.period);
                     e.series.update({ time: latest.time, value: e.last });
                 });
             }
+
+            // Bollinger Bands
             if (bbEnabled && bbSeries[id] && seriesData[id].length >= bbPeriod) {
                 const slice = seriesData[id].slice(-bbPeriod);
                 const closes = slice.map(c => c.close);
@@ -635,20 +669,51 @@ async function updateLive() {
                 bbSeries[id].upper.last = upperVal;
                 bbSeries[id].lower.last = lowerVal;
             }
-            applyVisibleRange(charts[id], candleSeries[id]);
-        }
-    }
-    if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
-        const interval = customIntervals[fullscreenContainerId];
-        const latest = await fetchLatestCandle(currentSymbol, interval);
-        if (latest) {
-            fullscreenChart.series.update(latest);
-            if (latest.time > (lastCandleTime[fullscreenContainerId] || 0)) {
-                lastCandleTime[fullscreenContainerId] = latest.time;
-                applyVisibleRange(fullscreenChart.chart, fullscreenChart.series);
+
+            // 2. RIPRISTINA il range visibile
+            if (currentRange) {
+                const dataLength = seriesData[id].length || 0;
+                const isAtRightEdge = Math.abs(currentRange.to - dataLength) < 3; // tolleranza di 3 barre
+
+                if (isAtRightEdge) {
+                    applyVisibleRange(chart, series);   // resta agganciato all'ultima candela
+                } else {
+                    chart.timeScale().setVisibleLogicalRange(currentRange); // mantiene zoom e posizione scelti dall'utente
+                }
+            } else {
+                applyVisibleRange(chart, series);
             }
         }
     }
+
+    // ==================== FULLSCREEN ====================
+    if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
+        const fsChart = fullscreenChart.chart;
+        const fsSeries = fullscreenChart.series;
+        const currentFSRange = fsChart.timeScale().getVisibleLogicalRange();
+
+        const interval = customIntervals[fullscreenContainerId];
+        const latest = await fetchLatestCandle(currentSymbol, interval);
+        if (latest) {
+            fsSeries.update(latest);
+
+            if (latest.time > (lastCandleTime[fullscreenContainerId] || 0)) {
+                lastCandleTime[fullscreenContainerId] = latest.time;
+
+                if (currentFSRange) {
+                    const dataLength = seriesData[fullscreenContainerId]?.length || 0;
+                    const isAtRight = Math.abs(currentFSRange.to - dataLength) < 3;
+                    if (isAtRight) {
+                        applyVisibleRange(fsChart, fsSeries);
+                    } else {
+                        fsChart.timeScale().setVisibleLogicalRange(currentFSRange);
+                    }
+                }
+            }
+        }
+    }
+
+    // Aggiornamento titolo BTC (invariato)
     const btcLatest = await fetchLatestCandle("BTCUSDT", "30");
     if (btcLatest) {
         let colorClass = "neutral";
@@ -661,7 +726,7 @@ async function updateLive() {
 setInterval(updateLive, 2000);
 setInterval(fetchPairs, 5000);
 
-// ==================== EVENT LISTENERS ====================
+// ==================== EVENT LISTENERS (invariati) ====================
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
 document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
 document.getElementById("toggle-ema").onclick = () => {
@@ -773,7 +838,7 @@ document.getElementById("open-in-exchange").onclick = () => {
 };
 document.getElementById("close-fullscreen").onclick = closeFullscreen;
 
-// ==================== RESIZE CON DEBOUNCE ====================
+// ==================== RESIZE CON DEBOUNCE (invariato) ====================
 let resizeTimer;
 window.addEventListener("resize", () => {
     setRealViewportHeight();
@@ -801,7 +866,7 @@ document.addEventListener('visibilitychange', () => {
     if (!document.hidden) setRealViewportHeight();
 });
 
-// ==================== ONLOAD ====================
+// ==================== ONLOAD (invariato) ====================
 window.onload = async () => {
     setRealViewportHeight();
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
