@@ -1,4 +1,4 @@
-<!-- ====================== APP.JS COMPLETO E DEFINITIVO (30 MARZO 2026) - ZOOM FISSO + LISTA FISSA ====================== -->
+// ====================== APP.JS COMPLETO E DEFINITIVO (30 MARZO 2026) - FIX ZOOM MOUSE WHEEL + PINCH ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -53,7 +53,7 @@ const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-// ==================== VARIABILI PER IL FIX ====================
+// ==================== VARIABILI PER FIX ====================
 let listScrollPosition = 0;
 
 // ==================== FUNZIONI UTILITY ====================
@@ -377,11 +377,10 @@ async function fetchPairs() {
     }
 }
 
-// ==================== LISTA CON SCROLL FISSO ====================
+// ==================== POPULATE LIST - SCROLL FISSO ====================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (!list) return;
-
     listScrollPosition = list.scrollTop;
 
     if (allPairsData.length === 0) {
@@ -433,7 +432,7 @@ function populateList(sort = "volume") {
     }, 10);
 }
 
-// ==================== CREAZIONE GRAFICO ====================
+// ==================== CREATE CHART ====================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -460,7 +459,11 @@ async function createChart(containerId) {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(interval) },
+        timeScale: { 
+            timeVisible: true, 
+            tickMarkFormatter: getTimeFormatter(interval),
+            lockVisibleTimeRangeOnResize: true
+        },
         rightPriceScale: { borderColor: '#222' },
         width: container.clientWidth,
         height: container.clientHeight
@@ -520,7 +523,6 @@ async function loadAllCharts(symbol) {
     currentSymbol = symbol;
     activeHorizPrice = savedHorizPrices[symbol] ?? null;
     rulerPrice = null;
-
     const promises = Object.keys(customIntervals).map(id => createChart(id));
     await Promise.all(promises);
     syncHorizLines();
@@ -631,14 +633,13 @@ function openAlertSetup() {
     document.getElementById("alert-setup").style.display = "block";
 }
 
-// ==================== UPDATELIVE - FIX ZOOM MIGLIORATO ====================
+// ==================== UPDATELIVE - FIX MOUSE WHEEL / PINCH ====================
 async function updateLive() {
     for (const id in customIntervals) {
         const chart = charts[id];
         const series = candleSeries[id];
         if (!chart || !series) continue;
 
-        // Salva lo stato attuale di zoom/pan
         const currentRange = chart.timeScale().getVisibleLogicalRange();
 
         const latest = await fetchLatestCandle(currentSymbol, customIntervals[id]);
@@ -654,7 +655,6 @@ async function updateLive() {
         if (latest.time > (lastCandleTime[id] || 0)) {
             lastCandleTime[id] = latest.time;
 
-            // Aggiorna EMA
             if (emaEnabled && emaSeries[id]) {
                 emaSeries[id].forEach(e => {
                     e.last = nextEMA(e.last, latest.close, e.period);
@@ -662,7 +662,6 @@ async function updateLive() {
                 });
             }
 
-            // Aggiorna Bollinger Bands
             if (bbEnabled && bbSeries[id] && seriesData[id].length >= bbPeriod) {
                 const slice = seriesData[id].slice(-bbPeriod);
                 const closes = slice.map(c => c.close);
@@ -678,30 +677,25 @@ async function updateLive() {
                 bbSeries[id].middle.series.update({ time, value: sma });
                 bbSeries[id].upper.series.update({ time, value: upperVal });
                 bbSeries[id].lower.series.update({ time, value: lowerVal });
-                bbSeries[id].middle.last = sma;
-                bbSeries[id].upper.last = upperVal;
-                bbSeries[id].lower.last = lowerVal;
             }
 
-            // Ripristino zoom/pan
+            // Ripristino zoom (mouse wheel / pinch)
             if (currentRange) {
                 const dataLength = seriesData[id].length || 0;
-                const isAtRightEdge = Math.abs(currentRange.to - dataLength) < 5;
+                const isAtRightEdge = Math.abs(currentRange.to - dataLength) < 6;
 
                 if (isAtRightEdge) {
-                    // L'utente è sul bordo destro → resta aggiornato
-                    setTimeout(() => applyVisibleRange(chart, series), 30);
+                    setTimeout(() => applyVisibleRange(chart, series), 20);
                 } else {
-                    // L'utente ha zoomato o scrollato → mantieni la sua vista
                     setTimeout(() => {
                         chart.timeScale().setVisibleLogicalRange(currentRange);
-                    }, 40);
+                    }, 30);
                 }
             }
         }
     }
 
-    // ==================== FULLSCREEN ====================
+    // FULLSCREEN
     if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
         const fsChart = fullscreenChart.chart;
         const fsSeries = fullscreenChart.series;
@@ -716,19 +710,18 @@ async function updateLive() {
 
                 if (currentFSRange) {
                     const dataLength = seriesData[fullscreenContainerId]?.length || 0;
-                    const isAtRight = Math.abs(currentFSRange.to - dataLength) < 5;
-
+                    const isAtRight = Math.abs(currentFSRange.to - dataLength) < 6;
                     if (isAtRight) {
-                        setTimeout(() => applyVisibleRange(fsChart, fsSeries), 30);
+                        setTimeout(() => applyVisibleRange(fsChart, fsSeries), 20);
                     } else {
-                        setTimeout(() => fsChart.timeScale().setVisibleLogicalRange(currentFSRange), 40);
+                        setTimeout(() => fsChart.timeScale().setVisibleLogicalRange(currentFSRange), 30);
                     }
                 }
             }
         }
     }
 
-    // Aggiornamento colore titolo BTC
+    // Titolo BTC
     const btcLatest = await fetchLatestCandle("BTCUSDT", "30");
     if (btcLatest) {
         let colorClass = "neutral";
@@ -770,7 +763,6 @@ document.getElementById("apply-settings").onclick = async () => {
     ];
     bbPeriod = Math.max(1, Number(document.getElementById("bb-period").value || 20));
     bbDev = Number(document.getElementById("bb-dev").value || 2);
-
     customIntervals["chart-5m"] = document.getElementById("tf-chart-5m").value;
     customIntervals["chart-30m"] = document.getElementById("tf-chart-30m").value;
     customIntervals["chart-4h"] = document.getElementById("tf-chart-4h").value;
@@ -806,8 +798,10 @@ document.getElementById("info-btn").onclick = () => document.getElementById("inf
 document.querySelector("#info-modal .close").onclick = () => document.getElementById("info-modal").style.display = "none";
 
 window.onclick = (event) => {
-    if (event.target === document.getElementById("info-modal")) document.getElementById("info-modal").style.display = "none";
-    if (event.target === document.getElementById("settings-modal")) document.getElementById("settings-modal").style.display = "none";
+    const infoModal = document.getElementById("info-modal");
+    const settingsModal = document.getElementById("settings-modal");
+    if (event.target === infoModal) infoModal.style.display = "none";
+    if (event.target === settingsModal) settingsModal.style.display = "none";
 };
 
 document.getElementById('open-botfather-btn').onclick = () => window.open('https://t.me/BotFather', '_blank');
@@ -817,10 +811,8 @@ document.getElementById("set-local-alert").onclick = () => {
     const alertPrice = Number(document.getElementById("alert-price-input").value);
     const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice;
     if (isNaN(alertPrice) || alertPrice <= 0) return alert("Prezzo non valido");
-
     const token = document.getElementById("personal-tg-token")?.value.trim() || personalTGToken;
     const chatId = document.getElementById("personal-tg-chatid")?.value.trim() || personalTGChatID;
-
     if (!token || !chatId) return alert("⚠️ Configura Token e ChatID nelle impostazioni!");
 
     fetch(`${SERVER_URL}/set_alert`, {
