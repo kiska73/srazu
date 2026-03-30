@@ -18,8 +18,7 @@ let fullscreenActive = false;
 let fullscreenChart = null;
 let fullscreenContainerId = null;
 
-// ==================== VARIABILI AGGIUNTE PER FIX ====================
-let lastFetchTimes = {};        // ← FIX 1: era mancante
+let lastFetchTimes = {};
 let listScrollPosition = 0;
 
 let emaPeriods = [5, 10, 60, 223];
@@ -52,7 +51,7 @@ let deviceId = localStorage.getItem('deviceId') || (function() {
 })();
 
 const visibleBarsCount = 38;
-const spaceBarsCount = 1;
+const spaceBarsCount = 5;
 const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -93,12 +92,25 @@ function nextEMA(prev, price, period) {
     return price * k + prev * (1 - k);
 }
 
+// ==================== APPLY VISIBLE RANGE - SICURA ====================
 function applyVisibleRange(chart, series) {
+    if (!chart || !series) return;
+
+    // Se l'utente ha già zoomato o spostato → NON toccare
+    const currentRange = chart.timeScale().getVisibleLogicalRange();
+    if (currentRange) return;
+
+    // Solo al primo caricamento
     const data = series.data ? series.data() : [];
     if (!data || data.length === 0) return;
+
     const len = data.length;
     const from = Math.max(0, len - visibleBarsCount);
-    chart.timeScale().setVisibleLogicalRange({ from, to: len + spaceBarsCount });
+
+    chart.timeScale().setVisibleLogicalRange({
+        from,
+        to: len + spaceBarsCount
+    });
 }
 
 function syncHorizLines() {
@@ -378,7 +390,6 @@ async function fetchPairs() {
     }
 }
 
-// ==================== POPULATE LIST ====================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (!list) return;
@@ -534,7 +545,6 @@ async function loadAllCharts(symbol) {
         if (charts[id] && el) {
             charts[id].resize(el.clientWidth, el.clientHeight);
             charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
-            applyVisibleRange(charts[id], candleSeries[id]);
         }
     });
 }
@@ -634,7 +644,7 @@ function openAlertSetup() {
     document.getElementById("alert-setup").style.display = "block";
 }
 
-// ==================== UPDATELIVE - LOGICA CORRETTA ====================
+// ==================== UPDATELIVE - FINALE ====================
 async function updateLive() {
     for (const id in customIntervals) {
         const chart = charts[id];
@@ -681,13 +691,11 @@ async function updateLive() {
                 bbSeries[id].lower.series.update({ time, value: lowerVal });
             }
 
-            // Solo se l'utente è sul bordo destro seguiamo la nuova candela
             const isUserAtRightEdge = currentRange && Math.abs(currentRange.to - currentDataLength) < 3;
 
             if (isUserAtRightEdge) {
-                setTimeout(() => applyVisibleRange(chart, series), 20);
+                chart.timeScale().scrollToRealTime();
             }
-            // Altrimenti lasciamo lo zoom come deciso dall'utente
         }
     }
 
@@ -708,7 +716,7 @@ async function updateLive() {
                 const isUserAtRightEdge = currentRange && Math.abs(currentRange.to - currentDataLength) < 3;
 
                 if (isUserAtRightEdge) {
-                    setTimeout(() => applyVisibleRange(fsChart, fsSeries), 20);
+                    fsChart.timeScale().scrollToRealTime();
                 }
             }
         }
@@ -727,126 +735,7 @@ async function updateLive() {
 setInterval(updateLive, 2000);
 setInterval(fetchPairs, 5000);
 
-// ==================== EVENT LISTENERS ====================
-document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
-document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
-
-document.getElementById("toggle-ema").onclick = () => {
-    emaEnabled = !emaEnabled;
-    const btn = document.getElementById("toggle-ema");
-    btn.textContent = emaEnabled ? "EMA: On" : "EMA: Off";
-    btn.classList.toggle("active", emaEnabled);
-    document.getElementById("ema-periods-section").style.display = emaEnabled ? "block" : "none";
-};
-
-document.getElementById("toggle-bb").onclick = () => {
-    bbEnabled = !bbEnabled;
-    const btn = document.getElementById("toggle-bb");
-    btn.textContent = bbEnabled ? "Bollinger Bands: On" : "Bollinger Bands: Off";
-    btn.classList.toggle("active", bbEnabled);
-    document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
-};
-
-document.getElementById("apply-settings").onclick = async () => {
-    emaPeriods = [
-        Math.max(1, Number(document.getElementById("ema1").value || 5)),
-        Math.max(1, Number(document.getElementById("ema2").value || 10)),
-        Math.max(1, Number(document.getElementById("ema3").value || 60)),
-        Math.max(1, Number(document.getElementById("ema4").value || 223))
-    ];
-    bbPeriod = Math.max(1, Number(document.getElementById("bb-period").value || 20));
-    bbDev = Number(document.getElementById("bb-dev").value || 2);
-    customIntervals["chart-5m"] = document.getElementById("tf-chart-5m").value;
-    customIntervals["chart-30m"] = document.getElementById("tf-chart-30m").value;
-    customIntervals["chart-4h"] = document.getElementById("tf-chart-4h").value;
-    customIntervals["chart-1d"] = document.getElementById("tf-chart-1d").value;
-
-    localStorage.setItem('customIntervals', JSON.stringify(customIntervals));
-    personalTGToken = document.getElementById("personal-tg-token").value.trim();
-    personalTGChatID = document.getElementById("personal-tg-chatid").value.trim();
-    localStorage.setItem('personalTGToken', personalTGToken);
-    localStorage.setItem('personalTGChatID', personalTGChatID);
-
-    await loadAllCharts(currentSymbol);
-    document.getElementById("settings-modal").style.display = "none";
-};
-
-document.getElementById("sort-select").onchange = e => {
-    currentSort = e.target.value;
-    populateList(currentSort);
-};
-
-document.getElementById("exchange-select").onchange = async (e) => {
-    const oldSymbol = currentSymbol;
-    currentExchange = e.target.value;
-    localStorage.setItem('currentExchange', currentExchange);
-    allPairsData = [];
-    document.getElementById("pairs-list").innerHTML = "<div class='loading'>Loading pairs...</div>";
-    await fetchPairs();
-    if (!allPairsData.some(p => p.s === oldSymbol)) currentSymbol = "BTCUSDT";
-    await loadAllCharts(currentSymbol);
-};
-
-document.getElementById("info-btn").onclick = () => document.getElementById("info-modal").style.display = "flex";
-document.querySelector("#info-modal .close").onclick = () => document.getElementById("info-modal").style.display = "none";
-
-window.onclick = (event) => {
-    const infoModal = document.getElementById("info-modal");
-    const settingsModal = document.getElementById("settings-modal");
-    if (event.target === infoModal) infoModal.style.display = "none";
-    if (event.target === settingsModal) settingsModal.style.display = "none";
-};
-
-document.getElementById('open-botfather-btn').onclick = () => window.open('https://t.me/BotFather', '_blank');
-document.getElementById("close-alert-setup").onclick = () => document.getElementById("alert-setup").style.display = "none";
-
-document.getElementById("set-local-alert").onclick = () => {
-    const alertPrice = Number(document.getElementById("alert-price-input").value);
-    const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice;
-    if (isNaN(alertPrice) || alertPrice <= 0) return alert("Prezzo non valido");
-    const token = document.getElementById("personal-tg-token")?.value.trim() || personalTGToken;
-    const chatId = document.getElementById("personal-tg-chatid")?.value.trim() || personalTGChatID;
-    if (!token || !chatId) return alert("⚠️ Configura Token e ChatID nelle impostazioni!");
-
-    fetch(`${SERVER_URL}/set_alert`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ device_id: deviceId, exchange: currentExchange, symbol: currentSymbol, alert_price: alertPrice, sync_price: syncPrice, token: token, chatId: chatId })
-    })
-    .then(() => completeAlertSetup(alertPrice, syncPrice))
-    .catch(() => {
-        alert("Server non raggiungibile, alert locale attivato.");
-        completeAlertSetup(alertPrice, syncPrice);
-    });
-};
-
-function completeAlertSetup(alertPrice, syncPrice) {
-    alertPrices[currentSymbol] = alertPrice;
-    syncPrices[currentSymbol] = syncPrice;
-    savedHorizPrices[currentSymbol] = syncPrice;
-    localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
-    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
-    localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
-    syncHorizLines();
-    if (!favorites.includes(currentSymbol)) {
-        favorites.push(currentSymbol);
-        localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
-        populateList(currentSort);
-    }
-    document.getElementById("alert-setup").style.display = "none";
-}
-
-document.getElementById("open-in-exchange").onclick = () => {
-    const price = Number(document.getElementById("alert-price-input").value);
-    if (isNaN(price) || price <= 0) return alert("Invalid price");
-    const tradeLink = currentExchange === "bybit" ? `https://www.bybit.com/trade/usdt/${currentSymbol}` : `https://www.binance.com/en/futures/${currentSymbol}`;
-    window.open(tradeLink, '_blank');
-    document.getElementById("alert-setup").style.display = "none";
-};
-
-document.getElementById("close-fullscreen").onclick = closeFullscreen;
-
-// ==================== RESIZE - FIX 2 ====================
+// ==================== RESIZE ====================
 let resizeTimer;
 window.addEventListener("resize", () => {
     setRealViewportHeight();
@@ -858,12 +747,6 @@ window.addEventListener("resize", () => {
             if (charts[id] && el) {
                 charts[id].resize(el.clientWidth, el.clientHeight);
                 charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
-                
-                // FIX: non resettiamo lo zoom ogni volta
-                const range = charts[id].timeScale().getVisibleLogicalRange();
-                if (!range) {
-                    applyVisibleRange(charts[id], candleSeries[id]);
-                }
             }
         });
         if (fullscreenActive && fullscreenChart) {
