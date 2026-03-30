@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO (30 MARZO 2026) - ZOOM FISSO DEFINITIVO ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO - ZOOM FISSO DEFINITIVO ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -422,7 +422,6 @@ function populateList(sort = "volume") {
             <span class="pair-price">${formatPrice(p.price)}</span>
             <span class="pair-pct ${p.p >= 0 ? "green" : "red"}">${p.p >= 0 ? "+" : ""}${p.p.toFixed(2)}%</span>
         `;
-
         div.onclick = (e) => {
             if (e.target.classList.contains('star')) return;
             loadAllCharts(p.s);
@@ -442,7 +441,7 @@ function populateList(sort = "volume") {
     }, 10);
 }
 
-// ==================== CREATE CHART - SENZA BARSPACING ====================
+// ==================== CREATE CHART - AGGIUNTO rightOffset ====================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -472,7 +471,8 @@ async function createChart(containerId) {
         timeScale: { 
             timeVisible: true, 
             tickMarkFormatter: getTimeFormatter(interval),
-            lockVisibleTimeRangeOnResize: true
+            lockVisibleTimeRangeOnResize: true,
+            rightOffset: spaceBarsCount // Mantiene sempre lo spazio a destra
         },
         rightPriceScale: { borderColor: '#222' },
         width: container.clientWidth,
@@ -501,7 +501,7 @@ async function createChart(containerId) {
     updateAlertLineOnSeries(series, containerId);
     if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(series, containerId);
 
-    applyVisibleRange(chart, series);   // solo primo caricamento
+    applyVisibleRange(chart, series);
 
     chart.subscribeClick(p => {
         if (p?.point) {
@@ -562,7 +562,11 @@ function openFullscreen(containerId, tfLabel) {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(customIntervals[containerId]) },
+        timeScale: { 
+            timeVisible: true, 
+            tickMarkFormatter: getTimeFormatter(customIntervals[containerId]),
+            rightOffset: spaceBarsCount // Mantiene lo spazio a destra in fullscreen
+        },
         rightPriceScale: { borderColor: '#222' },
         width: window.innerWidth,
         height: window.innerHeight - 60
@@ -571,17 +575,24 @@ function openFullscreen(containerId, tfLabel) {
     const newSeries = newChart.addCandlestickSeries(candleSeries[containerId].options());
     newSeries.setData(seriesData[containerId] || []);
 
+    fullscreenChart = { chart: newChart, series: newSeries, ema: [], bb: null };
+
     if (emaEnabled) {
         emaSeries[containerId]?.forEach((e, i) => {
             const s = newChart.addLineSeries({ color: EMA_COLORS[i], lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
             s.setData(e.data);
+            fullscreenChart.ema.push({ series: s, period: e.period });
         });
     }
     if (bbEnabled && bbSeries[containerId]) {
-        ['middle', 'upper', 'lower'].forEach(key => {
-            const s = newChart.addLineSeries({ color: BB_COLORS[key], lineWidth: key === 'middle' ? 1.5 : 1, priceLineVisible: false, lastValueVisible: false });
-            s.setData(bbSeries[containerId][key].data);
-        });
+        fullscreenChart.bb = {
+            middle: newChart.addLineSeries({ color: BB_COLORS.middle, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false }),
+            upper: newChart.addLineSeries({ color: BB_COLORS.upper, lineWidth: 1, priceLineVisible: false, lastValueVisible: false }),
+            lower: newChart.addLineSeries({ color: BB_COLORS.lower, lineWidth: 1, priceLineVisible: false, lastValueVisible: false })
+        };
+        fullscreenChart.bb.middle.setData(bbSeries[containerId].middle.data);
+        fullscreenChart.bb.upper.setData(bbSeries[containerId].upper.data);
+        fullscreenChart.bb.lower.setData(bbSeries[containerId].lower.data);
     }
 
     updatePriceLineOnSeries(newSeries, "fullscreen");
@@ -612,7 +623,6 @@ function openFullscreen(containerId, tfLabel) {
 
     overlay.style.display = "block";
     fullscreenActive = true;
-    fullscreenChart = { chart: newChart, series: newSeries };
     fullscreenContainerId = containerId;
 }
 
@@ -636,7 +646,7 @@ function openAlertSetup() {
     document.getElementById("alert-setup").style.display = "block";
 }
 
-// ==================== UPDATELIVE - SOLO SCROLL TO REALTIME ====================
+// ==================== UPDATELIVE - LOGICA UNIFICATA ====================
 async function updateLive() {
     for (const id in customIntervals) {
         const chart = charts[id];
@@ -651,6 +661,10 @@ async function updateLive() {
 
         series.update(latest);
 
+        if (fullscreenActive && fullscreenContainerId === id && fullscreenChart) {
+            fullscreenChart.series.update(latest);
+        }
+
         if (!seriesData[id]) seriesData[id] = [];
         const existingIndex = seriesData[id].findIndex(c => c.time === latest.time);
         if (existingIndex >= 0) seriesData[id][existingIndex] = {...latest};
@@ -660,9 +674,13 @@ async function updateLive() {
             lastCandleTime[id] = latest.time;
 
             if (emaEnabled && emaSeries[id]) {
-                emaSeries[id].forEach(e => {
+                emaSeries[id].forEach((e, i) => {
                     e.last = nextEMA(e.last, latest.close, e.period);
                     e.series.update({ time: latest.time, value: e.last });
+
+                    if (fullscreenActive && fullscreenContainerId === id && fullscreenChart && fullscreenChart.ema && fullscreenChart.ema[i]) {
+                        fullscreenChart.ema[i].series.update({ time: latest.time, value: e.last });
+                    }
                 });
             }
 
@@ -681,34 +699,25 @@ async function updateLive() {
                 bbSeries[id].middle.series.update({ time, value: sma });
                 bbSeries[id].upper.series.update({ time, value: upperVal });
                 bbSeries[id].lower.series.update({ time, value: lowerVal });
+
+                if (fullscreenActive && fullscreenContainerId === id && fullscreenChart && fullscreenChart.bb) {
+                    fullscreenChart.bb.middle.series.update({ time, value: sma });
+                    fullscreenChart.bb.upper.series.update({ time, value: upperVal });
+                    fullscreenChart.bb.lower.series.update({ time, value: lowerVal });
+                }
             }
 
-            const isUserAtRightEdge = currentRange && Math.abs(currentRange.to - currentDataLength) < 3;
-
+            // Scroll aggiornato per tenere conto dello spazio a destra
+            const isUserAtRightEdge = currentRange && currentRange.to >= currentDataLength - 2;
             if (isUserAtRightEdge) {
                 chart.timeScale().scrollToRealTime();
             }
-        }
-    }
 
-    // FULLSCREEN
-    if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
-        const fsChart = fullscreenChart.chart;
-        const fsSeries = fullscreenChart.series;
-        const currentRange = fsChart.timeScale().getVisibleLogicalRange();
-        const currentDataLength = seriesData[fullscreenContainerId] ? seriesData[fullscreenContainerId].length : 0;
-
-        const latest = await fetchLatestCandle(currentSymbol, customIntervals[fullscreenContainerId]);
-        if (latest) {
-            fsSeries.update(latest);
-
-            if (latest.time > (lastCandleTime[fullscreenContainerId] || 0)) {
-                lastCandleTime[fullscreenContainerId] = latest.time;
-
-                const isUserAtRightEdge = currentRange && Math.abs(currentRange.to - currentDataLength) < 3;
-
-                if (isUserAtRightEdge) {
-                    fsChart.timeScale().scrollToRealTime();
+            if (fullscreenActive && fullscreenContainerId === id && fullscreenChart) {
+                const fsRange = fullscreenChart.chart.timeScale().getVisibleLogicalRange();
+                const fsIsUserAtRightEdge = fsRange && fsRange.to >= currentDataLength - 2;
+                if (fsIsUserAtRightEdge) {
+                    fullscreenChart.chart.timeScale().scrollToRealTime();
                 }
             }
         }
@@ -726,7 +735,7 @@ async function updateLive() {
 setInterval(updateLive, 2000);
 setInterval(fetchPairs, 5000);
 
-// ==================== RESIZE - SOLO RESIZE ====================
+// ==================== RESIZE ====================
 let resizeTimer;
 window.addEventListener("resize", () => {
     setRealViewportHeight();
