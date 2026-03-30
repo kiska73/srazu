@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO (30 MARZO 2026) - ZOOM FISSO DEFINITIVO ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO (30 MARZO 2026) - ZOOM FISSO + FULLSCREEN OK ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -92,12 +92,9 @@ function nextEMA(prev, price, period) {
     return price * k + prev * (1 - k);
 }
 
-// ==================== APPLY VISIBLE RANGE - SOLO PRIMO CARICAMENTO ====================
 function applyVisibleRange(chart, series) {
     if (!chart || !series) return;
-
-    // Se l'utente ha già zoomato → NON toccare più
-    if (chart.timeScale().getVisibleLogicalRange()) return;
+    if (chart.timeScale().getVisibleLogicalRange()) return;   // rispetta zoom utente
 
     const data = series.data ? series.data() : [];
     if (!data || data.length === 0) return;
@@ -117,7 +114,7 @@ function syncHorizLines() {
         updateAlertLineOnSeries(candleSeries[k], k);
         if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(candleSeries[k], k);
     });
-    if (fullscreenActive) {
+    if (fullscreenActive && fullscreenChart) {
         updatePriceLineOnSeries(fullscreenChart.series, "fullscreen");
         updateAlertLineOnSeries(fullscreenChart.series, "fullscreen");
         if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(fullscreenChart.series, "fullscreen");
@@ -442,7 +439,7 @@ function populateList(sort = "volume") {
     }, 10);
 }
 
-// ==================== CREATE CHART - SENZA BARSPACING ====================
+// ==================== CREATE CHART ====================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -501,7 +498,7 @@ async function createChart(containerId) {
     updateAlertLineOnSeries(series, containerId);
     if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(series, containerId);
 
-    applyVisibleRange(chart, series);   // solo primo caricamento
+    applyVisibleRange(chart, series);
 
     chart.subscribeClick(p => {
         if (p?.point) {
@@ -543,6 +540,7 @@ async function loadAllCharts(symbol) {
     });
 }
 
+// ==================== FULLSCREEN ====================
 function openFullscreen(containerId, tfLabel) {
     const overlay = document.getElementById("fullscreen-overlay");
     const fsDiv = document.getElementById("fullscreen-chart");
@@ -636,8 +634,9 @@ function openAlertSetup() {
     document.getElementById("alert-setup").style.display = "block";
 }
 
-// ==================== UPDATELIVE - SOLO SCROLL TO REALTIME ====================
+// ==================== UPDATELIVE - COMPLETO ====================
 async function updateLive() {
+    // Grafici normali
     for (const id in customIntervals) {
         const chart = charts[id];
         const series = candleSeries[id];
@@ -691,7 +690,7 @@ async function updateLive() {
         }
     }
 
-    // FULLSCREEN
+    // FULLSCREEN - ORA AGGIORNA CORRETTAMENTE
     if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
         const fsChart = fullscreenChart.chart;
         const fsSeries = fullscreenChart.series;
@@ -714,6 +713,7 @@ async function updateLive() {
         }
     }
 
+    // Titolo BTC
     const btcLatest = await fetchLatestCandle("BTCUSDT", "30");
     if (btcLatest) {
         let colorClass = "neutral";
@@ -726,7 +726,7 @@ async function updateLive() {
 setInterval(updateLive, 2000);
 setInterval(fetchPairs, 5000);
 
-// ==================== RESIZE - SOLO RESIZE ====================
+// ==================== RESIZE ====================
 let resizeTimer;
 window.addEventListener("resize", () => {
     setRealViewportHeight();
