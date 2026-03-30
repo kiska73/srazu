@@ -1,5 +1,4 @@
-<!-- ====================== APP.JS COMPLETO E DEFINITIVO (MARZO 2026) - CON FIX ZOOM + SCROLL LISTA ====================== -->
-<!-- COPIA E INCOLLA TUTTO QUESTO FILE IN app.js -->
+<!-- ====================== APP.JS COMPLETO E DEFINITIVO (30 MARZO 2026) - ZOOM FISSO + LISTA FISSA ====================== -->
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -54,12 +53,10 @@ const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-// ==================== NUOVE VARIABILI PER FIX ZOOM E SCROLL ====================
-let listScrollPosition = 0;           // per mantenere lo scroll della lista delle coppie
-let savedVisibleRanges = {};          // per i 4 grafici (non più necessario ma lasciato per compatibilità futura)
-let savedFullscreenRange = null;
+// ==================== VARIABILI PER IL FIX ====================
+let listScrollPosition = 0;
 
-// ==================== SHORT SYMBOL PER CELLULARE ====================
+// ==================== FUNZIONI UTILITY ====================
 function getDisplaySymbol(symbol) {
     if (window.innerWidth <= 768) {
         return symbol.replace(/USDT$|USDC$|USD$/, '') || symbol;
@@ -67,10 +64,6 @@ function getDisplaySymbol(symbol) {
     return symbol;
 }
 
-// ==================== CACHE FETCH ====================
-let lastFetchTimes = {};
-
-// ==================== FUNZIONI BASE (invariate) ====================
 function setRealViewportHeight() {
     document.documentElement.style.setProperty('--real-vh', `${window.innerHeight}px`);
 }
@@ -384,18 +377,18 @@ async function fetchPairs() {
     }
 }
 
-// ==================== POPULATELIST CON FIX SCROLL ====================
+// ==================== LISTA CON SCROLL FISSO ====================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (!list) return;
 
-    // SALVA la posizione di scroll PRIMA di ricreare la lista
     listScrollPosition = list.scrollTop;
 
     if (allPairsData.length === 0) {
         list.innerHTML = "<div class='loading'>No pairs loaded</div>";
         return;
     }
+
     let sorted = [...allPairsData];
     if (sort === "gainers") sorted.sort((a, b) => b.p - a.p);
     else if (sort === "losers") sorted.sort((a, b) => a.p - a.p);
@@ -435,13 +428,12 @@ function populateList(sort = "volume") {
         };
     });
 
-    // RIPRISTINA lo scroll DOPO aver ricreato la lista
     setTimeout(() => {
-        if (list) list.scrollTop = listScrollPosition;
-    }, 0);
+        list.scrollTop = listScrollPosition;
+    }, 10);
 }
 
-// ==================== CREATECHART (invariata) ====================
+// ==================== CREAZIONE GRAFICO ====================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
@@ -453,13 +445,17 @@ async function createChart(containerId) {
     const rulerSpan = titleEl.querySelector('.title-ruler');
     const fsSpan = titleEl.querySelector('.title-fullscreen');
     const textSpan = titleEl.querySelector('.title-text');
+
     bellSpan.onclick = () => openAlertSetup();
     rulerSpan.onclick = toggleRulerMode;
     fsSpan.onclick = () => openFullscreen(containerId, label);
     textSpan.textContent = klines.length ? `${currentSymbol} - ${label}` : "No data – check connection";
     titleEl.className = "chart-title neutral";
+
     if (!klines.length) return;
+
     symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
+
     const chart = LightweightCharts.createChart(container, {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
@@ -469,6 +465,7 @@ async function createChart(containerId) {
         width: container.clientWidth,
         height: container.clientHeight
     });
+
     const series = chart.addCandlestickSeries({
         priceFormat: { type: "price", precision: symbolPricePrecision, minMove: 10 ** -symbolPricePrecision },
         upColor: '#ffffff',
@@ -478,18 +475,23 @@ async function createChart(containerId) {
         borderVisible: false,
         wickVisible: true
     });
+
     series.setData(klines);
     seriesData[containerId] = klines.map(c => ({...c}));
     lastCandleTime[containerId] = klines.at(-1).time;
     emaSeries[containerId] = [];
+
     if (emaEnabled) emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
     if (bbEnabled && klines.length >= bbPeriod) bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
+
     updatePriceLineOnSeries(series, containerId);
     updateAlertLineOnSeries(series, containerId);
     if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(series, containerId);
+
     const totalSlots = visibleBarsCount + spaceBarsCount;
     chart.timeScale().applyOptions({ barSpacing: container.clientWidth / totalSlots });
     applyVisibleRange(chart, series);
+
     chart.subscribeClick(p => {
         if (p?.point) {
             const price = series.coordinateToPrice(p.point.y);
@@ -503,11 +505,13 @@ async function createChart(containerId) {
             }
         }
     });
+
     chart.subscribeDblClick(() => {
         activeHorizPrice = null;
         syncHorizLines();
         saveHorizIfFavorite();
     });
+
     charts[containerId] = chart;
     candleSeries[containerId] = series;
 }
@@ -516,9 +520,11 @@ async function loadAllCharts(symbol) {
     currentSymbol = symbol;
     activeHorizPrice = savedHorizPrices[symbol] ?? null;
     rulerPrice = null;
+
     const promises = Object.keys(customIntervals).map(id => createChart(id));
     await Promise.all(promises);
     syncHorizLines();
+
     const totalSlots = visibleBarsCount + spaceBarsCount;
     Object.keys(charts).forEach(id => {
         const el = document.getElementById(id);
@@ -539,10 +545,12 @@ function openFullscreen(containerId, tfLabel) {
     const fsRuler = fsTitle.querySelector('.title-ruler');
     const fsText = fsTitle.querySelector('.title-text');
     const fsFs = fsTitle.querySelector('.title-fullscreen');
+
     fsBell.onclick = () => openAlertSetup();
     fsRuler.onclick = toggleRulerMode;
     fsFs.onclick = closeFullscreen;
     fsText.textContent = `${currentSymbol} - ${tfLabel}`;
+
     const newChart = LightweightCharts.createChart(fsDiv, {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
@@ -552,8 +560,10 @@ function openFullscreen(containerId, tfLabel) {
         width: window.innerWidth,
         height: window.innerHeight - 60
     });
+
     const newSeries = newChart.addCandlestickSeries(candleSeries[containerId].options());
     newSeries.setData(seriesData[containerId] || []);
+
     if (emaEnabled) {
         emaSeries[containerId]?.forEach((e, i) => {
             const s = newChart.addLineSeries({ color: EMA_COLORS[i], lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
@@ -566,13 +576,15 @@ function openFullscreen(containerId, tfLabel) {
             s.setData(bbSeries[containerId][key].data);
         });
     }
+
     updatePriceLineOnSeries(newSeries, "fullscreen");
     updateAlertLineOnSeries(newSeries, "fullscreen");
     if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(newSeries, "fullscreen");
+
     const totalSlots = visibleBarsCount + spaceBarsCount;
-    const barSpacing = window.innerWidth / totalSlots;
-    newChart.timeScale().applyOptions({ barSpacing: barSpacing });
+    newChart.timeScale().applyOptions({ barSpacing: window.innerWidth / totalSlots });
     applyVisibleRange(newChart, newSeries);
+
     newChart.subscribeClick(p => {
         if (p?.point) {
             const price = newSeries.coordinateToPrice(p.point.y);
@@ -586,11 +598,13 @@ function openFullscreen(containerId, tfLabel) {
             }
         }
     });
+
     newChart.subscribeDblClick(() => {
         activeHorizPrice = null;
         syncHorizLines();
         saveHorizIfFavorite();
     });
+
     overlay.style.display = "block";
     fullscreenActive = true;
     fullscreenChart = { chart: newChart, series: newSeries };
@@ -617,22 +631,20 @@ function openAlertSetup() {
     document.getElementById("alert-setup").style.display = "block";
 }
 
-// ==================== UPDATELIVE CON FIX DEFINITIVO ZOOM ====================
+// ==================== UPDATELIVE - FIX ZOOM MIGLIORATO ====================
 async function updateLive() {
     for (const id in customIntervals) {
-        const interval = customIntervals[id];
         const chart = charts[id];
         const series = candleSeries[id];
         if (!chart || !series) continue;
 
-        // 1. SALVA il range visibile attuale (zoom/pan dell'utente)
+        // Salva lo stato attuale di zoom/pan
         const currentRange = chart.timeScale().getVisibleLogicalRange();
 
-        const latest = await fetchLatestCandle(currentSymbol, interval);
-        if (!latest || !candleSeries[id]) continue;
+        const latest = await fetchLatestCandle(currentSymbol, customIntervals[id]);
+        if (!latest) continue;
 
-        // Aggiorna candela
-        candleSeries[id].update(latest);
+        series.update(latest);
 
         if (!seriesData[id]) seriesData[id] = [];
         const existingIndex = seriesData[id].findIndex(c => c.time === latest.time);
@@ -642,15 +654,15 @@ async function updateLive() {
         if (latest.time > (lastCandleTime[id] || 0)) {
             lastCandleTime[id] = latest.time;
 
-            // EMA
-            if (emaEnabled) {
-                emaSeries[id]?.forEach(e => {
+            // Aggiorna EMA
+            if (emaEnabled && emaSeries[id]) {
+                emaSeries[id].forEach(e => {
                     e.last = nextEMA(e.last, latest.close, e.period);
                     e.series.update({ time: latest.time, value: e.last });
                 });
             }
 
-            // Bollinger Bands
+            // Aggiorna Bollinger Bands
             if (bbEnabled && bbSeries[id] && seriesData[id].length >= bbPeriod) {
                 const slice = seriesData[id].slice(-bbPeriod);
                 const closes = slice.map(c => c.close);
@@ -662,6 +674,7 @@ async function updateLive() {
                 const upperVal = sma + bbDev * stdDev;
                 const lowerVal = sma - bbDev * stdDev;
                 const time = latest.time;
+
                 bbSeries[id].middle.series.update({ time, value: sma });
                 bbSeries[id].upper.series.update({ time, value: upperVal });
                 bbSeries[id].lower.series.update({ time, value: lowerVal });
@@ -670,18 +683,20 @@ async function updateLive() {
                 bbSeries[id].lower.last = lowerVal;
             }
 
-            // 2. RIPRISTINA il range visibile
+            // Ripristino zoom/pan
             if (currentRange) {
                 const dataLength = seriesData[id].length || 0;
-                const isAtRightEdge = Math.abs(currentRange.to - dataLength) < 3; // tolleranza di 3 barre
+                const isAtRightEdge = Math.abs(currentRange.to - dataLength) < 5;
 
                 if (isAtRightEdge) {
-                    applyVisibleRange(chart, series);   // resta agganciato all'ultima candela
+                    // L'utente è sul bordo destro → resta aggiornato
+                    setTimeout(() => applyVisibleRange(chart, series), 30);
                 } else {
-                    chart.timeScale().setVisibleLogicalRange(currentRange); // mantiene zoom e posizione scelti dall'utente
+                    // L'utente ha zoomato o scrollato → mantieni la sua vista
+                    setTimeout(() => {
+                        chart.timeScale().setVisibleLogicalRange(currentRange);
+                    }, 40);
                 }
-            } else {
-                applyVisibleRange(chart, series);
             }
         }
     }
@@ -692,8 +707,7 @@ async function updateLive() {
         const fsSeries = fullscreenChart.series;
         const currentFSRange = fsChart.timeScale().getVisibleLogicalRange();
 
-        const interval = customIntervals[fullscreenContainerId];
-        const latest = await fetchLatestCandle(currentSymbol, interval);
+        const latest = await fetchLatestCandle(currentSymbol, customIntervals[fullscreenContainerId]);
         if (latest) {
             fsSeries.update(latest);
 
@@ -702,18 +716,19 @@ async function updateLive() {
 
                 if (currentFSRange) {
                     const dataLength = seriesData[fullscreenContainerId]?.length || 0;
-                    const isAtRight = Math.abs(currentFSRange.to - dataLength) < 3;
+                    const isAtRight = Math.abs(currentFSRange.to - dataLength) < 5;
+
                     if (isAtRight) {
-                        applyVisibleRange(fsChart, fsSeries);
+                        setTimeout(() => applyVisibleRange(fsChart, fsSeries), 30);
                     } else {
-                        fsChart.timeScale().setVisibleLogicalRange(currentFSRange);
+                        setTimeout(() => fsChart.timeScale().setVisibleLogicalRange(currentFSRange), 40);
                     }
                 }
             }
         }
     }
 
-    // Aggiornamento titolo BTC (invariato)
+    // Aggiornamento colore titolo BTC
     const btcLatest = await fetchLatestCandle("BTCUSDT", "30");
     if (btcLatest) {
         let colorClass = "neutral";
@@ -726,9 +741,10 @@ async function updateLive() {
 setInterval(updateLive, 2000);
 setInterval(fetchPairs, 5000);
 
-// ==================== EVENT LISTENERS (invariati) ====================
+// ==================== EVENT LISTENERS ====================
 document.getElementById("settings-btn").onclick = () => document.getElementById("settings-modal").style.display = "flex";
 document.querySelector("#settings-modal .close").onclick = () => document.getElementById("settings-modal").style.display = "none";
+
 document.getElementById("toggle-ema").onclick = () => {
     emaEnabled = !emaEnabled;
     const btn = document.getElementById("toggle-ema");
@@ -736,6 +752,7 @@ document.getElementById("toggle-ema").onclick = () => {
     btn.classList.toggle("active", emaEnabled);
     document.getElementById("ema-periods-section").style.display = emaEnabled ? "block" : "none";
 };
+
 document.getElementById("toggle-bb").onclick = () => {
     bbEnabled = !bbEnabled;
     const btn = document.getElementById("toggle-bb");
@@ -743,6 +760,7 @@ document.getElementById("toggle-bb").onclick = () => {
     btn.classList.toggle("active", bbEnabled);
     document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
 };
+
 document.getElementById("apply-settings").onclick = async () => {
     emaPeriods = [
         Math.max(1, Number(document.getElementById("ema1").value || 5)),
@@ -752,22 +770,27 @@ document.getElementById("apply-settings").onclick = async () => {
     ];
     bbPeriod = Math.max(1, Number(document.getElementById("bb-period").value || 20));
     bbDev = Number(document.getElementById("bb-dev").value || 2);
+
     customIntervals["chart-5m"] = document.getElementById("tf-chart-5m").value;
     customIntervals["chart-30m"] = document.getElementById("tf-chart-30m").value;
     customIntervals["chart-4h"] = document.getElementById("tf-chart-4h").value;
     customIntervals["chart-1d"] = document.getElementById("tf-chart-1d").value;
+
     localStorage.setItem('customIntervals', JSON.stringify(customIntervals));
     personalTGToken = document.getElementById("personal-tg-token").value.trim();
     personalTGChatID = document.getElementById("personal-tg-chatid").value.trim();
     localStorage.setItem('personalTGToken', personalTGToken);
     localStorage.setItem('personalTGChatID', personalTGChatID);
+
     await loadAllCharts(currentSymbol);
     document.getElementById("settings-modal").style.display = "none";
 };
+
 document.getElementById("sort-select").onchange = e => {
     currentSort = e.target.value;
     populateList(currentSort);
 };
+
 document.getElementById("exchange-select").onchange = async (e) => {
     const oldSymbol = currentSymbol;
     currentExchange = e.target.value;
@@ -778,42 +801,40 @@ document.getElementById("exchange-select").onchange = async (e) => {
     if (!allPairsData.some(p => p.s === oldSymbol)) currentSymbol = "BTCUSDT";
     await loadAllCharts(currentSymbol);
 };
+
 document.getElementById("info-btn").onclick = () => document.getElementById("info-modal").style.display = "flex";
 document.querySelector("#info-modal .close").onclick = () => document.getElementById("info-modal").style.display = "none";
+
 window.onclick = (event) => {
-    const infoModal = document.getElementById("info-modal");
-    const settingsModal = document.getElementById("settings-modal");
-    if (event.target === infoModal) infoModal.style.display = "none";
-    if (event.target === settingsModal) settingsModal.style.display = "none";
+    if (event.target === document.getElementById("info-modal")) document.getElementById("info-modal").style.display = "none";
+    if (event.target === document.getElementById("settings-modal")) document.getElementById("settings-modal").style.display = "none";
 };
+
 document.getElementById('open-botfather-btn').onclick = () => window.open('https://t.me/BotFather', '_blank');
 document.getElementById("close-alert-setup").onclick = () => document.getElementById("alert-setup").style.display = "none";
+
 document.getElementById("set-local-alert").onclick = () => {
     const alertPrice = Number(document.getElementById("alert-price-input").value);
     const syncPrice = activeHorizPrice !== null ? activeHorizPrice : alertPrice;
     if (isNaN(alertPrice) || alertPrice <= 0) return alert("Prezzo non valido");
+
     const token = document.getElementById("personal-tg-token")?.value.trim() || personalTGToken;
     const chatId = document.getElementById("personal-tg-chatid")?.value.trim() || personalTGChatID;
-    if (!token || !chatId) return alert("⚠️ Errore: Configura Token e ChatID nelle impostazioni prima di mettere un alert!");
+
+    if (!token || !chatId) return alert("⚠️ Configura Token e ChatID nelle impostazioni!");
+
     fetch(`${SERVER_URL}/set_alert`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ device_id: deviceId, exchange: currentExchange, symbol: currentSymbol, alert_price: alertPrice, sync_price: syncPrice, token: token, chatId: chatId })
     })
-    .then(response => {
-        if (!response.ok) throw new Error('Server error');
-        return response.json();
-    })
-    .then(data => {
-        console.log("✅ Server sincronizzato:", data);
-        completeAlertSetup(alertPrice, syncPrice);
-    })
-    .catch(e => {
-        console.error("❌ Errore sincronizzazione server:", e);
-        alert("Il server non risponde, ma l'alert locale è attivo (linea visibile).");
+    .then(() => completeAlertSetup(alertPrice, syncPrice))
+    .catch(() => {
+        alert("Server non raggiungibile, alert locale attivato.");
         completeAlertSetup(alertPrice, syncPrice);
     });
 };
+
 function completeAlertSetup(alertPrice, syncPrice) {
     alertPrices[currentSymbol] = alertPrice;
     syncPrices[currentSymbol] = syncPrice;
@@ -829,6 +850,7 @@ function completeAlertSetup(alertPrice, syncPrice) {
     }
     document.getElementById("alert-setup").style.display = "none";
 }
+
 document.getElementById("open-in-exchange").onclick = () => {
     const price = Number(document.getElementById("alert-price-input").value);
     if (isNaN(price) || price <= 0) return alert("Invalid price");
@@ -836,9 +858,10 @@ document.getElementById("open-in-exchange").onclick = () => {
     window.open(tradeLink, '_blank');
     document.getElementById("alert-setup").style.display = "none";
 };
+
 document.getElementById("close-fullscreen").onclick = closeFullscreen;
 
-// ==================== RESIZE CON DEBOUNCE (invariato) ====================
+// ==================== RESIZE ====================
 let resizeTimer;
 window.addEventListener("resize", () => {
     setRealViewportHeight();
@@ -856,33 +879,38 @@ window.addEventListener("resize", () => {
         if (fullscreenActive && fullscreenChart) {
             fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
         }
-    }, 120);
+    }, 150);
 });
 
 window.addEventListener('orientationchange', () => {
     setTimeout(() => window.dispatchEvent(new Event("resize")), 300);
 });
+
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) setRealViewportHeight();
 });
 
-// ==================== ONLOAD (invariato) ====================
+// ==================== ONLOAD ====================
 window.onload = async () => {
     setRealViewportHeight();
     favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
     savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
     alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
     syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}');
+
     const savedIntervals = localStorage.getItem('customIntervals');
     if (savedIntervals) customIntervals = JSON.parse(savedIntervals);
+
     personalTGToken = localStorage.getItem('personalTGToken') || '';
     personalTGChatID = localStorage.getItem('personalTGChatID') || '';
     document.getElementById("personal-tg-token").value = personalTGToken;
     document.getElementById("personal-tg-chatid").value = personalTGChatID;
+
     Object.keys(customIntervals).forEach(id => {
         const select = document.getElementById("tf-" + id);
         if (select) select.value = customIntervals[id];
     });
+
     document.getElementById("exchange-select").value = currentExchange;
     document.getElementById("toggle-ema").textContent = emaEnabled ? "EMA: On" : "EMA: Off";
     document.getElementById("toggle-ema").classList.toggle("active", emaEnabled);
@@ -890,7 +918,9 @@ window.onload = async () => {
     document.getElementById("toggle-bb").textContent = bbEnabled ? "Bollinger Bands: On" : "Bollinger Bands: Off";
     document.getElementById("toggle-bb").classList.toggle("active", bbEnabled);
     document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
+
     document.querySelectorAll('.title-ruler').forEach(el => el.classList.remove('active'));
+
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
 };
