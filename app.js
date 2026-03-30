@@ -1,4 +1,4 @@
-// ====================== APP.JS COMPLETO E DEFINITIVO (30 MARZO 2026) - FIX ZOOM MOUSE WHEEL + PINCH ======================
+// ====================== APP.JS COMPLETO E DEFINITIVO (30 MARZO 2026) - ZOOM FISSO ======================
 
 let currentSymbol = "BTCUSDT";
 let currentExchange = localStorage.getItem('currentExchange') || "bybit";
@@ -633,14 +633,16 @@ function openAlertSetup() {
     document.getElementById("alert-setup").style.display = "block";
 }
 
-// ==================== UPDATELIVE - FIX MOUSE WHEEL / PINCH ====================
+// ==================== UPDATELIVE - VERSIONE CORRETTA (come hai suggerito tu) ====================
 async function updateLive() {
     for (const id in customIntervals) {
         const chart = charts[id];
         const series = candleSeries[id];
         if (!chart || !series) continue;
 
+        // Salviamo lo stato attuale PRIMA di aggiornare
         const currentRange = chart.timeScale().getVisibleLogicalRange();
+        const currentDataLength = seriesData[id] ? seriesData[id].length : 0;
 
         const latest = await fetchLatestCandle(currentSymbol, customIntervals[id]);
         if (!latest) continue;
@@ -655,6 +657,7 @@ async function updateLive() {
         if (latest.time > (lastCandleTime[id] || 0)) {
             lastCandleTime[id] = latest.time;
 
+            // EMA
             if (emaEnabled && emaSeries[id]) {
                 emaSeries[id].forEach(e => {
                     e.last = nextEMA(e.last, latest.close, e.period);
@@ -662,6 +665,7 @@ async function updateLive() {
                 });
             }
 
+            // Bollinger Bands
             if (bbEnabled && bbSeries[id] && seriesData[id].length >= bbPeriod) {
                 const slice = seriesData[id].slice(-bbPeriod);
                 const closes = slice.map(c => c.close);
@@ -679,27 +683,22 @@ async function updateLive() {
                 bbSeries[id].lower.series.update({ time, value: lowerVal });
             }
 
-            // Ripristino zoom (mouse wheel / pinch)
-            if (currentRange) {
-                const dataLength = seriesData[id].length || 0;
-                const isAtRightEdge = Math.abs(currentRange.to - dataLength) < 6;
+            // LOGICA CORRETTA: aggiorniamo solo se l'utente è sul bordo destro
+            const isUserAtRightEdge = currentRange && Math.abs(currentRange.to - currentDataLength) < 3;
 
-                if (isAtRightEdge) {
-                    setTimeout(() => applyVisibleRange(chart, series), 20);
-                } else {
-                    setTimeout(() => {
-                        chart.timeScale().setVisibleLogicalRange(currentRange);
-                    }, 30);
-                }
+            if (isUserAtRightEdge) {
+                setTimeout(() => applyVisibleRange(chart, series), 20);
             }
+            // Altrimenti NON facciamo niente → manteniamo lo zoom e lo scroll dell'utente
         }
     }
 
-    // FULLSCREEN
+    // ==================== FULLSCREEN ====================
     if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
         const fsChart = fullscreenChart.chart;
         const fsSeries = fullscreenChart.series;
-        const currentFSRange = fsChart.timeScale().getVisibleLogicalRange();
+        const currentRange = fsChart.timeScale().getVisibleLogicalRange();
+        const currentDataLength = seriesData[fullscreenContainerId] ? seriesData[fullscreenContainerId].length : 0;
 
         const latest = await fetchLatestCandle(currentSymbol, customIntervals[fullscreenContainerId]);
         if (latest) {
@@ -708,14 +707,10 @@ async function updateLive() {
             if (latest.time > (lastCandleTime[fullscreenContainerId] || 0)) {
                 lastCandleTime[fullscreenContainerId] = latest.time;
 
-                if (currentFSRange) {
-                    const dataLength = seriesData[fullscreenContainerId]?.length || 0;
-                    const isAtRight = Math.abs(currentFSRange.to - dataLength) < 6;
-                    if (isAtRight) {
-                        setTimeout(() => applyVisibleRange(fsChart, fsSeries), 20);
-                    } else {
-                        setTimeout(() => fsChart.timeScale().setVisibleLogicalRange(currentFSRange), 30);
-                    }
+                const isUserAtRightEdge = currentRange && Math.abs(currentRange.to - currentDataLength) < 3;
+
+                if (isUserAtRightEdge) {
+                    setTimeout(() => applyVisibleRange(fsChart, fsSeries), 20);
                 }
             }
         }
