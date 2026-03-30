@@ -18,6 +18,10 @@ let fullscreenActive = false;
 let fullscreenChart = null;
 let fullscreenContainerId = null;
 
+// ==================== VARIABILI AGGIUNTE PER FIX ====================
+let lastFetchTimes = {};        // ← FIX 1: era mancante
+let listScrollPosition = 0;
+
 let emaPeriods = [5, 10, 60, 223];
 let emaEnabled = true;
 let bbEnabled = false;
@@ -52,9 +56,6 @@ const spaceBarsCount = 1;
 const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-// ==================== VARIABILI PER FIX ====================
-let listScrollPosition = 0;
 
 // ==================== FUNZIONI UTILITY ====================
 function getDisplaySymbol(symbol) {
@@ -377,7 +378,7 @@ async function fetchPairs() {
     }
 }
 
-// ==================== POPULATE LIST - SCROLL FISSO ====================
+// ==================== POPULATE LIST ====================
 function populateList(sort = "volume") {
     const list = document.getElementById("pairs-list");
     if (!list) return;
@@ -633,14 +634,13 @@ function openAlertSetup() {
     document.getElementById("alert-setup").style.display = "block";
 }
 
-// ==================== UPDATELIVE - VERSIONE CORRETTA (come hai suggerito tu) ====================
+// ==================== UPDATELIVE - LOGICA CORRETTA ====================
 async function updateLive() {
     for (const id in customIntervals) {
         const chart = charts[id];
         const series = candleSeries[id];
         if (!chart || !series) continue;
 
-        // Salviamo lo stato attuale PRIMA di aggiornare
         const currentRange = chart.timeScale().getVisibleLogicalRange();
         const currentDataLength = seriesData[id] ? seriesData[id].length : 0;
 
@@ -657,7 +657,6 @@ async function updateLive() {
         if (latest.time > (lastCandleTime[id] || 0)) {
             lastCandleTime[id] = latest.time;
 
-            // EMA
             if (emaEnabled && emaSeries[id]) {
                 emaSeries[id].forEach(e => {
                     e.last = nextEMA(e.last, latest.close, e.period);
@@ -665,7 +664,6 @@ async function updateLive() {
                 });
             }
 
-            // Bollinger Bands
             if (bbEnabled && bbSeries[id] && seriesData[id].length >= bbPeriod) {
                 const slice = seriesData[id].slice(-bbPeriod);
                 const closes = slice.map(c => c.close);
@@ -683,17 +681,17 @@ async function updateLive() {
                 bbSeries[id].lower.series.update({ time, value: lowerVal });
             }
 
-            // LOGICA CORRETTA: aggiorniamo solo se l'utente è sul bordo destro
+            // Solo se l'utente è sul bordo destro seguiamo la nuova candela
             const isUserAtRightEdge = currentRange && Math.abs(currentRange.to - currentDataLength) < 3;
 
             if (isUserAtRightEdge) {
                 setTimeout(() => applyVisibleRange(chart, series), 20);
             }
-            // Altrimenti NON facciamo niente → manteniamo lo zoom e lo scroll dell'utente
+            // Altrimenti lasciamo lo zoom come deciso dall'utente
         }
     }
 
-    // ==================== FULLSCREEN ====================
+    // FULLSCREEN
     if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
         const fsChart = fullscreenChart.chart;
         const fsSeries = fullscreenChart.series;
@@ -848,7 +846,7 @@ document.getElementById("open-in-exchange").onclick = () => {
 
 document.getElementById("close-fullscreen").onclick = closeFullscreen;
 
-// ==================== RESIZE ====================
+// ==================== RESIZE - FIX 2 ====================
 let resizeTimer;
 window.addEventListener("resize", () => {
     setRealViewportHeight();
@@ -860,7 +858,12 @@ window.addEventListener("resize", () => {
             if (charts[id] && el) {
                 charts[id].resize(el.clientWidth, el.clientHeight);
                 charts[id].timeScale().applyOptions({ barSpacing: el.clientWidth / totalSlots });
-                applyVisibleRange(charts[id], candleSeries[id]);
+                
+                // FIX: non resettiamo lo zoom ogni volta
+                const range = charts[id].timeScale().getVisibleLogicalRange();
+                if (!range) {
+                    applyVisibleRange(charts[id], candleSeries[id]);
+                }
             }
         });
         if (fullscreenActive && fullscreenChart) {
