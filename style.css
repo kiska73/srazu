@@ -105,10 +105,11 @@ html, body {
 #sort-select {
     background: #1f2433;
     color: #ffffff;
-    border: none;
+    border: 1px solid #2f3755;
     padding: 6px 10px;
     border-radius: 4px;
     font-weight: bold;
+    font-size: 13px;
 }
 
 #settings-btn {
@@ -118,6 +119,11 @@ html, body {
     padding: 8px 12px;
     border-radius: 4px;
     cursor: pointer;
+    font-weight: bold;
+}
+
+#settings-btn:hover {
+    background: #353d66;
 }
 
 /* ====================== PAIRS LIST ====================== */
@@ -132,10 +138,7 @@ html, body {
     padding: 6px 8px;
     cursor: pointer;
     display: grid;
-
-    /* COLONNE COMPATTE */
     grid-template-columns: auto 70px 55px;
-
     align-items: center;
     font-size: 13px;
     border-bottom: 1px solid #161a25;
@@ -197,7 +200,7 @@ html, body {
 
 .modal-content {
     background: #161a25;
-    padding: 20px;
+    padding: 24px;
     width: 340px;
     max-width: 90vw;
     max-height: 90vh;
@@ -211,6 +214,43 @@ html, body {
     font-size: 28px;
     cursor: pointer;
     color: #aaa;
+}
+
+.close:hover {
+    color: #fff;
+}
+
+/* ====================== INPUT STYLING (FIX APPLICATO) ====================== */
+
+.modal input[type=number],
+.modal input[type=text],
+.modal input[type=password] {
+    width: 100%;
+    padding: 8px 10px;
+    background: #1f2433;
+    border: 1px solid #2f3755;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 6px;
+    box-sizing: border-box;
+}
+
+.modal input:focus {
+    outline: none;
+    border-color: #00ff85;
+    box-shadow: 0 0 4px rgba(0, 255, 133, 0.4);
+}
+
+.modal select {
+    width: 100%;
+    padding: 8px 10px;
+    background: #1f2433;
+    border: 1px solid #2f3755;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 6px;
 }
 
 /* ====================== ALERT BOX ====================== */
@@ -245,7 +285,6 @@ html, body {
 /* ====================== MEDIA QUERIES ====================== */
 
 @media (max-width: 920px) and (orientation: landscape) {
-
     #app {
         grid-template-columns: 1fr 200px;
     }
@@ -254,11 +293,9 @@ html, body {
         font-size: 11px;
         grid-template-columns: auto 65px 50px;
     }
-
 }
 
 @media (max-width: 768px) {
-
     #app {
         grid-template-columns: 1fr minmax(140px, 20vw);
     }
@@ -268,18 +305,16 @@ html, body {
         padding: 5px 7px;
         grid-template-columns: auto 65px 50px;
     }
-
 }
 
 @media (max-width: 480px) {
-
     #pairs {
         min-width: 135px;
     }
 
     .pair {
         font-size: 11px;
+        padding: 5px 7px;
         grid-template-columns: auto 60px 45px;
     }
-
 }
