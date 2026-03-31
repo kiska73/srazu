@@ -187,7 +187,7 @@ function updateRulerPercentage() {
     document.querySelectorAll('.title-pct').forEach(el => el.textContent = text);
 }
 
-// ==================== INDICATORS (PULITI) ====================
+// ==================== INDICATORS PULITI ====================
 function createEMA(emaArr, chart, klines, period, color) {
     const series = chart.addLineSeries({ 
         color, 
@@ -395,7 +395,7 @@ function closeFullscreen() {
     delete rulerLines["fullscreen"];
 }
 
-// ==================== FETCH KLINES (FIX TOTALE BINANCE) ====================
+// ==================== FETCH KLINES (BLINDATA) ====================
 async function fetchKlines(symbol, interval, limit = 500) {
     let cleanInterval = interval;
     
@@ -408,27 +408,43 @@ async function fetchKlines(symbol, interval, limit = 500) {
 
     const upSymbol = symbol.toUpperCase();
 
-    let baseUrl = currentExchange === "bybit" 
+    const url = currentExchange === "bybit" 
         ? `https://api.bybit.com/v5/market/kline?category=linear&symbol=${upSymbol}&interval=${interval}&limit=${limit}`
         : `https://fapi.binance.com/fapi/v1/klines?symbol=${upSymbol}&interval=${cleanInterval}&limit=${limit}`;
 
     try {
-        const res = await fetch(baseUrl);
+        const res = await fetch(url);
         if (!res.ok) return [];
+
         const data = await res.json();
-        let raw = currentExchange === "bybit" ? (data.result?.list || []) : data;
 
-        const formatted = raw.map(c => ({
-            time: Number(c[0]) / 1000,
-            open: Number(c[1]),
-            high: Number(c[2]),
-            low: Number(c[3]),
-            close: Number(c[4])
-        }));
-
-        return currentExchange === "bybit" ? formatted.reverse() : formatted;
+        if (currentExchange === "binance") {
+            if (!Array.isArray(data)) {
+                console.error("Binance API error:", data);
+                return [];
+            }
+            return data.map(c => ({
+                time: Number(c[0]) / 1000,
+                open: Number(c[1]),
+                high: Number(c[2]),
+                low: Number(c[3]),
+                close: Number(c[4])
+            }));
+        } else { // Bybit
+            if (!data.result || !Array.isArray(data.result.list)) {
+                console.error("Bybit API error:", data);
+                return [];
+            }
+            return data.result.list.map(c => ({
+                time: Number(c[0]) / 1000,
+                open: Number(c[1]),
+                high: Number(c[2]),
+                low: Number(c[3]),
+                close: Number(c[4])
+            })).reverse();
+        }
     } catch (e) {
-        console.error("Klines error", e);
+        console.error("Errore fetchKlines:", e);
         return [];
     }
 }
@@ -442,18 +458,20 @@ async function fetchLatestCandle(symbol, interval) {
     return k.length ? k[k.length-1] : null;
 }
 
-// ==================== FETCH PAIRS ====================
+// ==================== FETCH PAIRS (BLINDATA) ====================
 async function fetchPairs() {
-    let url = currentExchange === "bybit" 
-        ? "https://api.bybit.com/v5/market/tickers?category=linear" 
+    const url = currentExchange === "bybit"
+        ? "https://api.bybit.com/v5/market/tickers?category=linear"
         : "https://fapi.binance.com/fapi/v1/ticker/24hr";
 
     try {
         const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        let raw = currentExchange === "bybit" ? data.result.list : data;
 
-        allPairsData = raw.filter(p => {
+        let rawList = currentExchange === "bybit" ? (data.result?.list || []) : (Array.isArray(data) ? data : []);
+
+        allPairsData = rawList.filter(p => {
             const sym = p.symbol || p.s;
             return sym && sym.endsWith("USDT");
         }).map(p => ({
@@ -466,7 +484,11 @@ async function fetchPairs() {
         }));
 
         populateList(currentSort);
-    } catch (e) { console.error("List fetch error", e); }
+    } catch (e) {
+        console.error("Errore fetchPairs:", e);
+        allPairsData = [];
+        populateList(currentSort);
+    }
 }
 
 function populateList(sortType) {
@@ -508,13 +530,10 @@ function populateList(sortType) {
     list.scrollTop = currentScroll;
 }
 
-// ==================== RICERCA PAIRS (Lente di ingrandimento) ====================
-let searchInput, searchIcon;
-
+// ==================== RICERCA CON LENTE ====================
 function initSearch() {
-    searchIcon = document.getElementById('search-icon');
-    searchInput = document.getElementById('pair-search-input');
-
+    const searchIcon = document.getElementById('search-icon');
+    const searchInput = document.getElementById('pair-search-input');
     if (!searchIcon || !searchInput) return;
 
     searchIcon.onclick = (e) => {
@@ -546,7 +565,6 @@ function initSearch() {
         }
 
         const filtered = allPairsData.filter(p => p.s.includes(term));
-
         const favs = filtered.filter(p => favorites.includes(p.s));
         const others = filtered.filter(p => !favorites.includes(p.s));
         const final = [...favs, ...others];
@@ -650,7 +668,6 @@ async function updateLive() {
 
 // ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Exchange change
     document.getElementById('exchange-select').addEventListener('change', async e => {
         currentExchange = e.target.value;
         localStorage.setItem('currentExchange', currentExchange);
@@ -660,13 +677,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (allPairsData.length > 0) await loadAllCharts(allPairsData[0].s);
     });
 
-    // Sort
     document.getElementById('sort-select').addEventListener('change', e => {
         currentSort = e.target.value;
         populateList(currentSort);
     });
 
-    // Modals
     const settingsModal = document.getElementById('settings-modal');
     const infoModal = document.getElementById('info-modal');
     document.getElementById('settings-btn').onclick = () => settingsModal.style.display = "block";
@@ -682,7 +697,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === infoModal) infoModal.style.display = "none";
     };
 
-    // Toggles EMA/BB
     document.getElementById('toggle-ema').onclick = function() {
         emaEnabled = !emaEnabled;
         this.textContent = emaEnabled ? "EMA: On" : "EMA: Off";
@@ -697,7 +711,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
     };
 
-    // Apply settings
     document.getElementById('apply-settings').onclick = async () => {
         emaPeriods = [
             parseInt(document.getElementById('ema1').value)||5,
@@ -748,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     });
 
-    // Inizializza la ricerca
+    // Inizializza ricerca con lente
     initSearch();
 });
 
@@ -766,7 +779,7 @@ window.addEventListener('resize', () => {
 
 window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 300));
 
-// ==================== ONLOAD (Ricorda ultimo exchange) ====================
+// ==================== ONLOAD ====================
 window.onload = async () => {
     setRealViewportHeight();
 
