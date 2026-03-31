@@ -163,7 +163,6 @@ function updateRulerLineOnSeries(series, key) {
 
 function toggleRulerMode() {
     rulerMode = !rulerMode;
-
     document.querySelectorAll('.title-ruler').forEach(el => {
         rulerMode ? el.classList.add('active') : el.classList.remove('active');
     });
@@ -181,7 +180,6 @@ function toggleRulerMode() {
             delete rulerLines[key];
         });
     }
-
     syncHorizLines();
     updateRulerPercentage();
 }
@@ -192,9 +190,14 @@ function updateRulerPercentage() {
     document.querySelectorAll('.title-pct').forEach(el => el.textContent = text);
 }
 
-// ==================== INDICATORS ====================
+// ==================== INDICATORS (EMA senza valori a lato) ====================
 function createEMA(emaArr, chart, klines, period, color) {
-    const series = chart.addLineSeries({ color, lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
+    const series = chart.addLineSeries({ 
+        color, 
+        lineWidth: 1.2, 
+        priceLineVisible: false, 
+        lastValueVisible: false   // ← Rimosso il prezzo a lato
+    });
     let data = [];
     let lastEma = klines[0].close;
     for (let i = 0; i < klines.length; i++) {
@@ -227,7 +230,7 @@ function createBollinger(chart, klines, period, stdDev) {
     return { middle: {series: mid, data: midData}, upper: {series: up, data: upData}, lower: {series: low, data: lowData} };
 }
 
-// ==================== CHART CREATION (con zoom migliore) ====================
+// ==================== CHART CREATION (Super Zoom 50 candele) ====================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -275,9 +278,9 @@ async function createChart(containerId) {
     if (emaEnabled) emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
     if (bbEnabled && klines.length >= bbPeriod) bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
 
-    // Zoom iniziale: mostra circa le ultime 100 candele (più larghe e chiare)
+    // Super Zoom: solo ultime 50 candele (candele più grandi)
     chart.timeScale().setVisibleLogicalRange({
-        from: Math.max(0, klines.length - 100),
+        from: Math.max(0, klines.length - 50),
         to: klines.length + 2
     });
 
@@ -402,7 +405,7 @@ async function fetchKlines(symbol, interval, limit = 500) {
         if (interval === "D") cleanInterval = "1d";
         else if (interval === "240") cleanInterval = "4h";
         else if (interval === "60") cleanInterval = "1h";
-        else if (interval.match(/^\d+$/)) cleanInterval = interval + "m";   // 5 → 5m, 30 → 30m
+        else if (interval.match(/^\d+$/)) cleanInterval = interval + "m";   // 5 → 5m, 30 → 30m, ecc.
     }
 
     const upSymbol = symbol.toUpperCase();
@@ -441,7 +444,7 @@ async function fetchLatestCandle(symbol, interval) {
     return k.length ? k[k.length-1] : null;
 }
 
-// ==================== FETCH PAIRS (Volume corretto) ====================
+// ==================== FETCH PAIRS ====================
 async function fetchPairs() {
     let url = currentExchange === "bybit" 
         ? "https://api.bybit.com/v5/market/tickers?category=linear" 
@@ -515,6 +518,31 @@ function openAlertSetup() {
         ? activeHorizPrice.toFixed(symbolPricePrecision) 
         : (seriesData["chart-5m"]?.at(-1)?.close || 0).toFixed(symbolPricePrecision);
 }
+
+// ==================== ALERT BUTTON (LOGICA CORRETTA) ====================
+document.getElementById('set-local-alert').onclick = () => {
+    const val = parseFloat(document.getElementById('alert-price-input').value);
+    if (!isNaN(val)) {
+        alertPrices[currentSymbol] = val;
+        localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
+        syncHorizLines();
+        
+        document.getElementById('alert-setup').style.display = "none";
+
+        fetch(`${SERVER_URL}/set_alert`, {
+            method: 'POST', 
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+                device_id: deviceId, 
+                exchange: currentExchange, 
+                symbol: currentSymbol, 
+                price: val, 
+                token: personalTGToken, 
+                chatId: personalTGChatID
+            })
+        }).catch(() => console.log("Server offline - alert salvato in locale"));
+    }
+};
 
 // ==================== UPDATELIVE ====================
 async function updateLive() {
@@ -654,21 +682,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('close-alert-setup').onclick = () => document.getElementById('alert-setup').style.display = "none";
 
-    document.getElementById('set-local-alert').onclick = () => {
-        const val = parseFloat(document.getElementById('alert-price-input').value);
-        if (!isNaN(val)) {
-            alertPrices[currentSymbol] = val;
-            localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
-            syncHorizLines();
-            document.getElementById('alert-setup').style.display = "none";
-
-            fetch(`${SERVER_URL}/set_alert`, {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({device_id:deviceId, exchange:currentExchange, symbol:currentSymbol, price:val, token:personalTGToken, chatId:personalTGChatID})
-            }).catch(()=>{});
-        }
-    };
-
     document.getElementById('open-in-exchange').onclick = () => {
         const url = currentExchange === "bybit" 
             ? `https://www.bybit.com/trade/usdt/${currentSymbol}` 
@@ -703,7 +716,7 @@ window.addEventListener('resize', () => {
 
 window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 300));
 
-// ==================== ONLOAD ====================
+// ==================== ONLOAD (sempre Bybit + BTCUSDT) ====================
 window.onload = async () => {
     setRealViewportHeight();
 
@@ -714,7 +727,9 @@ window.onload = async () => {
     const savedInt = localStorage.getItem('customIntervals');
     if (savedInt) customIntervals = JSON.parse(savedInt);
 
-    document.getElementById("exchange-select").value = currentExchange;
+    // Forza Bybit all'avvio
+    currentExchange = "bybit";
+    document.getElementById("exchange-select").value = "bybit";
 
     await loadAllCharts("BTCUSDT");
     await fetchPairs();
