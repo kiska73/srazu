@@ -65,17 +65,15 @@
 
         <div id="pairs">
             <div class="pairs-header">
-                <!-- Riga 1: Exchange + Ricerca -->
-                <div class="header-top">
+                <div class="header-left">
                     <select id="exchange-select">
                         <option value="bybit">Bybit</option>
                         <option value="binance">Binance</option>
                     </select>
-                    <span id="search-icon" style="font-size:20px; cursor:pointer; padding:4px;">🔍</span>
+                    <span>Perpetual</span>
+                    <span id="info-btn" style="font-size:19px; margin-left:8px; cursor:pointer;">ℹ️</span>
                 </div>
-
-                <!-- Riga 2: Sort + Settings -->
-                <div class="header-bottom">
+                <div class="header-right">
                     <select id="sort-select">
                         <option value="volume">By Volume</option>
                         <option value="gainers">Top Gainers 24h</option>
@@ -162,15 +160,22 @@
             <ul>
                 <li>Real-time charts that update instantly.</li>
                 <li>Switch exchanges or lists anytime.</li>
-                <li>Synchronized analysis line.</li>
+                <li>Synchronized analysis line: add with one click, move without duplicates. Double-click on any chart to remove it.</li>
                 <li>Full-screen charts for precise analysis.</li>
-                <li>Quick alerts.</li>
-                <li>Private Telegram alerts.</li>
+                <li>Quick alerts: target exact levels or nearby zones with direct trade access.</li>
+                <li><strong>Advanced Tools</strong></li>
+                <li>Private Telegram alerts (server-managed).</li>
+                <li>Change all chart timeframes at once.</li>
+                <li>Customize moving average settings.</li>
+                <li>Dynamic color bands based on BTC movement.</li>
             </ul>
             <h4>Price Ruler Tool 📏</h4>
             <ul>
-                <li>Click the ruler icon to toggle measurement mode.</li>
-                <li>Click on any chart to measure percentage.</li>
+                <li>Click the ruler icon (right of the bell) to toggle measurement mode on/off.</li>
+                <li>When active, click on any chart to measure the percentage difference from the synchronized horizontal line to the clicked price.</li>
+                <li>A dashed green line will appear showing the percentage (e.g. +2.45%).</li>
+                <li>Click again on the chart to update the measurement to a new price level.</li>
+                <li>Click the ruler icon again to turn off and remove the measurement line.</li>
             </ul>
         </div>
     </div>
