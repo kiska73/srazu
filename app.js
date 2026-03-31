@@ -228,7 +228,7 @@ function createBollinger(chart, klines, period, stdDev) {
     return { middle: {series: mid, data: midData}, upper: {series: up, data: upData}, lower: {series: low, data: lowData} };
 }
 
-// ==================== CHART CREATION (Super Zoom) ====================
+// ==================== CHART CREATION ====================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -276,7 +276,6 @@ async function createChart(containerId) {
     if (emaEnabled) emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
     if (bbEnabled && klines.length >= bbPeriod) bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
 
-    // Super Zoom: 40 candele grandi
     chart.timeScale().setVisibleLogicalRange({
         from: Math.max(0, klines.length - 40),
         to: klines.length + 2
@@ -395,7 +394,7 @@ function closeFullscreen() {
     delete rulerLines["fullscreen"];
 }
 
-// ==================== FETCH KLINES (BLINDATA) ====================
+// ==================== FETCH KLINES (CORAZZATA) ====================
 async function fetchKlines(symbol, interval, limit = 500) {
     let cleanInterval = interval;
     
@@ -425,10 +424,10 @@ async function fetchKlines(symbol, interval, limit = 500) {
             }
             return data.map(c => ({
                 time: Number(c[0]) / 1000,
-                open: Number(c[1]),
-                high: Number(c[2]),
-                low: Number(c[3]),
-                close: Number(c[4])
+                open: parseFloat(c[1]),
+                high: parseFloat(c[2]),
+                low: parseFloat(c[3]),
+                close: parseFloat(c[4])
             }));
         } else { // Bybit
             if (!data.result || !Array.isArray(data.result.list)) {
@@ -437,10 +436,10 @@ async function fetchKlines(symbol, interval, limit = 500) {
             }
             return data.result.list.map(c => ({
                 time: Number(c[0]) / 1000,
-                open: Number(c[1]),
-                high: Number(c[2]),
-                low: Number(c[3]),
-                close: Number(c[4])
+                open: parseFloat(c[1]),
+                high: parseFloat(c[2]),
+                low: parseFloat(c[3]),
+                close: parseFloat(c[4])
             })).reverse();
         }
     } catch (e) {
@@ -458,7 +457,7 @@ async function fetchLatestCandle(symbol, interval) {
     return k.length ? k[k.length-1] : null;
 }
 
-// ==================== FETCH PAIRS (BLINDATA) ====================
+// ==================== FETCH PAIRS ====================
 async function fetchPairs() {
     const url = currentExchange === "bybit"
         ? "https://api.bybit.com/v5/market/tickers?category=linear"
@@ -528,70 +527,6 @@ function populateList(sortType) {
     }).join('');
 
     list.scrollTop = currentScroll;
-}
-
-// ==================== RICERCA CON LENTE ====================
-function initSearch() {
-    const searchIcon = document.getElementById('search-icon');
-    const searchInput = document.getElementById('pair-search-input');
-    if (!searchIcon || !searchInput) return;
-
-    searchIcon.onclick = (e) => {
-        e.stopPropagation();
-        if (searchInput.style.display === 'none' || searchInput.style.display === '') {
-            searchInput.style.display = 'block';
-            searchInput.focus();
-            searchIcon.style.opacity = '1';
-        } else {
-            searchInput.style.display = 'none';
-            searchInput.value = '';
-            searchIcon.style.opacity = '0.7';
-            populateList(currentSort);
-        }
-    };
-
-    document.addEventListener('click', (e) => {
-        if (e.target !== searchInput && e.target !== searchIcon) {
-            searchInput.style.display = 'none';
-            searchIcon.style.opacity = '0.7';
-        }
-    });
-
-    searchInput.oninput = (e) => {
-        const term = e.target.value.toUpperCase().trim();
-        if (!term) {
-            populateList(currentSort);
-            return;
-        }
-
-        const filtered = allPairsData.filter(p => p.s.includes(term));
-        const favs = filtered.filter(p => favorites.includes(p.s));
-        const others = filtered.filter(p => !favorites.includes(p.s));
-        const final = [...favs, ...others];
-
-        const list = document.getElementById('pairs-list');
-        list.innerHTML = final.map(p => {
-            const isFav = favorites.includes(p.s);
-            const change = parseFloat(p.pc || 0).toFixed(2);
-            const color = change >= 0 ? "#00ff85" : "#ff3b3b";
-            const activeClass = p.s === currentSymbol ? "active" : "";
-
-            return `
-                <div class="pair-item ${activeClass}" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #222;cursor:pointer;" onclick="loadAllCharts('${p.s}')">
-                    <div style="display:flex;flex-direction:column;">
-                        <span style="font-weight:bold;color:white;font-size:15px;">${getDisplaySymbol(p.s)}</span>
-                        <span style="color:#aaa;font-size:13px;">${formatPrice(p.lp)}</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:12px;">
-                        <span style="color:${color};font-weight:bold;font-size:14px;">${change >= 0 ? '+' : ''}${change}%</span>
-                        <span class="star-icon ${isFav ? 'active' : ''}" style="color:${isFav?'#ffd700':'#555'};font-size:20px;" onclick="event.stopPropagation();toggleFavorite('${p.s}')">
-                            ${isFav ? '★' : '☆'}
-                        </span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    };
 }
 
 // ==================== ALERT SETUP ====================
@@ -665,119 +600,6 @@ async function updateLive() {
         });
     }
 };
-
-// ==================== EVENT LISTENERS ====================
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('exchange-select').addEventListener('change', async e => {
-        currentExchange = e.target.value;
-        localStorage.setItem('currentExchange', currentExchange);
-        allPairsData = [];
-        document.getElementById('pairs-list').innerHTML = "<div class='loading'>Switching exchange...</div>";
-        await fetchPairs();
-        if (allPairsData.length > 0) await loadAllCharts(allPairsData[0].s);
-    });
-
-    document.getElementById('sort-select').addEventListener('change', e => {
-        currentSort = e.target.value;
-        populateList(currentSort);
-    });
-
-    const settingsModal = document.getElementById('settings-modal');
-    const infoModal = document.getElementById('info-modal');
-    document.getElementById('settings-btn').onclick = () => settingsModal.style.display = "block";
-    document.getElementById('info-btn').onclick = () => infoModal.style.display = "block";
-
-    document.querySelectorAll('.close').forEach(b => b.onclick = () => {
-        settingsModal.style.display = "none";
-        infoModal.style.display = "none";
-    });
-
-    window.onclick = e => {
-        if (e.target === settingsModal) settingsModal.style.display = "none";
-        if (e.target === infoModal) infoModal.style.display = "none";
-    };
-
-    document.getElementById('toggle-ema').onclick = function() {
-        emaEnabled = !emaEnabled;
-        this.textContent = emaEnabled ? "EMA: On" : "EMA: Off";
-        this.classList.toggle("active", emaEnabled);
-        document.getElementById("ema-periods-section").style.display = emaEnabled ? "block" : "none";
-    };
-
-    document.getElementById('toggle-bb').onclick = function() {
-        bbEnabled = !bbEnabled;
-        this.textContent = bbEnabled ? "Bollinger Bands: On" : "Bollinger Bands: Off";
-        this.classList.toggle("active", bbEnabled);
-        document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
-    };
-
-    document.getElementById('apply-settings').onclick = async () => {
-        emaPeriods = [
-            parseInt(document.getElementById('ema1').value)||5,
-            parseInt(document.getElementById('ema2').value)||10,
-            parseInt(document.getElementById('ema3').value)||60,
-            parseInt(document.getElementById('ema4').value)||223
-        ];
-        bbPeriod = parseInt(document.getElementById('bb-period').value)||20;
-        bbDev = parseFloat(document.getElementById('bb-dev').value)||2;
-
-        customIntervals = {
-            "chart-5m": document.getElementById('tf-chart-5m').value,
-            "chart-30m": document.getElementById('tf-chart-30m').value,
-            "chart-4h": document.getElementById('tf-chart-4h').value,
-            "chart-1d": document.getElementById('tf-chart-1d').value
-        };
-        localStorage.setItem('customIntervals', JSON.stringify(customIntervals));
-
-        personalTGToken = document.getElementById('personal-tg-token').value.trim();
-        personalTGChatID = document.getElementById('personal-tg-chatid').value.trim();
-        localStorage.setItem('personalTGToken', personalTGToken);
-        localStorage.setItem('personalTGChatID', personalTGChatID);
-
-        settingsModal.style.display = "none";
-        await loadAllCharts(currentSymbol);
-    };
-
-    document.getElementById('open-botfather-btn').onclick = () => window.open('https://t.me/BotFather', '_blank');
-
-    document.getElementById('close-alert-setup').onclick = () => document.getElementById('alert-setup').style.display = "none";
-
-    document.getElementById('open-in-exchange').onclick = () => {
-        const url = currentExchange === "bybit" 
-            ? `https://www.bybit.com/trade/usdt/${currentSymbol}` 
-            : `https://www.binance.com/en/futures/${currentSymbol}`;
-        window.open(url, '_blank');
-    };
-
-    document.getElementById('close-fullscreen').addEventListener('click', closeFullscreen);
-
-    document.querySelectorAll('.title-bell').forEach(el => el.onclick = openAlertSetup);
-    document.querySelectorAll('.title-ruler').forEach(el => el.onclick = toggleRulerMode);
-    document.querySelectorAll('.title-fullscreen').forEach(el => {
-        el.onclick = () => {
-            const container = el.closest('.chart-wrapper').querySelector('.chart-container').id;
-            const label = customLabels[customIntervals[container]] || customIntervals[container];
-            openFullscreen(container, label);
-        };
-    });
-
-    // Inizializza ricerca con lente
-    initSearch();
-});
-
-// ==================== RESIZE ====================
-window.addEventListener('resize', () => {
-    setRealViewportHeight();
-    Object.keys(charts).forEach(id => {
-        const container = document.getElementById(id);
-        if (charts[id] && container) charts[id].resize(container.clientWidth, container.clientHeight);
-    });
-    if (fullscreenActive && fullscreenChart) {
-        fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
-    }
-});
-
-window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 300));
 
 // ==================== ONLOAD ====================
 window.onload = async () => {
