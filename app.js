@@ -86,7 +86,7 @@ function nextEMA(prev, price, period) {
     return price * k + prev * (1 - k);
 }
 
-// ==================== HORIZONTAL LINES & RULER ====================
+// ==================== LINES & RULER ====================
 function syncHorizLines() {
     Object.keys(candleSeries).forEach(k => {
         updatePriceLineOnSeries(candleSeries[k], k);
@@ -103,11 +103,8 @@ function syncHorizLines() {
 
 function saveHorizIfFavorite() {
     if (favorites.includes(currentSymbol)) {
-        if (activeHorizPrice !== null) {
-            savedHorizPrices[currentSymbol] = activeHorizPrice;
-        } else {
-            delete savedHorizPrices[currentSymbol];
-        }
+        if (activeHorizPrice !== null) savedHorizPrices[currentSymbol] = activeHorizPrice;
+        else delete savedHorizPrices[currentSymbol];
         localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
     }
 }
@@ -123,7 +120,6 @@ function toggleFavorite(symbol) {
         saveHorizIfFavorite();
     }
     localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
-    localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
     populateList(currentSort);
 
     if (wasFavorite && symbol === currentSymbol) {
@@ -136,25 +132,11 @@ function toggleFavorite(symbol) {
 function updatePriceLineOnSeries(series, key) {
     if (priceLines[key]) { series.removePriceLine(priceLines[key]); delete priceLines[key]; }
     if (activeHorizPrice == null) return;
-
     const line = series.createPriceLine({
-        price: activeHorizPrice,
-        color: "#FFFF00",
-        lineWidth: 1,
-        lineStyle: LightweightCharts.LineStyle.Solid,
-        axisLabelVisible: true,
-        axisLabelColor: "#FFFF00",
-        axisLabelBackgroundColor: "#161a25",
-        title: "",
-        draggable: true
+        price: activeHorizPrice, color: "#FFFF00", lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true, axisLabelColor: "#FFFF00", axisLabelBackgroundColor: "#161a25", title: "", draggable: true
     });
-    line.applyOptions({
-        onDrag: l => {
-            activeHorizPrice = l.price;
-            syncHorizLines();
-            saveHorizIfFavorite();
-        }
-    });
+    line.applyOptions({ onDrag: l => { activeHorizPrice = l.price; syncHorizLines(); saveHorizIfFavorite(); }});
     priceLines[key] = line;
 }
 
@@ -162,24 +144,16 @@ function updateAlertLineOnSeries(series, key) {
     if (alertLines[key]) { series.removePriceLine(alertLines[key]); delete alertLines[key]; }
     const alertPrice = alertPrices[currentSymbol];
     if (alertPrice == null) return;
-
     const line = series.createPriceLine({
-        price: alertPrice,
-        color: "#FFD700",
-        lineWidth: 1,
-        lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: false,
-        title: "",
-        draggable: false
+        price: alertPrice, color: "#FFD700", lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: false, title: "", draggable: false
     });
     alertLines[key] = line;
 }
 
 function toggleRulerMode() {
     rulerMode = !rulerMode;
-    document.querySelectorAll('.title-ruler').forEach(el => {
-        rulerMode ? el.classList.add('active') : el.classList.remove('active');
-    });
+    document.querySelectorAll('.title-ruler').forEach(el => rulerMode ? el.classList.add('active') : el.classList.remove('active'));
     if (!rulerMode) rulerPrice = null;
     syncHorizLines();
 }
@@ -187,29 +161,17 @@ function toggleRulerMode() {
 function updateRulerLineOnSeries(series, key) {
     if (rulerLines[key]) { series.removePriceLine(rulerLines[key]); delete rulerLines[key]; }
     if (rulerPrice === null) return;
-
     const line = series.createPriceLine({
-        price: rulerPrice,
-        color: "#00FF00",
-        lineWidth: 2,
-        lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: true,
-        axisLabelColor: "#00FF00",
-        axisLabelBackgroundColor: "#161a25",
-        title: "",
-        draggable: false
+        price: rulerPrice, color: "#00FF00", lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true, axisLabelColor: "#00FF00", axisLabelBackgroundColor: "#161a25", title: "", draggable: false
     });
     rulerLines[key] = line;
 }
 
 function updateRulerPercentage() {
-    const text = (rulerMode && rulerPrice !== null && activeHorizPrice !== null)
-        ? `${((rulerPrice - activeHorizPrice) / activeHorizPrice * 100).toFixed(2)}%`.replace(/^-/, '–')
-        : '';
-
+    const text = (rulerMode && rulerPrice !== null && activeHorizPrice !== null) 
+        ? `${((rulerPrice - activeHorizPrice) / activeHorizPrice * 100).toFixed(2)}%`.replace(/^-/, '–') : '';
     document.querySelectorAll('.title-pct').forEach(el => el.textContent = text);
-    const fsPct = document.querySelector('#fullscreen-title .title-pct');
-    if (fsPct) fsPct.textContent = text;
 }
 
 // ==================== INDICATORS ====================
@@ -226,9 +188,9 @@ function createEMA(emaArr, chart, klines, period, color) {
 }
 
 function createBollinger(chart, klines, period, stdDev) {
-    const mid = chart.addLineSeries({ color: BB_COLORS.middle, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false });
-    const up  = chart.addLineSeries({ color: BB_COLORS.upper,  lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
-    const low = chart.addLineSeries({ color: BB_COLORS.lower, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+    const mid = chart.addLineSeries({ color: BB_COLORS.middle, lineWidth: 1.5 });
+    const up  = chart.addLineSeries({ color: BB_COLORS.upper,  lineWidth: 1 });
+    const low = chart.addLineSeries({ color: BB_COLORS.lower, lineWidth: 1 });
 
     let midData = [], upData = [], lowData = [];
     for (let i = period - 1; i < klines.length; i++) {
@@ -239,20 +201,12 @@ function createBollinger(chart, klines, period, stdDev) {
         for (let val of closes) variance += Math.pow(val - sma, 2);
         const dev = Math.sqrt(variance / period) * stdDev;
         const time = klines[i].time;
-
         midData.push({ time, value: sma });
         upData.push({ time, value: sma + dev });
         lowData.push({ time, value: sma - dev });
     }
-    mid.setData(midData);
-    up.setData(upData);
-    low.setData(lowData);
-
-    return {
-        middle: { series: mid, data: midData },
-        upper:  { series: up,  data: upData },
-        lower:  { series: low, data: lowData }
-    };
+    mid.setData(midData); up.setData(upData); low.setData(lowData);
+    return { middle: {series: mid, data: midData}, upper: {series: up, data: upData}, lower: {series: low, data: lowData} };
 }
 
 // ==================== CHART CREATION ====================
@@ -276,11 +230,7 @@ async function createChart(containerId) {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        timeScale: { 
-            timeVisible: true, 
-            tickMarkFormatter: getTimeFormatter(interval),
-            lockVisibleTimeRangeOnResize: true 
-        },
+        timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(interval), lockVisibleTimeRangeOnResize: true },
         rightPriceScale: { borderColor: '#222' },
         width: container.clientWidth,
         height: container.clientHeight
@@ -288,12 +238,9 @@ async function createChart(containerId) {
 
     const series = chart.addCandlestickSeries({
         priceFormat: { type: "price", precision: symbolPricePrecision, minMove: 10 ** -symbolPricePrecision },
-        upColor: '#ffffff',
-        downColor: '#0051D4',
-        wickUpColor: '#cccccc',
-        wickDownColor: '#0051D4',
-        borderVisible: false,
-        wickVisible: true
+        upColor: '#ffffff', downColor: '#0051D4',
+        wickUpColor: '#cccccc', wickDownColor: '#0051D4',
+        borderVisible: false, wickVisible: true
     });
 
     series.setData(klines);
@@ -329,15 +276,14 @@ async function createChart(containerId) {
 }
 
 async function loadAllCharts(symbol) {
-    currentSymbol = symbol;
-    activeHorizPrice = savedHorizPrices[symbol] ?? null;
+    currentSymbol = symbol.toUpperCase();   // Importante per Binance
+    activeHorizPrice = savedHorizPrices[currentSymbol] ?? null;
     rulerPrice = null;
 
     const promises = Object.keys(customIntervals).map(id => createChart(id));
     await Promise.all(promises);
     syncHorizLines();
 
-    // Resize iniziale
     Object.keys(charts).forEach(id => {
         const el = document.getElementById(id);
         if (charts[id] && el) charts[id].resize(el.clientWidth, el.clientHeight);
@@ -365,15 +311,13 @@ function openFullscreen(containerId, tfLabel) {
     const newSeries = newChart.addCandlestickSeries(candleSeries[containerId].options());
     newSeries.setData(seriesData[containerId] || []);
 
-    if (emaEnabled && emaSeries[containerId]) {
-        emaSeries[containerId].forEach((e, i) => {
-            const s = newChart.addLineSeries({ color: EMA_COLORS[i], lineWidth: 1.2 });
-            s.setData(e.data);
-        });
-    }
+    if (emaEnabled && emaSeries[containerId]) emaSeries[containerId].forEach((e,i) => {
+        const s = newChart.addLineSeries({ color: EMA_COLORS[i], lineWidth: 1.2 });
+        s.setData(e.data);
+    });
     if (bbEnabled && bbSeries[containerId]) {
         ['middle','upper','lower'].forEach(key => {
-            const s = newChart.addLineSeries({ color: BB_COLORS[key], lineWidth: key === 'middle' ? 1.5 : 1 });
+            const s = newChart.addLineSeries({ color: BB_COLORS[key], lineWidth: key==='middle'?1.5:1 });
             s.setData(bbSeries[containerId][key].data);
         });
     }
@@ -385,8 +329,7 @@ function openFullscreen(containerId, tfLabel) {
     newChart.subscribeClick(p => {
         if (p?.point) {
             const price = newSeries.coordinateToPrice(p.point.y);
-            if (rulerMode) rulerPrice = price;
-            else activeHorizPrice = price;
+            if (rulerMode) rulerPrice = price; else activeHorizPrice = price;
             syncHorizLines();
             if (!rulerMode) saveHorizIfFavorite();
         }
@@ -410,14 +353,14 @@ function closeFullscreen() {
     fullscreenActive = false;
     fullscreenChart = null;
     fullscreenContainerId = null;
-    delete rulerLines["fullscreen"];
 }
 
 // ==================== DATA FETCHING ====================
 async function fetchKlines(symbol, interval, limit = 500) {
+    const upSymbol = symbol.toUpperCase();   // ← FIX PER BINANCE
     let baseUrl = currentExchange === "bybit" 
-        ? `https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=${interval}&limit=${limit}`
-        : `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+        ? `https://api.bybit.com/v5/market/kline?category=linear&symbol=${upSymbol}&interval=${interval}&limit=${limit}`
+        : `https://fapi.binance.com/fapi/v1/klines?symbol=${upSymbol}&interval=${interval}&limit=${limit}`;
 
     try {
         const res = await fetch(baseUrl);
@@ -425,7 +368,7 @@ async function fetchKlines(symbol, interval, limit = 500) {
         const data = await res.json();
         let raw = currentExchange === "bybit" ? (data.result?.list || []) : data;
         return raw.map(c => ({
-            time: Number(c[0]) / 1000,
+            time: Number(c[0])/1000,
             open: Number(c[1]), high: Number(c[2]), low: Number(c[3]), close: Number(c[4])
         })).reverse();
     } catch (e) {
@@ -439,9 +382,8 @@ async function fetchLatestCandle(symbol, interval) {
     const now = Date.now();
     if (lastFetchTimes[key] && now - lastFetchTimes[key] < 1800) return null;
     lastFetchTimes[key] = now;
-
     const k = await fetchKlines(symbol, interval, 2);
-    return k.length ? k[k.length - 1] : null;
+    return k.length ? k[k.length-1] : null;
 }
 
 async function fetchPairs() {
@@ -455,7 +397,7 @@ async function fetchPairs() {
         let raw = currentExchange === "bybit" ? data.result.list : data;
 
         allPairsData = raw.filter(p => (p.symbol || p.s).endsWith("USDT")).map(p => ({
-            s: p.symbol || p.s,
+            s: (p.symbol || p.s).toUpperCase(),
             lp: p.lastPrice || p.last,
             pc: p.price24hPcnt || p.priceChangePercent,
             v: p.volume24h || p.quoteVolume
@@ -465,6 +407,7 @@ async function fetchPairs() {
     } catch (e) { console.error("List fetch error", e); }
 }
 
+// ==================== POPULATE LIST (CON STILI INLINE) ====================
 function populateList(sortType) {
     const list = document.getElementById('pairs-list');
     if (!list) return;
@@ -473,7 +416,7 @@ function populateList(sortType) {
     let sorted = [...allPairsData];
     if (sortType === "volume") sorted.sort((a, b) => b.v - a.v);
     else if (sortType === "gainers") sorted.sort((a, b) => b.pc - a.pc);
-    else if (sortType === "losers") sorted.sort((a, b) => a.pc - b.pc);   // ← CORREZIONE QUI
+    else if (sortType === "losers") sorted.sort((a, b) => a.pc - b.pc);
 
     const favs = sorted.filter(p => favorites.includes(p.s));
     const others = sorted.filter(p => !favorites.includes(p.s));
@@ -482,18 +425,18 @@ function populateList(sortType) {
     list.innerHTML = final.map(p => {
         const isFav = favorites.includes(p.s);
         const change = parseFloat(p.pc || 0).toFixed(2);
-        const color = change >= 0 ? "var(--green)" : "var(--red)";
+        const color = change >= 0 ? "#00ff85" : "#ff3b3b";
         const activeClass = p.s === currentSymbol ? "active" : "";
 
         return `
-            <div class="pair-item ${activeClass}" onclick="loadAllCharts('${p.s}')">
-                <div class="pair-info">
-                    <span class="pair-name">${getDisplaySymbol(p.s)}</span>
-                    <span class="pair-price">${formatPrice(p.lp)}</span>
+            <div class="pair-item ${activeClass}" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #222;cursor:pointer;" onclick="loadAllCharts('${p.s}')">
+                <div style="display:flex;flex-direction:column;">
+                    <span style="font-weight:bold;color:white;font-size:15px;">${getDisplaySymbol(p.s)}</span>
+                    <span style="color:#aaa;font-size:13px;">${formatPrice(p.lp)}</span>
                 </div>
-                <div class="pair-stats">
-                    <span class="pair-change" style="color:${color}">${change}%</span>
-                    <span class="star-icon ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('${p.s}')">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="color:${color};font-weight:bold;font-size:14px;">${change >= 0 ? '+' : ''}${change}%</span>
+                    <span class="star-icon ${isFav ? 'active' : ''}" style="color:${isFav?'#ffd700':'#555'};font-size:20px;" onclick="event.stopPropagation();toggleFavorite('${p.s}')">
                         ${isFav ? '★' : '☆'}
                     </span>
                 </div>
@@ -504,7 +447,7 @@ function populateList(sortType) {
     list.scrollTop = currentScroll;
 }
 
-// ==================== ALERT ====================
+// ==================== ALERT SETUP ====================
 function openAlertSetup() {
     const panel = document.getElementById('alert-setup');
     const input = document.getElementById('alert-price-input');
@@ -547,14 +490,13 @@ async function updateLive() {
             if (bbEnabled && bbSeries[id] && seriesData[id].length >= bbPeriod) {
                 const slice = seriesData[id].slice(-bbPeriod);
                 const closes = slice.map(c => c.close);
-                const sma = closes.reduce((a,b) => a + b, 0) / bbPeriod;
+                const sma = closes.reduce((a,b)=>a+b,0)/bbPeriod;
                 let variance = 0;
-                for (let val of closes) variance += Math.pow(val - sma, 2);
-                const dev = Math.sqrt(variance / bbPeriod) * bbDev;
-
-                bbSeries[id].middle.series.update({time: latest.time, value: sma});
-                bbSeries[id].upper.series.update({time: latest.time, value: sma + dev});
-                bbSeries[id].lower.series.update({time: latest.time, value: sma - dev});
+                for (let val of closes) variance += Math.pow(val-sma,2);
+                const dev = Math.sqrt(variance/bbPeriod) * bbDev;
+                bbSeries[id].middle.series.update({time:latest.time,value:sma});
+                bbSeries[id].upper.series.update({time:latest.time,value:sma+dev});
+                bbSeries[id].lower.series.update({time:latest.time,value:sma-dev});
             }
 
             const isUserAtRightEdge = currentRange && Math.abs(currentRange.to - currentDataLength) < 3;
@@ -562,18 +504,16 @@ async function updateLive() {
         }
     }
 
-    // Fullscreen update (senza nuova chiamata API)
     if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
         const latest = seriesData[fullscreenContainerId]?.at(-1);
         if (latest) fullscreenChart.series.update(latest);
     }
 
-    // BTC title color (ottimizzato)
     const btc = await fetchLatestCandle("BTCUSDT", "30");
     if (btc) {
         const cls = btc.close > btc.open ? "green" : (btc.close < btc.open ? "red" : "neutral");
         document.querySelectorAll('.chart-title').forEach(t => {
-            t.classList.remove('green', 'red', 'neutral');
+            t.classList.remove('green','red','neutral');
             t.classList.add(cls);
         });
     }
@@ -581,23 +521,22 @@ async function updateLive() {
 
 // ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Exchange
     document.getElementById('exchange-select').addEventListener('change', async e => {
         currentExchange = e.target.value;
         localStorage.setItem('currentExchange', currentExchange);
         allPairsData = [];
-        document.getElementById('pairs-list').innerHTML = "<div class='loading'>Loading pairs...</div>";
+        document.getElementById('pairs-list').innerHTML = "<div class='loading'>Switching exchange...</div>";
         await fetchPairs();
-        if (allPairsData.length) await loadAllCharts(allPairsData[0].s);
+        if (allPairsData.length > 0) {
+            await loadAllCharts(allPairsData[0].s);
+        }
     });
 
-    // Sort
     document.getElementById('sort-select').addEventListener('change', e => {
         currentSort = e.target.value;
         populateList(currentSort);
     });
 
-    // Modals
     const settingsModal = document.getElementById('settings-modal');
     const infoModal = document.getElementById('info-modal');
     document.getElementById('settings-btn').onclick = () => settingsModal.style.display = "block";
@@ -613,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === infoModal) infoModal.style.display = "none";
     };
 
-    // Toggles
+    // Toggle EMA / BB
     document.getElementById('toggle-ema').onclick = function() {
         emaEnabled = !emaEnabled;
         this.textContent = emaEnabled ? "EMA: On" : "EMA: Off";
@@ -628,16 +567,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
     };
 
-    // Apply settings
     document.getElementById('apply-settings').onclick = async () => {
         emaPeriods = [
-            parseInt(document.getElementById('ema1').value) || 5,
-            parseInt(document.getElementById('ema2').value) || 10,
-            parseInt(document.getElementById('ema3').value) || 60,
-            parseInt(document.getElementById('ema4').value) || 223
+            parseInt(document.getElementById('ema1').value)||5,
+            parseInt(document.getElementById('ema2').value)||10,
+            parseInt(document.getElementById('ema3').value)||60,
+            parseInt(document.getElementById('ema4').value)||223
         ];
-        bbPeriod = parseInt(document.getElementById('bb-period').value) || 20;
-        bbDev = parseFloat(document.getElementById('bb-dev').value) || 2;
+        bbPeriod = parseInt(document.getElementById('bb-period').value)||20;
+        bbDev = parseFloat(document.getElementById('bb-dev').value)||2;
 
         customIntervals = {
             "chart-5m": document.getElementById('tf-chart-5m').value,
@@ -658,7 +596,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('open-botfather-btn').onclick = () => window.open('https://t.me/BotFather', '_blank');
 
-    // Alert panel
     document.getElementById('close-alert-setup').onclick = () => document.getElementById('alert-setup').style.display = "none";
 
     document.getElementById('set-local-alert').onclick = () => {
@@ -670,10 +607,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('alert-setup').style.display = "none";
 
             fetch(`${SERVER_URL}/set_alert`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ device_id: deviceId, exchange: currentExchange, symbol: currentSymbol, price: val, token: personalTGToken, chatId: personalTGChatID })
-            }).catch(() => {});
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({device_id:deviceId, exchange:currentExchange, symbol:currentSymbol, price:val, token:personalTGToken, chatId:personalTGChatID})
+            }).catch(()=>{});
         }
     };
 
@@ -686,7 +622,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('close-fullscreen').addEventListener('click', closeFullscreen);
 
-    // Title icons
     document.querySelectorAll('.title-bell').forEach(el => el.onclick = openAlertSetup);
     document.querySelectorAll('.title-ruler').forEach(el => el.onclick = toggleRulerMode);
     document.querySelectorAll('.title-fullscreen').forEach(el => {
@@ -698,23 +633,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ==================== RESIZE (importante su mobile) ====================
+// ==================== RESIZE ====================
 window.addEventListener('resize', () => {
     setRealViewportHeight();
     Object.keys(charts).forEach(id => {
         const container = document.getElementById(id);
-        if (charts[id] && container) {
-            charts[id].resize(container.clientWidth, container.clientHeight);
-        }
+        if (charts[id] && container) charts[id].resize(container.clientWidth, container.clientHeight);
     });
     if (fullscreenActive && fullscreenChart) {
         fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
     }
 });
 
-window.addEventListener('orientationchange', () => {
-    setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
-});
+window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 300));
 
 // ==================== ONLOAD ====================
 window.onload = async () => {
