@@ -394,7 +394,7 @@ function closeFullscreen() {
     delete rulerLines["fullscreen"];
 }
 
-// ==================== FETCH KLINES (CORAZZATA) ====================
+// ==================== FETCH KLINES (BLINDATA) ====================
 async function fetchKlines(symbol, interval, limit = 500) {
     let cleanInterval = interval;
     
@@ -424,10 +424,10 @@ async function fetchKlines(symbol, interval, limit = 500) {
             }
             return data.map(c => ({
                 time: Number(c[0]) / 1000,
-                open: parseFloat(c[1]),
-                high: parseFloat(c[2]),
-                low: parseFloat(c[3]),
-                close: parseFloat(c[4])
+                open: Number(c[1]),
+                high: Number(c[2]),
+                low: Number(c[3]),
+                close: Number(c[4])
             }));
         } else { // Bybit
             if (!data.result || !Array.isArray(data.result.list)) {
@@ -436,10 +436,10 @@ async function fetchKlines(symbol, interval, limit = 500) {
             }
             return data.result.list.map(c => ({
                 time: Number(c[0]) / 1000,
-                open: parseFloat(c[1]),
-                high: parseFloat(c[2]),
-                low: parseFloat(c[3]),
-                close: parseFloat(c[4])
+                open: Number(c[1]),
+                high: Number(c[2]),
+                low: Number(c[3]),
+                close: Number(c[4])
             })).reverse();
         }
     } catch (e) {
@@ -527,6 +527,70 @@ function populateList(sortType) {
     }).join('');
 
     list.scrollTop = currentScroll;
+}
+
+// ==================== RICERCA CON LENTE ====================
+function initSearch() {
+    const searchIcon = document.getElementById('search-icon');
+    const searchInput = document.getElementById('pair-search-input');
+    if (!searchIcon || !searchInput) return;
+
+    searchIcon.onclick = (e) => {
+        e.stopPropagation();
+        if (searchInput.style.display === 'none' || searchInput.style.display === '') {
+            searchInput.style.display = 'block';
+            searchInput.focus();
+            searchIcon.style.opacity = '1';
+        } else {
+            searchInput.style.display = 'none';
+            searchInput.value = '';
+            searchIcon.style.opacity = '0.7';
+            populateList(currentSort);
+        }
+    };
+
+    document.addEventListener('click', (e) => {
+        if (e.target !== searchInput && e.target !== searchIcon) {
+            searchInput.style.display = 'none';
+            searchIcon.style.opacity = '0.7';
+        }
+    });
+
+    searchInput.oninput = (e) => {
+        const term = e.target.value.toUpperCase().trim();
+        if (!term) {
+            populateList(currentSort);
+            return;
+        }
+
+        const filtered = allPairsData.filter(p => p.s.includes(term));
+        const favs = filtered.filter(p => favorites.includes(p.s));
+        const others = filtered.filter(p => !favorites.includes(p.s));
+        const final = [...favs, ...others];
+
+        const list = document.getElementById('pairs-list');
+        list.innerHTML = final.map(p => {
+            const isFav = favorites.includes(p.s);
+            const change = parseFloat(p.pc || 0).toFixed(2);
+            const color = change >= 0 ? "#00ff85" : "#ff3b3b";
+            const activeClass = p.s === currentSymbol ? "active" : "";
+
+            return `
+                <div class="pair-item ${activeClass}" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #222;cursor:pointer;" onclick="loadAllCharts('${p.s}')">
+                    <div style="display:flex;flex-direction:column;">
+                        <span style="font-weight:bold;color:white;font-size:15px;">${getDisplaySymbol(p.s)}</span>
+                        <span style="color:#aaa;font-size:13px;">${formatPrice(p.lp)}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span style="color:${color};font-weight:bold;font-size:14px;">${change >= 0 ? '+' : ''}${change}%</span>
+                        <span class="star-icon ${isFav ? 'active' : ''}" style="color:${isFav?'#ffd700':'#555'};font-size:20px;" onclick="event.stopPropagation();toggleFavorite('${p.s}')">
+                            ${isFav ? '★' : '☆'}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    };
 }
 
 // ==================== ALERT SETUP ====================
