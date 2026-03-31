@@ -86,7 +86,7 @@ function nextEMA(prev, price, period) {
     return price * k + prev * (1 - k);
 }
 
-// ==================== LINES & RULER ====================
+// ==================== HORIZONTAL LINES & RULER (CORRETTO) ====================
 function syncHorizLines() {
     Object.keys(candleSeries).forEach(k => {
         updatePriceLineOnSeries(candleSeries[k], k);
@@ -151,13 +151,6 @@ function updateAlertLineOnSeries(series, key) {
     alertLines[key] = line;
 }
 
-function toggleRulerMode() {
-    rulerMode = !rulerMode;
-    document.querySelectorAll('.title-ruler').forEach(el => rulerMode ? el.classList.add('active') : el.classList.remove('active'));
-    if (!rulerMode) rulerPrice = null;
-    syncHorizLines();
-}
-
 function updateRulerLineOnSeries(series, key) {
     if (rulerLines[key]) { series.removePriceLine(rulerLines[key]); delete rulerLines[key]; }
     if (rulerPrice === null) return;
@@ -166,6 +159,34 @@ function updateRulerLineOnSeries(series, key) {
         axisLabelVisible: true, axisLabelColor: "#00FF00", axisLabelBackgroundColor: "#161a25", title: "", draggable: false
     });
     rulerLines[key] = line;
+}
+
+// ==================== TOGGLE RULER (CORREZIONE PRINCIPALE) ====================
+function toggleRulerMode() {
+    rulerMode = !rulerMode;
+
+    // Aggiorna lo stile dei pulsanti
+    document.querySelectorAll('.title-ruler').forEach(el => {
+        rulerMode ? el.classList.add('active') : el.classList.remove('active');
+    });
+
+    if (!rulerMode) {
+        rulerPrice = null;
+        // Rimuove completamente tutte le linee ruler
+        Object.keys(rulerLines).forEach(key => {
+            if (rulerLines[key]) {
+                if (key === "fullscreen" && fullscreenChart) {
+                    fullscreenChart.series.removePriceLine(rulerLines[key]);
+                } else if (candleSeries[key]) {
+                    candleSeries[key].removePriceLine(rulerLines[key]);
+                }
+            }
+            delete rulerLines[key];
+        });
+    }
+
+    syncHorizLines();
+    updateRulerPercentage();
 }
 
 function updateRulerPercentage() {
@@ -209,7 +230,7 @@ function createBollinger(chart, klines, period, stdDev) {
     return { middle: {series: mid, data: midData}, upper: {series: up, data: upData}, lower: {series: low, data: lowData} };
 }
 
-// ==================== CHART CREATION (con rightOffset) ====================
+// ==================== CHART CREATION ====================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -233,8 +254,8 @@ async function createChart(containerId) {
         timeScale: { 
             timeVisible: true, 
             tickMarkFormatter: getTimeFormatter(interval),
-            rightOffset: 12,        // ← SPAZIO A DESTRA
-            barSpacing: 6,
+            rightOffset: 2,
+            barSpacing: 8,
             lockVisibleTimeRangeOnResize: true 
         },
         rightPriceScale: { borderColor: '#222' },
@@ -267,10 +288,13 @@ async function createChart(containerId) {
     chart.subscribeClick(p => {
         if (p?.point) {
             const price = series.coordinateToPrice(p.point.y);
-            if (rulerMode) rulerPrice = price;
-            else activeHorizPrice = price;
+            if (rulerMode) {
+                rulerPrice = price;
+            } else {
+                activeHorizPrice = price;
+                saveHorizIfFavorite();
+            }
             syncHorizLines();
-            if (!rulerMode) saveHorizIfFavorite();
         }
     });
 
@@ -296,7 +320,7 @@ async function loadAllCharts(symbol) {
     });
 }
 
-// ==================== FULLSCREEN (con rightOffset) ====================
+// ==================== FULLSCREEN ====================
 function openFullscreen(containerId, tfLabel) {
     const overlay = document.getElementById("fullscreen-overlay");
     const fsDiv = document.getElementById("fullscreen-chart");
@@ -311,8 +335,8 @@ function openFullscreen(containerId, tfLabel) {
         timeScale: { 
             timeVisible: true, 
             tickMarkFormatter: getTimeFormatter(customIntervals[containerId]),
-            rightOffset: 12,      // ← anche in fullscreen
-            barSpacing: 6 
+            rightOffset: 2,
+            barSpacing: 8 
         },
         rightPriceScale: { borderColor: '#222' },
         width: window.innerWidth,
@@ -342,7 +366,8 @@ function openFullscreen(containerId, tfLabel) {
     newChart.subscribeClick(p => {
         if (p?.point) {
             const price = newSeries.coordinateToPrice(p.point.y);
-            if (rulerMode) rulerPrice = price; else activeHorizPrice = price;
+            if (rulerMode) rulerPrice = price;
+            else activeHorizPrice = price;
             syncHorizLines();
             if (!rulerMode) saveHorizIfFavorite();
         }
@@ -366,24 +391,35 @@ function closeFullscreen() {
     fullscreenActive = false;
     fullscreenChart = null;
     fullscreenContainerId = null;
+    delete rulerLines["fullscreen"];
 }
 
-// ==================== DATA FETCHING ====================
+// ==================== DATA FETCHING (con fix Binance) ====================
 async function fetchKlines(symbol, interval, limit = 500) {
+    let cleanInterval = interval;
+    if (currentExchange === "binance" && interval === "D") cleanInterval = "1d";
+
     const upSymbol = symbol.toUpperCase();
+
     let baseUrl = currentExchange === "bybit" 
         ? `https://api.bybit.com/v5/market/kline?category=linear&symbol=${upSymbol}&interval=${interval}&limit=${limit}`
-        : `https://fapi.binance.com/fapi/v1/klines?symbol=${upSymbol}&interval=${interval}&limit=${limit}`;
+        : `https://fapi.binance.com/fapi/v1/klines?symbol=${upSymbol}&interval=${cleanInterval}&limit=${limit}`;
 
     try {
         const res = await fetch(baseUrl);
         if (!res.ok) return [];
         const data = await res.json();
         let raw = currentExchange === "bybit" ? (data.result?.list || []) : data;
-        return raw.map(c => ({
-            time: Number(c[0])/1000,
-            open: Number(c[1]), high: Number(c[2]), low: Number(c[3]), close: Number(c[4])
-        })).reverse();
+
+        const formatted = raw.map(c => ({
+            time: Number(c[0]) / 1000,
+            open: Number(c[1]),
+            high: Number(c[2]),
+            low: Number(c[3]),
+            close: Number(c[4])
+        }));
+
+        return currentExchange === "bybit" ? formatted.reverse() : formatted;
     } catch (e) {
         console.error("Klines error", e);
         return [];
@@ -416,27 +452,24 @@ async function fetchPairs() {
             s: (p.symbol || p.s).toUpperCase(),
             lp: parseFloat(p.lastPrice || p.last || 0),
             pc: parseFloat(p.price24hPcnt || p.priceChangePercent || 0) * (currentExchange === "bybit" ? 100 : 1),
-            v: parseFloat(p.volume24h || p.quoteVolume || p.turnover24h || 0)   // quoteVolume = volume in USDT
+            v: currentExchange === "bybit" 
+                ? parseFloat(p.turnover24h || 0)
+                : parseFloat(p.quoteVolume || 0)
         }));
 
         populateList(currentSort);
     } catch (e) { console.error("List fetch error", e); }
 }
 
-// ==================== POPULATE LIST ====================
 function populateList(sortType) {
     const list = document.getElementById('pairs-list');
     if (!list) return;
     const currentScroll = list.scrollTop;
 
     let sorted = [...allPairsData];
-    if (sortType === "volume") {
-        sorted.sort((a, b) => b.v - a.v);           // Volume decrescente
-    } else if (sortType === "gainers") {
-        sorted.sort((a, b) => b.pc - a.pc);
-    } else if (sortType === "losers") {
-        sorted.sort((a, b) => a.pc - b.pc);
-    }
+    if (sortType === "volume") sorted.sort((a, b) => b.v - a.v);
+    else if (sortType === "gainers") sorted.sort((a, b) => b.pc - a.pc);
+    else if (sortType === "losers") sorted.sort((a, b) => a.pc - b.pc);
 
     const favs = sorted.filter(p => favorites.includes(p.s));
     const others = sorted.filter(p => !favorites.includes(p.s));
@@ -467,7 +500,6 @@ function populateList(sortType) {
     list.scrollTop = currentScroll;
 }
 
-// ==================== ALERT SETUP ====================
 function openAlertSetup() {
     const panel = document.getElementById('alert-setup');
     const input = document.getElementById('alert-price-input');
@@ -539,7 +571,7 @@ async function updateLive() {
     }
 }
 
-// ==================== EVENT LISTENERS ====================
+// ==================== EVENT LISTENERS & RESIZE ====================
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exchange-select').addEventListener('change', async e => {
         currentExchange = e.target.value;
@@ -650,7 +682,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ==================== RESIZE ====================
 window.addEventListener('resize', () => {
     setRealViewportHeight();
     Object.keys(charts).forEach(id => {
@@ -664,7 +695,6 @@ window.addEventListener('resize', () => {
 
 window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 300));
 
-// ==================== ONLOAD ====================
 window.onload = async () => {
     setRealViewportHeight();
 
@@ -684,7 +714,6 @@ window.onload = async () => {
     setInterval(fetchPairs, 5000);
 };
 
-// Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 }
