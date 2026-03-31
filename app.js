@@ -22,7 +22,6 @@ let fullscreenChart = null;
 let fullscreenContainerId = null;
 
 let lastFetchTimes = {};
-let listScrollPosition = 0;
 
 let emaPeriods = [5, 10, 60, 223];
 let emaEnabled = true;
@@ -34,7 +33,6 @@ let symbolPricePrecision = 2;
 let favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
 let savedHorizPrices = JSON.parse(localStorage.getItem('favoriteHorizPrices') || '{}');
 let alertPrices = JSON.parse(localStorage.getItem('alertPrices') || '{}');
-let syncPrices = JSON.parse(localStorage.getItem('syncPrices') || '{}');
 
 let customIntervals = { "chart-5m": "5", "chart-30m": "30", "chart-4h": "240", "chart-1d": "D" };
 let customLabels = { "1": "1m", "3": "3m", "5": "5m", "15": "15m", "30": "30m", "60": "1h", "240": "4h", "D": "1d" };
@@ -50,8 +48,6 @@ const SERVER_URL = "https://srazu-bot.onrender.com";
 let deviceId = localStorage.getItem('deviceId') || crypto.randomUUID();
 localStorage.setItem('deviceId', deviceId);
 
-const visibleBarsCount = 38;
-const spaceBarsCount = 5;
 const EMA_COLORS = ["#FFD700", "#FF9800", "#40C4FF", "#E040FB"];
 const BB_COLORS = { middle: "#FFFF00", upper: "#888888", lower: "#888888" };
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -109,13 +105,10 @@ function saveHorizIfFavorite() {
     if (favorites.includes(currentSymbol)) {
         if (activeHorizPrice !== null) {
             savedHorizPrices[currentSymbol] = activeHorizPrice;
-            syncPrices[currentSymbol] = activeHorizPrice;
         } else {
             delete savedHorizPrices[currentSymbol];
-            delete syncPrices[currentSymbol];
         }
         localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
-        localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     }
 }
 
@@ -124,7 +117,6 @@ function toggleFavorite(symbol) {
     if (wasFavorite) {
         favorites = favorites.filter(s => s !== symbol);
         delete savedHorizPrices[symbol];
-        delete syncPrices[symbol];
         if (alertPrices[symbol] !== undefined) delete alertPrices[symbol];
     } else {
         favorites.push(symbol);
@@ -132,8 +124,8 @@ function toggleFavorite(symbol) {
     }
     localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
     localStorage.setItem('favoriteHorizPrices', JSON.stringify(savedHorizPrices));
-    localStorage.setItem('syncPrices', JSON.stringify(syncPrices));
     populateList(currentSort);
+
     if (wasFavorite && symbol === currentSymbol) {
         activeHorizPrice = null;
         rulerPrice = null;
@@ -144,11 +136,25 @@ function toggleFavorite(symbol) {
 function updatePriceLineOnSeries(series, key) {
     if (priceLines[key]) { series.removePriceLine(priceLines[key]); delete priceLines[key]; }
     if (activeHorizPrice == null) return;
+
     const line = series.createPriceLine({
-        price: activeHorizPrice, color: "#FFFF00", lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid,
-        axisLabelVisible: true, axisLabelColor: "#FFFF00", axisLabelBackgroundColor: "#161a25", title: "", draggable: true
+        price: activeHorizPrice,
+        color: "#FFFF00",
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true,
+        axisLabelColor: "#FFFF00",
+        axisLabelBackgroundColor: "#161a25",
+        title: "",
+        draggable: true
     });
-    line.applyOptions({ onDrag: l => { activeHorizPrice = l.price; syncHorizLines(); saveHorizIfFavorite(); } });
+    line.applyOptions({
+        onDrag: l => {
+            activeHorizPrice = l.price;
+            syncHorizLines();
+            saveHorizIfFavorite();
+        }
+    });
     priceLines[key] = line;
 }
 
@@ -156,16 +162,24 @@ function updateAlertLineOnSeries(series, key) {
     if (alertLines[key]) { series.removePriceLine(alertLines[key]); delete alertLines[key]; }
     const alertPrice = alertPrices[currentSymbol];
     if (alertPrice == null) return;
+
     const line = series.createPriceLine({
-        price: alertPrice, color: "#FFD700", lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: false, title: "", draggable: false
+        price: alertPrice,
+        color: "#FFD700",
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: false,
+        title: "",
+        draggable: false
     });
     alertLines[key] = line;
 }
 
 function toggleRulerMode() {
     rulerMode = !rulerMode;
-    document.querySelectorAll('.title-ruler').forEach(el => rulerMode ? el.classList.add('active') : el.classList.remove('active'));
+    document.querySelectorAll('.title-ruler').forEach(el => {
+        rulerMode ? el.classList.add('active') : el.classList.remove('active');
+    });
     if (!rulerMode) rulerPrice = null;
     syncHorizLines();
 }
@@ -173,30 +187,34 @@ function toggleRulerMode() {
 function updateRulerLineOnSeries(series, key) {
     if (rulerLines[key]) { series.removePriceLine(rulerLines[key]); delete rulerLines[key]; }
     if (rulerPrice === null) return;
+
     const line = series.createPriceLine({
-        price: rulerPrice, color: "#00FF00", lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: true, axisLabelColor: "#00FF00", axisLabelBackgroundColor: "#161a25", title: "", draggable: false
+        price: rulerPrice,
+        color: "#00FF00",
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true,
+        axisLabelColor: "#00FF00",
+        axisLabelBackgroundColor: "#161a25",
+        title: "",
+        draggable: false
     });
     rulerLines[key] = line;
 }
 
 function updateRulerPercentage() {
-    const pctElements = document.querySelectorAll('.title-pct');
+    const text = (rulerMode && rulerPrice !== null && activeHorizPrice !== null)
+        ? `${((rulerPrice - activeHorizPrice) / activeHorizPrice * 100).toFixed(2)}%`.replace(/^-/, '–')
+        : '';
+
+    document.querySelectorAll('.title-pct').forEach(el => el.textContent = text);
     const fsPct = document.querySelector('#fullscreen-title .title-pct');
-    if (rulerMode && rulerPrice !== null && activeHorizPrice !== null) {
-        const diff = ((rulerPrice - activeHorizPrice) / activeHorizPrice * 100);
-        const text = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)}%`;
-        pctElements.forEach(el => el.textContent = text);
-        if (fsPct) fsPct.textContent = text;
-    } else {
-        pctElements.forEach(el => el.textContent = '');
-        if (fsPct) fsPct.textContent = '';
-    }
+    if (fsPct) fsPct.textContent = text;
 }
 
-// ==================== INDICATORS (createEMA + createBollinger) ====================
+// ==================== INDICATORS ====================
 function createEMA(emaArr, chart, klines, period, color) {
-    const series = chart.addLineSeries({ color: color, lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
+    const series = chart.addLineSeries({ color, lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false });
     let data = [];
     let lastEma = klines[0].close;
     for (let i = 0; i < klines.length; i++) {
@@ -209,7 +227,7 @@ function createEMA(emaArr, chart, klines, period, color) {
 
 function createBollinger(chart, klines, period, stdDev) {
     const mid = chart.addLineSeries({ color: BB_COLORS.middle, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false });
-    const up = chart.addLineSeries({ color: BB_COLORS.upper, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+    const up  = chart.addLineSeries({ color: BB_COLORS.upper,  lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
     const low = chart.addLineSeries({ color: BB_COLORS.lower, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
 
     let midData = [], upData = [], lowData = [];
@@ -221,15 +239,19 @@ function createBollinger(chart, klines, period, stdDev) {
         for (let val of closes) variance += Math.pow(val - sma, 2);
         const dev = Math.sqrt(variance / period) * stdDev;
         const time = klines[i].time;
+
         midData.push({ time, value: sma });
         upData.push({ time, value: sma + dev });
         lowData.push({ time, value: sma - dev });
     }
-    mid.setData(midData); up.setData(upData); low.setData(lowData);
-    return { 
-        middle: { series: mid, data: midData }, 
-        upper: { series: up, data: upData }, 
-        lower: { series: low, data: lowData } 
+    mid.setData(midData);
+    up.setData(upData);
+    low.setData(lowData);
+
+    return {
+        middle: { series: mid, data: midData },
+        upper:  { series: up,  data: upData },
+        lower:  { series: low, data: lowData }
     };
 }
 
@@ -254,7 +276,11 @@ async function createChart(containerId) {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
         grid: { horzLines: { color: '#222' }, vertLines: { color: '#222' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        timeScale: { timeVisible: true, tickMarkFormatter: getTimeFormatter(interval), lockVisibleTimeRangeOnResize: true },
+        timeScale: { 
+            timeVisible: true, 
+            tickMarkFormatter: getTimeFormatter(interval),
+            lockVisibleTimeRangeOnResize: true 
+        },
         rightPriceScale: { borderColor: '#222' },
         width: container.clientWidth,
         height: container.clientHeight
@@ -262,9 +288,12 @@ async function createChart(containerId) {
 
     const series = chart.addCandlestickSeries({
         priceFormat: { type: "price", precision: symbolPricePrecision, minMove: 10 ** -symbolPricePrecision },
-        upColor: '#ffffff', downColor: '#0051D4',
-        wickUpColor: '#cccccc', wickDownColor: '#0051D4',
-        borderVisible: false, wickVisible: true
+        upColor: '#ffffff',
+        downColor: '#0051D4',
+        wickUpColor: '#cccccc',
+        wickDownColor: '#0051D4',
+        borderVisible: false,
+        wickVisible: true
     });
 
     series.setData(klines);
@@ -308,6 +337,7 @@ async function loadAllCharts(symbol) {
     await Promise.all(promises);
     syncHorizLines();
 
+    // Resize iniziale
     Object.keys(charts).forEach(id => {
         const el = document.getElementById(id);
         if (charts[id] && el) charts[id].resize(el.clientWidth, el.clientHeight);
@@ -320,8 +350,7 @@ function openFullscreen(containerId, tfLabel) {
     const fsDiv = document.getElementById("fullscreen-chart");
     fsDiv.innerHTML = "";
 
-    const fsTitle = document.getElementById("fullscreen-title");
-    fsTitle.querySelector('.title-text').textContent = `${currentSymbol} - ${tfLabel}`;
+    document.getElementById("fullscreen-title").querySelector('.title-text').textContent = `${currentSymbol} - ${tfLabel}`;
 
     const newChart = LightweightCharts.createChart(fsDiv, {
         layout: { background: { type: 'solid', color: '#0f1117' }, textColor: '#d1d4dc' },
@@ -356,7 +385,8 @@ function openFullscreen(containerId, tfLabel) {
     newChart.subscribeClick(p => {
         if (p?.point) {
             const price = newSeries.coordinateToPrice(p.point.y);
-            if (rulerMode) rulerPrice = price; else activeHorizPrice = price;
+            if (rulerMode) rulerPrice = price;
+            else activeHorizPrice = price;
             syncHorizLines();
             if (!rulerMode) saveHorizIfFavorite();
         }
@@ -409,8 +439,9 @@ async function fetchLatestCandle(symbol, interval) {
     const now = Date.now();
     if (lastFetchTimes[key] && now - lastFetchTimes[key] < 1800) return null;
     lastFetchTimes[key] = now;
+
     const k = await fetchKlines(symbol, interval, 2);
-    return k.length ? k[k.length-1] : null;
+    return k.length ? k[k.length - 1] : null;
 }
 
 async function fetchPairs() {
@@ -422,7 +453,7 @@ async function fetchPairs() {
         const res = await fetch(url);
         const data = await res.json();
         let raw = currentExchange === "bybit" ? data.result.list : data;
-        
+
         allPairsData = raw.filter(p => (p.symbol || p.s).endsWith("USDT")).map(p => ({
             s: p.symbol || p.s,
             lp: p.lastPrice || p.last,
@@ -442,7 +473,7 @@ function populateList(sortType) {
     let sorted = [...allPairsData];
     if (sortType === "volume") sorted.sort((a, b) => b.v - a.v);
     else if (sortType === "gainers") sorted.sort((a, b) => b.pc - a.pc);
-    else if (sortType === "losers") sorted.sort((a, b) => a.pc - a.pc);
+    else if (sortType === "losers") sorted.sort((a, b) => a.pc - b.pc);   // ← CORREZIONE QUI
 
     const favs = sorted.filter(p => favorites.includes(p.s));
     const others = sorted.filter(p => !favorites.includes(p.s));
@@ -450,7 +481,7 @@ function populateList(sortType) {
 
     list.innerHTML = final.map(p => {
         const isFav = favorites.includes(p.s);
-        const change = parseFloat(p.pc).toFixed(2);
+        const change = parseFloat(p.pc || 0).toFixed(2);
         const color = change >= 0 ? "var(--green)" : "var(--red)";
         const activeClass = p.s === currentSymbol ? "active" : "";
 
@@ -469,19 +500,21 @@ function populateList(sortType) {
             </div>
         `;
     }).join('');
-    
+
     list.scrollTop = currentScroll;
 }
 
-// ==================== ALERT SETUP ====================
+// ==================== ALERT ====================
 function openAlertSetup() {
     const panel = document.getElementById('alert-setup');
     const input = document.getElementById('alert-price-input');
     panel.style.display = "block";
-    input.value = activeHorizPrice ? activeHorizPrice.toFixed(symbolPricePrecision) : (seriesData["chart-5m"]?.at(-1)?.close || 0).toFixed(symbolPricePrecision);
+    input.value = activeHorizPrice 
+        ? activeHorizPrice.toFixed(symbolPricePrecision) 
+        : (seriesData["chart-5m"]?.at(-1)?.close || 0).toFixed(symbolPricePrecision);
 }
 
-// ==================== UPDATELIVE (CON FULLSCREEN FIX) ====================
+// ==================== UPDATELIVE ====================
 async function updateLive() {
     for (const id in customIntervals) {
         const chart = charts[id];
@@ -511,16 +544,17 @@ async function updateLive() {
                 });
             }
 
-            if (bbEnabled && bbSeries[id]) {
+            if (bbEnabled && bbSeries[id] && seriesData[id].length >= bbPeriod) {
                 const slice = seriesData[id].slice(-bbPeriod);
                 const closes = slice.map(c => c.close);
-                const sma = closes.reduce((a,b)=>a+b,0)/bbPeriod;
+                const sma = closes.reduce((a,b) => a + b, 0) / bbPeriod;
                 let variance = 0;
-                for (let val of closes) variance += Math.pow(val-sma,2);
-                const dev = Math.sqrt(variance/bbPeriod) * bbDev;
-                bbSeries[id].middle.series.update({time:latest.time, value:sma});
-                bbSeries[id].upper.series.update({time:latest.time, value:sma+dev});
-                bbSeries[id].lower.series.update({time:latest.time, value:sma-dev});
+                for (let val of closes) variance += Math.pow(val - sma, 2);
+                const dev = Math.sqrt(variance / bbPeriod) * bbDev;
+
+                bbSeries[id].middle.series.update({time: latest.time, value: sma});
+                bbSeries[id].upper.series.update({time: latest.time, value: sma + dev});
+                bbSeries[id].lower.series.update({time: latest.time, value: sma - dev});
             }
 
             const isUserAtRightEdge = currentRange && Math.abs(currentRange.to - currentDataLength) < 3;
@@ -528,31 +562,26 @@ async function updateLive() {
         }
     }
 
-    // FULLSCREEN UPDATE (usa dati già in memoria)
+    // Fullscreen update (senza nuova chiamata API)
     if (fullscreenActive && fullscreenChart && fullscreenContainerId) {
-        const fsChart = fullscreenChart.chart;
-        const fsSeries = fullscreenChart.series;
-        const currentRange = fsChart.timeScale().getVisibleLogicalRange();
-        const currentDataLength = seriesData[fullscreenContainerId] ? seriesData[fullscreenContainerId].length : 0;
-        const latest = seriesData[fullscreenContainerId] ? seriesData[fullscreenContainerId].at(-1) : null;
-
-        if (latest) {
-            fsSeries.update(latest);
-            const isUserAtRightEdge = currentRange && Math.abs(currentRange.to - currentDataLength) < 3;
-            if (isUserAtRightEdge) fsChart.timeScale().scrollToRealTime();
-        }
+        const latest = seriesData[fullscreenContainerId]?.at(-1);
+        if (latest) fullscreenChart.series.update(latest);
     }
 
-    // BTC color
+    // BTC title color (ottimizzato)
     const btc = await fetchLatestCandle("BTCUSDT", "30");
     if (btc) {
         const cls = btc.close > btc.open ? "green" : (btc.close < btc.open ? "red" : "neutral");
-        document.querySelectorAll('.chart-title').forEach(t => t.className = `chart-title ${cls}`);
+        document.querySelectorAll('.chart-title').forEach(t => {
+            t.classList.remove('green', 'red', 'neutral');
+            t.classList.add(cls);
+        });
     }
 }
 
 // ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', () => {
+    // Exchange
     document.getElementById('exchange-select').addEventListener('change', async e => {
         currentExchange = e.target.value;
         localStorage.setItem('currentExchange', currentExchange);
@@ -562,24 +591,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (allPairsData.length) await loadAllCharts(allPairsData[0].s);
     });
 
+    // Sort
     document.getElementById('sort-select').addEventListener('change', e => {
         currentSort = e.target.value;
         populateList(currentSort);
     });
 
+    // Modals
     const settingsModal = document.getElementById('settings-modal');
     const infoModal = document.getElementById('info-modal');
-
     document.getElementById('settings-btn').onclick = () => settingsModal.style.display = "block";
     document.getElementById('info-btn').onclick = () => infoModal.style.display = "block";
 
-    document.querySelectorAll('.close').forEach(b => b.onclick = () => { settingsModal.style.display="none"; infoModal.style.display="none"; });
+    document.querySelectorAll('.close').forEach(b => b.onclick = () => {
+        settingsModal.style.display = "none";
+        infoModal.style.display = "none";
+    });
 
     window.onclick = e => {
         if (e.target === settingsModal) settingsModal.style.display = "none";
         if (e.target === infoModal) infoModal.style.display = "none";
     };
 
+    // Toggles
     document.getElementById('toggle-ema').onclick = function() {
         emaEnabled = !emaEnabled;
         this.textContent = emaEnabled ? "EMA: On" : "EMA: Off";
@@ -594,11 +628,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
     };
 
+    // Apply settings
     document.getElementById('apply-settings').onclick = async () => {
-        emaPeriods = [parseInt(document.getElementById('ema1').value)||5, parseInt(document.getElementById('ema2').value)||10,
-                      parseInt(document.getElementById('ema3').value)||60, parseInt(document.getElementById('ema4').value)||223];
-        bbPeriod = parseInt(document.getElementById('bb-period').value)||20;
-        bbDev = parseFloat(document.getElementById('bb-dev').value)||2;
+        emaPeriods = [
+            parseInt(document.getElementById('ema1').value) || 5,
+            parseInt(document.getElementById('ema2').value) || 10,
+            parseInt(document.getElementById('ema3').value) || 60,
+            parseInt(document.getElementById('ema4').value) || 223
+        ];
+        bbPeriod = parseInt(document.getElementById('bb-period').value) || 20;
+        bbDev = parseFloat(document.getElementById('bb-dev').value) || 2;
 
         customIntervals = {
             "chart-5m": document.getElementById('tf-chart-5m').value,
@@ -619,6 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('open-botfather-btn').onclick = () => window.open('https://t.me/BotFather', '_blank');
 
+    // Alert panel
     document.getElementById('close-alert-setup').onclick = () => document.getElementById('alert-setup').style.display = "none";
 
     document.getElementById('set-local-alert').onclick = () => {
@@ -630,9 +670,10 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('alert-setup').style.display = "none";
 
             fetch(`${SERVER_URL}/set_alert`, {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({device_id: deviceId, exchange: currentExchange, symbol: currentSymbol, price: val, token: personalTGToken, chatId: personalTGChatID})
-            }).catch(()=>{});
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ device_id: deviceId, exchange: currentExchange, symbol: currentSymbol, price: val, token: personalTGToken, chatId: personalTGChatID })
+            }).catch(() => {});
         }
     };
 
@@ -655,6 +696,24 @@ document.addEventListener('DOMContentLoaded', () => {
             openFullscreen(container, label);
         };
     });
+});
+
+// ==================== RESIZE (importante su mobile) ====================
+window.addEventListener('resize', () => {
+    setRealViewportHeight();
+    Object.keys(charts).forEach(id => {
+        const container = document.getElementById(id);
+        if (charts[id] && container) {
+            charts[id].resize(container.clientWidth, container.clientHeight);
+        }
+    });
+    if (fullscreenActive && fullscreenChart) {
+        fullscreenChart.chart.resize(window.innerWidth, window.innerHeight - 60);
+    }
+});
+
+window.addEventListener('orientationchange', () => {
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
 });
 
 // ==================== ONLOAD ====================
