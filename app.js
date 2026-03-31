@@ -187,7 +187,7 @@ function updateRulerPercentage() {
     document.querySelectorAll('.title-pct').forEach(el => el.textContent = text);
 }
 
-// ==================== INDICATORS (PULITI) ====================
+// ==================== INDICATORS (PULITI - SENZA VALORI A LATO) ====================
 function createEMA(emaArr, chart, klines, period, color) {
     const series = chart.addLineSeries({ 
         color, 
@@ -253,7 +253,7 @@ async function createChart(containerId) {
             timeVisible: true, 
             tickMarkFormatter: getTimeFormatter(interval),
             rightOffset: 5,
-            barSpacing: 15,
+            barSpacing: 15,                    // Candele più larghe
             lockVisibleTimeRangeOnResize: true 
         },
         rightPriceScale: { borderColor: '#222' },
@@ -276,7 +276,7 @@ async function createChart(containerId) {
     if (emaEnabled) emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
     if (bbEnabled && klines.length >= bbPeriod) bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
 
-    // Super Zoom: 40 candele grandi
+    // Super Zoom: solo ultime 40 candele
     chart.timeScale().setVisibleLogicalRange({
         from: Math.max(0, klines.length - 40),
         to: klines.length + 2
@@ -403,7 +403,7 @@ async function fetchKlines(symbol, interval, limit = 500) {
         if (interval === "D") cleanInterval = "1d";
         else if (interval === "240") cleanInterval = "4h";
         else if (interval === "60") cleanInterval = "1h";
-        else if (interval.match(/^\d+$/)) cleanInterval = interval + "m";
+        else if (!isNaN(parseInt(interval))) cleanInterval = interval + "m";
     }
 
     const upSymbol = symbol.toUpperCase();
@@ -508,75 +508,6 @@ function populateList(sortType) {
     list.scrollTop = currentScroll;
 }
 
-// ==================== RICERCA PAIRS (Lente di ingrandimento) ====================
-let searchInput, searchIcon;
-
-function initSearch() {
-    searchIcon = document.getElementById('search-icon');
-    searchInput = document.getElementById('pair-search-input');
-
-    if (!searchIcon || !searchInput) return;
-
-    searchIcon.onclick = (e) => {
-        e.stopPropagation();
-        if (searchInput.style.display === 'none' || searchInput.style.display === '') {
-            searchInput.style.display = 'block';
-            searchInput.focus();
-            searchIcon.style.opacity = '1';
-        } else {
-            searchInput.style.display = 'none';
-            searchInput.value = '';
-            searchIcon.style.opacity = '0.7';
-            populateList(currentSort);
-        }
-    };
-
-    document.addEventListener('click', (e) => {
-        if (e.target !== searchInput && e.target !== searchIcon) {
-            searchInput.style.display = 'none';
-            searchIcon.style.opacity = '0.7';
-        }
-    });
-
-    searchInput.oninput = (e) => {
-        const term = e.target.value.toUpperCase().trim();
-        if (!term) {
-            populateList(currentSort);
-            return;
-        }
-
-        const filtered = allPairsData.filter(p => p.s.includes(term));
-
-        const favs = filtered.filter(p => favorites.includes(p.s));
-        const others = filtered.filter(p => !favorites.includes(p.s));
-        const final = [...favs, ...others];
-
-        const list = document.getElementById('pairs-list');
-        list.innerHTML = final.map(p => {
-            const isFav = favorites.includes(p.s);
-            const change = parseFloat(p.pc || 0).toFixed(2);
-            const color = change >= 0 ? "#00ff85" : "#ff3b3b";
-            const activeClass = p.s === currentSymbol ? "active" : "";
-
-            return `
-                <div class="pair-item ${activeClass}" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #222;cursor:pointer;" onclick="loadAllCharts('${p.s}')">
-                    <div style="display:flex;flex-direction:column;">
-                        <span style="font-weight:bold;color:white;font-size:15px;">${getDisplaySymbol(p.s)}</span>
-                        <span style="color:#aaa;font-size:13px;">${formatPrice(p.lp)}</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:12px;">
-                        <span style="color:${color};font-weight:bold;font-size:14px;">${change >= 0 ? '+' : ''}${change}%</span>
-                        <span class="star-icon ${isFav ? 'active' : ''}" style="color:${isFav?'#ffd700':'#555'};font-size:20px;" onclick="event.stopPropagation();toggleFavorite('${p.s}')">
-                            ${isFav ? '★' : '☆'}
-                        </span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    };
-}
-
-// ==================== ALERT SETUP ====================
 function openAlertSetup() {
     const panel = document.getElementById('alert-setup');
     const input = document.getElementById('alert-price-input');
@@ -585,6 +516,23 @@ function openAlertSetup() {
         ? activeHorizPrice.toFixed(symbolPricePrecision) 
         : (seriesData["chart-5m"]?.at(-1)?.close || 0).toFixed(symbolPricePrecision);
 }
+
+// ==================== ALERT BUTTON ====================
+document.getElementById('set-local-alert').onclick = () => {
+    const val = parseFloat(document.getElementById('alert-price-input').value);
+    if (!isNaN(val)) {
+        alertPrices[currentSymbol] = val;
+        localStorage.setItem('alertPrices', JSON.stringify(alertPrices));
+        syncHorizLines();
+        document.getElementById('alert-setup').style.display = "none";
+
+        fetch(`${SERVER_URL}/set_alert`, {
+            method: 'POST', 
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({device_id:deviceId, exchange:currentExchange, symbol:currentSymbol, price:val, token:personalTGToken, chatId:personalTGChatID})
+        }).catch(() => console.log("Server offline - alert locale salvato"));
+    }
+};
 
 // ==================== UPDATELIVE ====================
 async function updateLive() {
@@ -650,7 +598,6 @@ async function updateLive() {
 
 // ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Exchange change
     document.getElementById('exchange-select').addEventListener('change', async e => {
         currentExchange = e.target.value;
         localStorage.setItem('currentExchange', currentExchange);
@@ -660,13 +607,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (allPairsData.length > 0) await loadAllCharts(allPairsData[0].s);
     });
 
-    // Sort
     document.getElementById('sort-select').addEventListener('change', e => {
         currentSort = e.target.value;
         populateList(currentSort);
     });
 
-    // Modals
     const settingsModal = document.getElementById('settings-modal');
     const infoModal = document.getElementById('info-modal');
     document.getElementById('settings-btn').onclick = () => settingsModal.style.display = "block";
@@ -682,7 +627,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === infoModal) infoModal.style.display = "none";
     };
 
-    // Toggles EMA/BB
     document.getElementById('toggle-ema').onclick = function() {
         emaEnabled = !emaEnabled;
         this.textContent = emaEnabled ? "EMA: On" : "EMA: Off";
@@ -697,7 +641,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("bb-periods-section").style.display = bbEnabled ? "block" : "none";
     };
 
-    // Apply settings
     document.getElementById('apply-settings').onclick = async () => {
         emaPeriods = [
             parseInt(document.getElementById('ema1').value)||5,
@@ -747,9 +690,6 @@ document.addEventListener('DOMContentLoaded', () => {
             openFullscreen(container, label);
         };
     });
-
-    // Inizializza la ricerca
-    initSearch();
 });
 
 // ==================== RESIZE ====================
@@ -777,6 +717,7 @@ window.onload = async () => {
     const savedInt = localStorage.getItem('customIntervals');
     if (savedInt) customIntervals = JSON.parse(savedInt);
 
+    // Ricorda l'ultimo exchange usato
     currentExchange = localStorage.getItem('currentExchange') || "bybit";
     document.getElementById("exchange-select").value = currentExchange;
 
