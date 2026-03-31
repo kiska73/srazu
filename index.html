@@ -64,24 +64,18 @@
         </div>
 
         <div id="pairs">
-            <div class="pairs-header" style="position: relative;">
-                <div class="header-left">
+            <div class="pairs-header">
+                <!-- Riga 1: Exchange + Ricerca -->
+                <div class="header-top">
                     <select id="exchange-select">
                         <option value="bybit">Bybit</option>
                         <option value="binance">Binance</option>
                     </select>
-                    <span>Perpetual</span>
-                    <span id="info-btn" style="font-size:19px; margin-left:8px; cursor:pointer;">ℹ️</span>
+                    <span id="search-icon" style="font-size:20px; cursor:pointer; padding:4px;">🔍</span>
                 </div>
 
-                <!-- LENTE DI RICERCA -->
-                <div style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; z-index: 100;">
-                    <input type="text" id="pair-search-input" placeholder="Cerca simbolo..." 
-                           style="display: none; width: 150px; padding: 6px 10px; background: #1f2433; border: 1px solid #444; color: white; border-radius: 4px; font-size: 13px;">
-                    <span id="search-icon" style="font-size: 20px; cursor: pointer; opacity: 0.8; padding: 4px;">🔍</span>
-                </div>
-
-                <div class="header-right">
+                <!-- Riga 2: Sort + Settings -->
+                <div class="header-bottom">
                     <select id="sort-select">
                         <option value="volume">By Volume</option>
                         <option value="gainers">Top Gainers 24h</option>
@@ -158,7 +152,6 @@
         <div class="modal-content">
             <span class="close">×</span>
             <h3>APP INFORMATION</h3>
-            <!-- Il contenuto rimane invariato -->
             <p><strong>- Trade smarter, faster, and clearer – all for free!</strong></p>
             <p><strong>- Real-time market analysis at a glance, perfect for quick trades.</strong></p>
             <p><strong>- Completely free, supported only by a small amount of non-intrusive ads.</strong></p>
