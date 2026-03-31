@@ -6,8 +6,8 @@ let currentExchange = localStorage.getItem('currentExchange') || "bybit";
 let charts = {};
 let candleSeries = {};
 let seriesData = {};
-let emaSeries = {};     // { "chart-5m": [{series, period, last, data}, ...] }
-let bbSeries = {};      // { "chart-5m": {middle, upper, lower} }
+let emaSeries = {};
+let bbSeries = {};
 let lastCandleTime = {};
 
 let priceLines = {};
@@ -87,12 +87,11 @@ function nextEMA(prev, price, period) {
     return price * k + prev * (1 - k);
 }
 
-// ==================== RESET INDICATORS (FIX BUG EMA STRANI) ====================
+// ==================== RESET INDICATORS (FIX EMA STRANI) ====================
 function resetAllSeries(containerId) {
     const chart = charts[containerId];
     if (!chart) return;
 
-    // Rimuovi tutte le serie EMA
     if (emaSeries[containerId]) {
         emaSeries[containerId].forEach(item => {
             if (item.series) chart.removeSeries(item.series);
@@ -100,7 +99,6 @@ function resetAllSeries(containerId) {
         emaSeries[containerId] = [];
     }
 
-    // Rimuovi Bollinger Bands
     if (bbSeries[containerId]) {
         ['middle', 'upper', 'lower'].forEach(key => {
             if (bbSeries[containerId][key]?.series) {
@@ -110,18 +108,17 @@ function resetAllSeries(containerId) {
         delete bbSeries[containerId];
     }
 
-    // Rimuovi linee prezzo
-    if (priceLines[containerId]) {
-        candleSeries[containerId]?.removePriceLine(priceLines[containerId]);
-        delete priceLines[containerId];
+    if (priceLines[containerId]) { 
+        candleSeries[containerId]?.removePriceLine(priceLines[containerId]); 
+        delete priceLines[containerId]; 
     }
-    if (alertLines[containerId]) {
-        candleSeries[containerId]?.removePriceLine(alertLines[containerId]);
-        delete alertLines[containerId];
+    if (alertLines[containerId]) { 
+        candleSeries[containerId]?.removePriceLine(alertLines[containerId]); 
+        delete alertLines[containerId]; 
     }
-    if (rulerLines[containerId]) {
-        candleSeries[containerId]?.removePriceLine(rulerLines[containerId]);
-        delete rulerLines[containerId];
+    if (rulerLines[containerId]) { 
+        candleSeries[containerId]?.removePriceLine(rulerLines[containerId]); 
+        delete rulerLines[containerId]; 
     }
 }
 
@@ -132,7 +129,6 @@ function syncHorizLines() {
         updateAlertLineOnSeries(candleSeries[k], k);
         if (rulerMode && rulerPrice !== null) updateRulerLineOnSeries(candleSeries[k], k);
     });
-
     if (fullscreenActive && fullscreenChart) {
         updatePriceLineOnSeries(fullscreenChart.series, "fullscreen");
         updateAlertLineOnSeries(fullscreenChart.series, "fullscreen");
@@ -170,70 +166,33 @@ function toggleFavorite(symbol) {
 }
 
 function updatePriceLineOnSeries(series, key) {
-    if (priceLines[key]) { 
-        series.removePriceLine(priceLines[key]); 
-        delete priceLines[key]; 
-    }
+    if (priceLines[key]) { series.removePriceLine(priceLines[key]); delete priceLines[key]; }
     if (activeHorizPrice == null) return;
-
     const line = series.createPriceLine({
-        price: activeHorizPrice, 
-        color: "#FFFF00", 
-        lineWidth: 1, 
-        lineStyle: LightweightCharts.LineStyle.Solid,
-        axisLabelVisible: true, 
-        axisLabelColor: "#FFFF00", 
-        axisLabelBackgroundColor: "#161a25", 
-        title: "", 
-        draggable: true
+        price: activeHorizPrice, color: "#FFFF00", lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true, axisLabelColor: "#FFFF00", axisLabelBackgroundColor: "#161a25", title: "", draggable: true
     });
-    line.applyOptions({ 
-        onDrag: l => { 
-            activeHorizPrice = l.price; 
-            syncHorizLines(); 
-            saveHorizIfFavorite(); 
-        }
-    });
+    line.applyOptions({ onDrag: l => { activeHorizPrice = l.price; syncHorizLines(); saveHorizIfFavorite(); }});
     priceLines[key] = line;
 }
 
 function updateAlertLineOnSeries(series, key) {
-    if (alertLines[key]) { 
-        series.removePriceLine(alertLines[key]); 
-        delete alertLines[key]; 
-    }
+    if (alertLines[key]) { series.removePriceLine(alertLines[key]); delete alertLines[key]; }
     const alertPrice = alertPrices[currentSymbol];
     if (alertPrice == null) return;
-
     const line = series.createPriceLine({
-        price: alertPrice, 
-        color: "#FFD700", 
-        lineWidth: 1, 
-        lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: false, 
-        title: "", 
-        draggable: false
+        price: alertPrice, color: "#FFD700", lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: false, title: "", draggable: false
     });
     alertLines[key] = line;
 }
 
 function updateRulerLineOnSeries(series, key) {
-    if (rulerLines[key]) { 
-        series.removePriceLine(rulerLines[key]); 
-        delete rulerLines[key]; 
-    }
+    if (rulerLines[key]) { series.removePriceLine(rulerLines[key]); delete rulerLines[key]; }
     if (rulerPrice === null) return;
-
     const line = series.createPriceLine({
-        price: rulerPrice, 
-        color: "#00FF00", 
-        lineWidth: 2, 
-        lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: true, 
-        axisLabelColor: "#00FF00", 
-        axisLabelBackgroundColor: "#161a25", 
-        title: "", 
-        draggable: false
+        price: rulerPrice, color: "#00FF00", lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true, axisLabelColor: "#00FF00", axisLabelBackgroundColor: "#161a25", title: "", draggable: false
     });
     rulerLines[key] = line;
 }
@@ -267,14 +226,10 @@ function updateRulerPercentage() {
 // ==================== INDICATORS ====================
 function createEMA(emaArr, chart, klines, period, color) {
     const series = chart.addLineSeries({ 
-        color, 
-        lineWidth: 1.2, 
-        priceLineVisible: false, 
-        lastValueVisible: false 
+        color, lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false 
     });
     let data = [];
     let lastEma = klines[0].close;
-
     for (let i = 0; i < klines.length; i++) {
         lastEma = nextEMA(lastEma, klines[i].close, period);
         data.push({ time: klines[i].time, value: lastEma });
@@ -298,20 +253,12 @@ function createBollinger(chart, klines, period, stdDev) {
         for (let val of closes) variance += Math.pow(val - sma, 2);
         const dev = Math.sqrt(variance / period) * stdDev;
         const time = klines[i].time;
-
         midData.push({ time, value: sma });
         upData.push({ time, value: sma + dev });
         lowData.push({ time, value: sma - dev });
     }
-    mid.setData(midData);
-    up.setData(upData);
-    low.setData(lowData);
-
-    return { 
-        middle: {series: mid, data: midData}, 
-        upper: {series: up, data: upData}, 
-        lower: {series: low, data: lowData} 
-    };
+    mid.setData(midData); up.setData(upData); low.setData(lowData);
+    return { middle: {series: mid, data: midData}, upper: {series: up, data: upData}, lower: {series: low, data: lowData} };
 }
 
 // ==================== CHART CREATION ====================
@@ -331,7 +278,6 @@ async function createChart(containerId) {
 
     symbolPricePrecision = getPricePrecision(klines.at(-1).close.toString());
 
-    // RESET COMPLETO prima di creare nuove serie
     resetAllSeries(containerId);
 
     const chart = LightweightCharts.createChart(container, {
@@ -352,12 +298,9 @@ async function createChart(containerId) {
 
     const series = chart.addCandlestickSeries({
         priceFormat: { type: "price", precision: symbolPricePrecision, minMove: 10 ** -symbolPricePrecision },
-        upColor: '#ffffff', 
-        downColor: '#0051D4',
-        wickUpColor: '#cccccc', 
-        wickDownColor: '#0051D4',
-        borderVisible: false, 
-        wickVisible: true
+        upColor: '#ffffff', downColor: '#0051D4',
+        wickUpColor: '#cccccc', wickDownColor: '#0051D4',
+        borderVisible: false, wickVisible: true
     });
 
     series.setData(klines);
@@ -365,14 +308,9 @@ async function createChart(containerId) {
     lastCandleTime[containerId] = klines.at(-1).time;
     emaSeries[containerId] = [];
 
-    if (emaEnabled) {
-        emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
-    }
-    if (bbEnabled && klines.length >= bbPeriod) {
-        bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
-    }
+    if (emaEnabled) emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
+    if (bbEnabled && klines.length >= bbPeriod) bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
 
-    // Super Zoom: ultime 40 candele
     chart.timeScale().setVisibleLogicalRange({
         from: Math.max(0, klines.length - 40),
         to: klines.length + 2
@@ -402,27 +340,24 @@ async function createChart(containerId) {
     });
 }
 
-// ==================== LOAD ALL CHARTS ====================
 async function loadAllCharts(symbol) {
     currentSymbol = symbol.toUpperCase();
     activeHorizPrice = savedHorizPrices[currentSymbol] ?? null;
     rulerPrice = null;
 
-    // Reset di tutti i grafici prima di ricaricare
     Object.keys(charts).forEach(id => resetAllSeries(id));
 
     const promises = Object.keys(customIntervals).map(id => createChart(id));
     await Promise.all(promises);
     syncHorizLines();
 
-    // Resize dopo il caricamento
     Object.keys(charts).forEach(id => {
         const el = document.getElementById(id);
         if (charts[id] && el) charts[id].resize(el.clientWidth, el.clientHeight);
     });
 }
 
-// ==================== FULLSCREEN (Versione Pulita) ====================
+// ==================== FULLSCREEN ====================
 function openFullscreen(containerId, tfLabel) {
     const overlay = document.getElementById("fullscreen-overlay");
     const fsDiv = document.getElementById("fullscreen-chart");
@@ -440,10 +375,7 @@ function openFullscreen(containerId, tfLabel) {
             rightOffset: 5,
             barSpacing: 15 
         },
-        rightPriceScale: { 
-            borderColor: '#222',
-            borderVisible: false   // Più pulito in fullscreen
-        },
+        rightPriceScale: { borderColor: '#222', borderVisible: false },
         width: window.innerWidth,
         height: window.innerHeight - 60
     });
@@ -451,27 +383,24 @@ function openFullscreen(containerId, tfLabel) {
     const newSeries = newChart.addCandlestickSeries(candleSeries[containerId].options());
     newSeries.setData(seriesData[containerId] || []);
 
-    // Aggiungi EMA
     if (emaEnabled && emaSeries[containerId]) {
         emaSeries[containerId].forEach((e, i) => {
             const s = newChart.addLineSeries({ 
                 color: EMA_COLORS[i], 
-                lineWidth: 1.2,
-                priceLineVisible: false,
-                lastValueVisible: false
+                lineWidth: 1.2, 
+                priceLineVisible: false, 
+                lastValueVisible: false 
             });
             s.setData(e.data);
         });
     }
-
-    // Aggiungi Bollinger Bands
     if (bbEnabled && bbSeries[containerId]) {
         ['middle','upper','lower'].forEach(key => {
             const s = newChart.addLineSeries({ 
                 color: BB_COLORS[key], 
-                lineWidth: key === 'middle' ? 1.5 : 1,
-                priceLineVisible: false,
-                lastValueVisible: false
+                lineWidth: key==='middle'?1.5:1,
+                priceLineVisible: false, 
+                lastValueVisible: false 
             });
             s.setData(bbSeries[containerId][key].data);
         });
@@ -515,7 +444,6 @@ function closeFullscreen() {
 // ==================== FETCH KLINES ====================
 async function fetchKlines(symbol, interval, limit = 500) {
     let cleanInterval = interval;
-    
     if (currentExchange === "binance") {
         if (interval === "D") cleanInterval = "1d";
         else if (interval === "240") cleanInterval = "4h";
@@ -524,8 +452,7 @@ async function fetchKlines(symbol, interval, limit = 500) {
     }
 
     const upSymbol = symbol.toUpperCase();
-
-    let baseUrl = currentExchange === "bybit" 
+    const baseUrl = currentExchange === "bybit" 
         ? `https://api.bybit.com/v5/market/kline?category=linear&symbol=${upSymbol}&interval=${interval}&limit=${limit}`
         : `https://fapi.binance.com/fapi/v1/klines?symbol=${upSymbol}&interval=${cleanInterval}&limit=${limit}`;
 
@@ -559,32 +486,60 @@ async function fetchLatestCandle(symbol, interval) {
     return k.length ? k[k.length-1] : null;
 }
 
-// ==================== FETCH PAIRS & POPULATE ====================
+// ==================== FETCH PAIRS (BINANCE FIX + BYBIT) ====================
 async function fetchPairs() {
-    let url = currentExchange === "bybit" 
-        ? "https://api.bybit.com/v5/market/tickers?category=linear" 
-        : "https://fapi.binance.com/fapi/v1/ticker/24hr";
+    const listEl = document.getElementById('pairs-list');
+    listEl.innerHTML = "<div class='loading'>Loading active pairs...</div>";
 
     try {
-        const res = await fetch(url);
-        const data = await res.json();
-        let raw = currentExchange === "bybit" ? data.result.list : data;
+        if (currentExchange === "bybit") {
+            const res = await fetch("https://api.bybit.com/v5/market/tickers?category=linear");
+            const data = await res.json();
+            const raw = data.result?.list || [];
 
-        allPairsData = raw.filter(p => {
-            const sym = p.symbol || p.s;
-            return sym && sym.endsWith("USDT");
-        }).map(p => ({
-            s: (p.symbol || p.s).toUpperCase(),
-            lp: parseFloat(p.lastPrice || p.last || 0),
-            pc: parseFloat(p.price24hPcnt || p.priceChangePercent || 0) * (currentExchange === "bybit" ? 100 : 1),
-            v: currentExchange === "bybit" 
-                ? parseFloat(p.turnover24h || 0) 
-                : parseFloat(p.quoteVolume || 0)
-        }));
+            allPairsData = raw
+                .filter(p => p.symbol && p.symbol.endsWith("USDT") && parseFloat(p.turnover24h || 0) > 0)
+                .map(p => ({
+                    s: p.symbol.toUpperCase(),
+                    lp: parseFloat(p.lastPrice || 0),
+                    pc: parseFloat(p.price24hPcnt || 0) * 100,
+                    v: parseFloat(p.turnover24h || 0)
+                }));
+
+        } else { // BINANCE - VERSIONE CORRETTA
+            // 1. Prendi solo simboli attivi da exchangeInfo
+            const infoRes = await fetch("https://fapi.binance.com/fapi/v1/exchangeInfo");
+            const info = await infoRes.json();
+
+            const activeSymbols = new Set(
+                info.symbols
+                    .filter(s => 
+                        s.status === "TRADING" && 
+                        s.quoteAsset === "USDT" &&
+                        s.contractType === "PERPETUAL"
+                    )
+                    .map(s => s.symbol)
+            );
+
+            // 2. Prendi dati prezzo e volume
+            const tickerRes = await fetch("https://fapi.binance.com/fapi/v1/ticker/24hr");
+            const tickers = await tickerRes.json();
+
+            allPairsData = tickers
+                .filter(t => activeSymbols.has(t.symbol) && parseFloat(t.quoteVolume || 0) > 0)
+                .map(t => ({
+                    s: t.symbol,
+                    lp: parseFloat(t.lastPrice || 0),
+                    pc: parseFloat(t.priceChangePercent || 0),
+                    v: parseFloat(t.quoteVolume || 0)
+                }));
+        }
 
         populateList(currentSort);
-    } catch (e) { 
-        console.error("List fetch error", e); 
+    } catch (e) {
+        console.error("Fetch pairs error:", e);
+        listEl.innerHTML = "<div class='loading'>Error loading pairs. Retrying in 5s...</div>";
+        setTimeout(fetchPairs, 5000);
     }
 }
 
@@ -627,7 +582,7 @@ function populateList(sortType) {
     list.scrollTop = currentScroll;
 }
 
-// ==================== ALERT ====================
+// ==================== ALERT SETUP ====================
 function openAlertSetup() {
     const panel = document.getElementById('alert-setup');
     const input = document.getElementById('alert-price-input');
@@ -688,7 +643,6 @@ async function updateLive() {
                 let variance = 0;
                 for (let val of closes) variance += Math.pow(val-sma,2);
                 const dev = Math.sqrt(variance/bbPeriod) * bbDev;
-
                 bbSeries[id].middle.series.update({time:latest.time,value:sma});
                 bbSeries[id].upper.series.update({time:latest.time,value:sma+dev});
                 bbSeries[id].lower.series.update({time:latest.time,value:sma-dev});
@@ -714,14 +668,12 @@ async function updateLive() {
     }
 };
 
-// ==================== EVENT LISTENERS & INIT ====================
+// ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Exchange select
     document.getElementById('exchange-select').addEventListener('change', async e => {
         currentExchange = e.target.value;
         localStorage.setItem('currentExchange', currentExchange);
         allPairsData = [];
-        document.getElementById('pairs-list').innerHTML = "<div class='loading'>Switching exchange...</div>";
         await fetchPairs();
         if (allPairsData.length > 0) await loadAllCharts(allPairsData[0].s);
     });
@@ -731,7 +683,6 @@ document.addEventListener('DOMContentLoaded', () => {
         populateList(currentSort);
     });
 
-    // Modals
     const settingsModal = document.getElementById('settings-modal');
     const infoModal = document.getElementById('info-modal');
     document.getElementById('settings-btn').onclick = () => settingsModal.style.display = "block";
@@ -747,7 +698,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === infoModal) infoModal.style.display = "none";
     };
 
-    // Settings toggles
     document.getElementById('toggle-ema').onclick = function() {
         emaEnabled = !emaEnabled;
         this.textContent = emaEnabled ? "EMA: On" : "EMA: Off";
@@ -792,6 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('open-botfather-btn').onclick = () => window.open('https://t.me/BotFather', '_blank');
     document.getElementById('close-alert-setup').onclick = () => document.getElementById('alert-setup').style.display = "none";
+
     document.getElementById('open-in-exchange').onclick = () => {
         const url = currentExchange === "bybit" 
             ? `https://www.bybit.com/trade/usdt/${currentSymbol}` 
@@ -824,9 +775,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-window.addEventListener('orientationchange', () => {
-    setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
-});
+window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 300));
 
 // ==================== ONLOAD ====================
 window.onload = async () => {
@@ -846,7 +795,7 @@ window.onload = async () => {
     await fetchPairs();
 
     setInterval(updateLive, 2000);
-    setInterval(fetchPairs, 5000);
+    setInterval(fetchPairs, 10000);
 };
 
 if ('serviceWorker' in navigator) {
