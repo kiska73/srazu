@@ -1,5 +1,6 @@
-// ====================== SRAZU SERVICE WORKER v2 (MARZO 2026) ======================
-const CACHE_NAME = 'srazu-v1';   // ← cambiato da v1 a v2 per forzare aggiornamento
+// ====================== SRAZU SERVICE WORKER v3 (MARZO 2026) ======================
+
+const CACHE_NAME = 'srazu-v8';   // cambio versione per forzare update
 
 const CORE_ASSETS = [
   '/',
@@ -15,40 +16,84 @@ const CORE_ASSETS = [
   '/favicon.ico'
 ];
 
+
+// ====================== INSTALL ======================
+
 self.addEventListener('install', event => {
+
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('✅ SRAZU v2: Cache creata');
+      console.log('✅ SRAZU SW: Cache creata');
       return cache.addAll(CORE_ASSETS);
     })
   );
+
   self.skipWaiting();
+
 });
 
+
+// ====================== ACTIVATE ======================
+
 self.addEventListener('activate', event => {
+
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+        keys
+          .filter(key => key !== CACHE_NAME)
+          .map(key => caches.delete(key))
       );
     })
   );
+
   self.clients.claim();
+
 });
 
+
+// ====================== FETCH ======================
+
 self.addEventListener('fetch', event => {
-  // Network First per tutto (più affidabile per aggiornamenti live)
+
+  const request = event.request;
+
+  // ⚠️ Ignora richieste non http/https (chrome-extension ecc)
+  if (!request.url.startsWith('http')) {
+    return;
+  }
+
   event.respondWith(
-    fetch(event.request).then(networkResponse => {
-      if (networkResponse && networkResponse.status === 200) {
+
+    fetch(request)
+      .then(networkResponse => {
+
+        if (!networkResponse || networkResponse.status !== 200) {
+          return networkResponse;
+        }
+
         const responseClone = networkResponse.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
-      }
-      return networkResponse;
-    }).catch(() => {
-      return caches.match(event.request).then(cached => {
-        return cached || caches.match('/index.html');
-      });
-    })
+
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(request, responseClone);
+        });
+
+        return networkResponse;
+
+      })
+
+      .catch(() => {
+
+        return caches.match(request).then(cached => {
+
+          if (cached) return cached;
+
+          return caches.match('/index.html');
+
+        });
+
+      })
+
   );
+
 });
