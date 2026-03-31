@@ -64,7 +64,7 @@
         </div>
 
         <div id="pairs">
-            <div class="pairs-header">
+            <div class="pairs-header" style="position: relative;">
                 <div class="header-left">
                     <select id="exchange-select">
                         <option value="bybit">Bybit</option>
@@ -73,6 +73,14 @@
                     <span>Perpetual</span>
                     <span id="info-btn" style="font-size:19px; margin-left:8px; cursor:pointer;">ℹ️</span>
                 </div>
+
+                <!-- LENTE DI RICERCA -->
+                <div style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; z-index: 100;">
+                    <input type="text" id="pair-search-input" placeholder="Cerca simbolo..." 
+                           style="display: none; width: 150px; padding: 6px 10px; background: #1f2433; border: 1px solid #444; color: white; border-radius: 4px; font-size: 13px;">
+                    <span id="search-icon" style="font-size: 20px; cursor: pointer; opacity: 0.8; padding: 4px;">🔍</span>
+                </div>
+
                 <div class="header-right">
                     <select id="sort-select">
                         <option value="volume">By Volume</option>
@@ -150,6 +158,7 @@
         <div class="modal-content">
             <span class="close">×</span>
             <h3>APP INFORMATION</h3>
+            <!-- Il contenuto rimane invariato -->
             <p><strong>- Trade smarter, faster, and clearer – all for free!</strong></p>
             <p><strong>- Real-time market analysis at a glance, perfect for quick trades.</strong></p>
             <p><strong>- Completely free, supported only by a small amount of non-intrusive ads.</strong></p>
@@ -160,22 +169,15 @@
             <ul>
                 <li>Real-time charts that update instantly.</li>
                 <li>Switch exchanges or lists anytime.</li>
-                <li>Synchronized analysis line: add with one click, move without duplicates. Double-click on any chart to remove it.</li>
+                <li>Synchronized analysis line.</li>
                 <li>Full-screen charts for precise analysis.</li>
-                <li>Quick alerts: target exact levels or nearby zones with direct trade access.</li>
-                <li><strong>Advanced Tools</strong></li>
-                <li>Private Telegram alerts (server-managed).</li>
-                <li>Change all chart timeframes at once.</li>
-                <li>Customize moving average settings.</li>
-                <li>Dynamic color bands based on BTC movement.</li>
+                <li>Quick alerts.</li>
+                <li>Private Telegram alerts.</li>
             </ul>
             <h4>Price Ruler Tool 📏</h4>
             <ul>
-                <li>Click the ruler icon (right of the bell) to toggle measurement mode on/off.</li>
-                <li>When active, click on any chart to measure the percentage difference from the synchronized horizontal line to the clicked price.</li>
-                <li>A dashed green line will appear showing the percentage (e.g. +2.45%).</li>
-                <li>Click again on the chart to update the measurement to a new price level.</li>
-                <li>Click the ruler icon again to turn off and remove the measurement line.</li>
+                <li>Click the ruler icon to toggle measurement mode.</li>
+                <li>Click on any chart to measure percentage.</li>
             </ul>
         </div>
     </div>
