@@ -86,7 +86,7 @@ function nextEMA(prev, price, period) {
     return price * k + prev * (1 - k);
 }
 
-// ==================== HORIZONTAL LINES & RULER (CORRETTO) ====================
+// ==================== LINES & RULER ====================
 function syncHorizLines() {
     Object.keys(candleSeries).forEach(k => {
         updatePriceLineOnSeries(candleSeries[k], k);
@@ -161,18 +161,15 @@ function updateRulerLineOnSeries(series, key) {
     rulerLines[key] = line;
 }
 
-// ==================== TOGGLE RULER (CORREZIONE PRINCIPALE) ====================
 function toggleRulerMode() {
     rulerMode = !rulerMode;
 
-    // Aggiorna lo stile dei pulsanti
     document.querySelectorAll('.title-ruler').forEach(el => {
         rulerMode ? el.classList.add('active') : el.classList.remove('active');
     });
 
     if (!rulerMode) {
         rulerPrice = null;
-        // Rimuove completamente tutte le linee ruler
         Object.keys(rulerLines).forEach(key => {
             if (rulerLines[key]) {
                 if (key === "fullscreen" && fullscreenChart) {
@@ -230,7 +227,7 @@ function createBollinger(chart, klines, period, stdDev) {
     return { middle: {series: mid, data: midData}, upper: {series: up, data: upData}, lower: {series: low, data: lowData} };
 }
 
-// ==================== CHART CREATION ====================
+// ==================== CHART CREATION (con zoom migliore) ====================
 async function createChart(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -278,6 +275,12 @@ async function createChart(containerId) {
     if (emaEnabled) emaPeriods.forEach((p, i) => createEMA(emaSeries[containerId], chart, klines, p, EMA_COLORS[i]));
     if (bbEnabled && klines.length >= bbPeriod) bbSeries[containerId] = createBollinger(chart, klines, bbPeriod, bbDev);
 
+    // Zoom iniziale: mostra circa le ultime 100 candele (più larghe e chiare)
+    chart.timeScale().setVisibleLogicalRange({
+        from: Math.max(0, klines.length - 100),
+        to: klines.length + 2
+    });
+
     candleSeries[containerId] = series;
     charts[containerId] = chart;
 
@@ -288,13 +291,10 @@ async function createChart(containerId) {
     chart.subscribeClick(p => {
         if (p?.point) {
             const price = series.coordinateToPrice(p.point.y);
-            if (rulerMode) {
-                rulerPrice = price;
-            } else {
-                activeHorizPrice = price;
-                saveHorizIfFavorite();
-            }
+            if (rulerMode) rulerPrice = price;
+            else activeHorizPrice = price;
             syncHorizLines();
+            if (!rulerMode) saveHorizIfFavorite();
         }
     });
 
@@ -394,10 +394,16 @@ function closeFullscreen() {
     delete rulerLines["fullscreen"];
 }
 
-// ==================== DATA FETCHING (con fix Binance) ====================
+// ==================== FETCH KLINES (FIX COMPLETO BINANCE) ====================
 async function fetchKlines(symbol, interval, limit = 500) {
     let cleanInterval = interval;
-    if (currentExchange === "binance" && interval === "D") cleanInterval = "1d";
+    
+    if (currentExchange === "binance") {
+        if (interval === "D") cleanInterval = "1d";
+        else if (interval === "240") cleanInterval = "4h";
+        else if (interval === "60") cleanInterval = "1h";
+        else if (interval.match(/^\d+$/)) cleanInterval = interval + "m";   // 5 → 5m, 30 → 30m
+    }
 
     const upSymbol = symbol.toUpperCase();
 
@@ -435,6 +441,7 @@ async function fetchLatestCandle(symbol, interval) {
     return k.length ? k[k.length-1] : null;
 }
 
+// ==================== FETCH PAIRS (Volume corretto) ====================
 async function fetchPairs() {
     let url = currentExchange === "bybit" 
         ? "https://api.bybit.com/v5/market/tickers?category=linear" 
@@ -453,7 +460,7 @@ async function fetchPairs() {
             lp: parseFloat(p.lastPrice || p.last || 0),
             pc: parseFloat(p.price24hPcnt || p.priceChangePercent || 0) * (currentExchange === "bybit" ? 100 : 1),
             v: currentExchange === "bybit" 
-                ? parseFloat(p.turnover24h || 0)
+                ? parseFloat(p.turnover24h || 0) 
                 : parseFloat(p.quoteVolume || 0)
         }));
 
@@ -571,7 +578,7 @@ async function updateLive() {
     }
 }
 
-// ==================== EVENT LISTENERS & RESIZE ====================
+// ==================== EVENT LISTENERS ====================
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exchange-select').addEventListener('change', async e => {
         currentExchange = e.target.value;
@@ -682,6 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// ==================== RESIZE ====================
 window.addEventListener('resize', () => {
     setRealViewportHeight();
     Object.keys(charts).forEach(id => {
@@ -695,6 +703,7 @@ window.addEventListener('resize', () => {
 
 window.addEventListener('orientationchange', () => setTimeout(() => window.dispatchEvent(new Event('resize')), 300));
 
+// ==================== ONLOAD ====================
 window.onload = async () => {
     setRealViewportHeight();
 
